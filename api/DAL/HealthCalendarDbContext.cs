@@ -4,9 +4,9 @@ using HealthCalendar.Models;
 
 namespace HealthCalendar.DAL;
 
-public class DatabaseContext : DbContext
+public class HealthCalendarDbContext : DbContext
 {
-    public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
+    public HealthCalendarDbContext(DbContextOptions<HealthCalendarDbContext> options) : base(options)
     {
         Database.EnsureCreated();
     }

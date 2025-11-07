@@ -11,9 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<DatabaseContext>(options =>
+builder.Services.AddDbContext<HealthCalendarDbContext>(options =>
 {
-    options.UseSqlite(builder.Configuration["ConnectionStrings:DatabaseContextConnection"]);
+    options.UseSqlite(builder.Configuration["ConnectionStrings:HealthCalendarDbContextConnection"]);
 });
 
 builder.Services.AddControllers().AddNewtonsoftJson(options =>

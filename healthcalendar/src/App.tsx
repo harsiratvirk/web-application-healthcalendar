@@ -5,7 +5,7 @@ import HomePage from './home/HomePage'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import './App.css'
 
-function App() {
+const App: React.FC = () => {
   return (
     <Router>
       <Routes>
