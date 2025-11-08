@@ -1,1 +1,1 @@
-namespace HealthCalendar.Controllers;
+namespace HealthCalendar.DTOs;
