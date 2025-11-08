@@ -1,0 +1,80 @@
+/* Shared auth page styles */
+:root {
+  --primary: #5183EE;
+  --primary-strong: #2562E8;
+  --bg: #E8F9FF;
+  --error: #E4483A;
+  --field-border: #4097F5;
+}
+
+.auth-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.auth-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(1.25rem, 3vw, 3rem);
+  align-items: center;
+  width: 100%;
+  max-width: none;
+  padding: clamp(1rem, 2vw, 2.5rem) clamp(2rem, 4vw, 5rem);
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.auth-left { display: flex; justify-content: center; }
+.auth-image {
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.auth-right { max-width: 520px; margin-inline: auto; }
+.auth-title { font-size: clamp(1.5rem, 2.5vw, 2.2rem); font-weight: 800; margin-bottom: 1rem; color: #1f2937; }
+
+.auth-form { display: grid; gap: 1rem; }
+.auth-form label { font-weight: 600; color: #374151; display: grid; gap: 0.35rem; }
+
+.auth-input {
+  padding: 0.7rem 0.85rem;
+  border: 2px solid var(--field-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  background: #fff;
+}
+
+.auth-input:focus { box-shadow: 0 0 0 3px #5183EE33; }
+
+.auth-btn {
+  margin-top: 0.5rem;
+  background: var(--primary-strong);
+  color: #fff;
+  border: none;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-btn:hover { background: var(--primary); }
+
+.auth-banner { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 0.75rem; font-weight: 600; }
+.auth-banner--error { background: #ffe9e7; color: var(--error); border: 1px solid var(--error); }
+
+.auth-alt { margin-top: 0.75rem; color: #4b5563; }
+.auth-alt a { color: var(--primary-strong); text-decoration: none; font-weight: 700; }
+.auth-alt a:hover { text-decoration: underline; }
+
+@media (max-width: 960px) {
+  .auth-main { grid-template-columns: 1fr; }
+  .auth-left { order: -1; display:flex; justify-content:center; }
+}
