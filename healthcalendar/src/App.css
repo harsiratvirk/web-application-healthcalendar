@@ -1,8 +1,10 @@
+/* Remove vite template constraints that center and limit width */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: initial;
 }
 
 .logo {
@@ -33,10 +35,6 @@
   }
 }
 
-.card {
-  padding: 2em;
-}
+.card { padding: 0; }
 
-.read-the-docs {
-  color: #888;
-}
+.read-the-docs { color: inherit; }
