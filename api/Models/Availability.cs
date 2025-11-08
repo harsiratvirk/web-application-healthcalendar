@@ -10,8 +10,8 @@ namespace HealthCalendar.Models
         public TimeOnly To { get; set; }
 
         // Specifies Day of Week 
-        public enum DayOfWeek { Mon, Tue, Wed, Thu, Fri, Sun, Sat }
-        // Specifies sepcific date, used to override DayOfWeek
+        public DayOfWeek DayOfWeek { get; set; }
+        // Specifies sepcific date, overrides corresponding DayOfWeek
         public DateOnly? Date { get; set; }
 
         // Foreign Key (User.Id)

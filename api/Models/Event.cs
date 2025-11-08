@@ -9,8 +9,8 @@ namespace HealthCalendar.Models
         public TimeOnly From { get; set; }
         public TimeOnly To { get; set; }
         public DateOnly Date { get; set; }
-        public String Title { get; set; } = String.Empty;
-        public String Location { get; set; } = String.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
 
         // Foreign Key (User.Id)
         public int UserId { get; set; }

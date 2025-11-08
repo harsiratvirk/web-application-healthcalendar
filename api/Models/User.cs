@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
+using HealthCalendar.Shared;
 
 namespace HealthCalendar.Models
 {
@@ -13,7 +14,7 @@ namespace HealthCalendar.Models
             PasswordHash
         */
         public string Name { get; set; } = string.Empty;
-        public enum Role { Patient, Worker, Admin }
+        public Role Role { get; set; }
         
         // Foreign Key (User.Id)
         // For Patient, Points to related Worker
