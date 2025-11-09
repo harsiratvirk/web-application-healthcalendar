@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Event } from '../types/event'
 import '../styles/EventFormsBase.css'
+import '../styles/ConfirmDialog.css'
 
 type Props = {
   event: Event
@@ -30,6 +31,7 @@ export default function EditEventForm({ event, onClose, onSave, onDelete }: Prop
   const [locationError, setLocationError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const endTimeOptions = useMemo(() => times.filter(t => t > startTime), [startTime])
 
@@ -70,67 +72,106 @@ export default function EditEventForm({ event, onClose, onSave, onDelete }: Prop
       // Keep silent; avoid top banner
     } finally {
       setDeleting(false)
+      setShowConfirm(false)
     }
   }
 
+  const formatDate = (iso: string) => {
+    const d = new Date(`${iso}T00:00:00Z`)
+    const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone: 'UTC' }).format(d)
+    const dd = iso.slice(8, 10)
+    const mm = iso.slice(5, 7)
+    const yyyy = iso.slice(0, 4)
+    return `${weekday} ${dd}-${mm}-${yyyy}`
+  }
+
   return (
-    <div className="overlay" role="dialog" aria-modal="true">
-  <div className="modal">
-        <header className="modal__header">
-          <h2>Edit Event</h2>
-          <button className="icon-btn" onClick={onClose} aria-label="Close">
-            <img src="/images/exit.png" alt="Close" />
-          </button>
-        </header>
-  <form className="form" onSubmit={submit}>
-          <label>
-            Title
-            <input
-              value={title}
-              onChange={e => {
-                const v = e.target.value
-                setTitle(v)
-                if (titleError && v.trim()) setTitleError(null)
-              }}
-              aria-invalid={!!titleError}
-            />
-            {titleError && <small className="field-error">{titleError}</small>}
-          </label>
-          <label>
-            Location
-            <input
-              value={location}
-              onChange={e => {
-                const v = e.target.value
-                setLocation(v)
-                if (locationError && v.trim()) setLocationError(null)
-              }}
-              aria-invalid={!!locationError}
-            />
-            {locationError && <small className="field-error">{locationError}</small>}
-          </label>
-          <div className="form__row">
+    <>
+    {!showConfirm && (
+      <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="edit-event-title">
+        <div className="modal">
+          <header className="modal__header">
+            <h2 id="edit-event-title">Edit Event</h2>
+            <button className="icon-btn" onClick={onClose} aria-label="Close">
+              <img src="/images/exit.png" alt="Close" />
+            </button>
+          </header>
+          <form className="form" onSubmit={submit}>
             <label>
-              Start Time
-              <select value={startTime} onChange={e => setStartTime(e.target.value)}>
-                {times.map(t => (<option key={t} value={t}>{t}</option>))}
-              </select>
+              Title
+              <input
+                value={title}
+                onChange={e => {
+                  const v = e.target.value
+                  setTitle(v)
+                  if (titleError && v.trim()) setTitleError(null)
+                }}
+                aria-invalid={!!titleError}
+              />
+              {titleError && <small className="field-error">{titleError}</small>}
             </label>
             <label>
-              End Time
-              <select value={endTime} onChange={e => setEndTime(e.target.value)}>
-                {endTimeOptions.map(t => (<option key={t} value={t}>{t}</option>))}
-              </select>
+              Location
+              <input
+                value={location}
+                onChange={e => {
+                  const v = e.target.value
+                  setLocation(v)
+                  if (locationError && v.trim()) setLocationError(null)
+                }}
+                aria-invalid={!!locationError}
+              />
+              {locationError && <small className="field-error">{locationError}</small>}
             </label>
-          </div>
-          <div className="form__actions form__actions--edit">
-            <button type="button" className="btn btn--danger" onClick={remove} disabled={deleting}>Delete</button>
-            <div className="form__actions-spacer" />
-            <button type="button" className="btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn--primary" disabled={saving}>Save</button>
-          </div>
-        </form>
+            <div className="form__row">
+              <label>
+                Start Time
+                <select value={startTime} onChange={e => setStartTime(e.target.value)}>
+                  {times.map(t => (<option key={t} value={t}>{t}</option>))}
+                </select>
+              </label>
+              <label>
+                End Time
+                <select value={endTime} onChange={e => setEndTime(e.target.value)}>
+                  {endTimeOptions.map(t => (<option key={t} value={t}>{t}</option>))}
+                </select>
+              </label>
+            </div>
+            <div className="form__actions form__actions--edit">
+              <button type="button" className="btn btn--danger" onClick={() => setShowConfirm(true)} disabled={deleting}>Delete</button>
+              <div className="form__actions-spacer" />
+              <button type="button" className="btn" onClick={onClose}>Cancel</button>
+              <button type="submit" className="btn btn--primary" disabled={saving}>Save</button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    )}
+    {showConfirm && (
+      <div className="overlay confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-title" aria-describedby="confirm-delete-desc">
+        <div className="modal confirm-modal">
+          <header className="modal__header">
+            <h2 id="confirm-delete-title">Confirm Delete</h2>
+            <button className="icon-btn" onClick={() => setShowConfirm(false)} aria-label="Close confirmation">
+              <img src="/images/exit.png" alt="Close" />
+            </button>
+          </header>
+          <div id="confirm-delete-desc" className="confirm-body">
+            Are you sure you want to delete this event?
+            <ul className="confirm-details">
+              <li><strong>Title:</strong> {event.title}</li>
+              <li><strong>Date:</strong> {formatDate(event.date)}</li>
+              <li><strong>Time:</strong> {event.startTime} – {event.endTime}</li>
+              <li><strong>Location:</strong> {event.location}</li>
+            </ul>
+          </div>
+          <div className="confirm-actions">
+            <button type="button" className="btn" onClick={() => setShowConfirm(false)} disabled={deleting}>Cancel</button>
+            <button type="button" className="btn btn--danger" onClick={remove} disabled={deleting}>Delete</button>
+          </div>
+        </div>
+      </div>
+    )}
+  </>
   )
 }

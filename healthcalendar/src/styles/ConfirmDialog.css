@@ -1,0 +1,38 @@
+/* Confirmation dialog specific styles */
+
+.confirm-overlay {
+  z-index: 120;
+}
+
+.confirm-modal {
+  max-width: 500px;
+}
+
+.confirm-body {
+  font-size: 1.1rem; 
+  font-weight: 600;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.confirm-details {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: #4b5563;
+}
+
+.confirm-details li {
+  margin: 0.15rem 0;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .confirm-modal { max-width: 100%; }
+}
