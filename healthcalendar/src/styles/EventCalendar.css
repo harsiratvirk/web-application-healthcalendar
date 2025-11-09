@@ -2,7 +2,8 @@
 :root {
     --primary: #5183EE;
     --primary-strong: #2562E8;
-    --danger: #E4483A;
+    --danger: #E4483A; /* legacy token */
+    --error: #E4483A;  /* align with auth styles */
 }
 
 .event-page {
@@ -23,6 +24,7 @@
     margin: 0;
     box-sizing: border-box;
 }
+
 
 .event-header {
     display: flex;
@@ -91,18 +93,18 @@
 .logout-btn {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem; 
     background: #fff;
     border: 1px solid #d1d5db;
-    padding: 0.5rem .9rem;
+    padding: 0.45rem 0.7rem; 
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
 }
 
 .logout-btn img {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
 }
 
 .banner {
@@ -166,15 +168,15 @@
 
 /* Inline field error for event forms */
 .field-error {
-    color: var(--danger);
+    color: var(--error);
     font-size: 0.9rem;
     line-height: 1.2;
 }
 
 .form input[aria-invalid="true"],
 .form select[aria-invalid="true"] {
-    border-color: var(--danger);
-    box-shadow: 0 0 0 3px rgba(228, 72, 58, 0.15);
+    border-color: var(--error);
+    box-shadow: 0 0 0 3px #E4483A22;
 }
 
 .form__row {

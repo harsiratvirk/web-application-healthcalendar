@@ -85,12 +85,28 @@ export default function EditEventForm({ event, onClose, onSave, onDelete }: Prop
         <form className="form" onSubmit={submit}>
           <label>
             Title
-            <input value={title} onChange={e => setTitle(e.target.value)} aria-invalid={!!titleError} />
+            <input
+              value={title}
+              onChange={e => {
+                const v = e.target.value
+                setTitle(v)
+                if (titleError && v.trim()) setTitleError(null)
+              }}
+              aria-invalid={!!titleError}
+            />
             {titleError && <small className="field-error">{titleError}</small>}
           </label>
           <label>
             Location
-            <input value={location} onChange={e => setLocation(e.target.value)} aria-invalid={!!locationError} />
+            <input
+              value={location}
+              onChange={e => {
+                const v = e.target.value
+                setLocation(v)
+                if (locationError && v.trim()) setLocationError(null)
+              }}
+              aria-invalid={!!locationError}
+            />
             {locationError && <small className="field-error">{locationError}</small>}
           </label>
           <div className="form__row">

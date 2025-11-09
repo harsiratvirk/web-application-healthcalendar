@@ -50,32 +50,9 @@
 .cal-grid__body {
     display: grid;
     grid-template-columns: 80px 1fr;
-    overflow: auto;
-    flex: 1; 
-    min-height: 0;
 }
 
-/* Restore visible scrollbars while ensuring full scroll reach */
-.cal-grid__body {
-    scrollbar-width: auto; /* Firefox */
-}
-
-/* WebKit visible thin scrollbar styling (optional subtle) */
-.cal-grid__body::-webkit-scrollbar {
-    width: 8px;
-}
-.cal-grid__body::-webkit-scrollbar-track {
-    background: #f1f5f9;
-}
-.cal-grid__body::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
-}
-.cal-grid__body::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-
-.cal-grid__days { padding-bottom: 4px; }
+/* Remove extra padding that was used to ensure scroll reach */
 
 .cal-grid__times {
     background: #f9fafb;

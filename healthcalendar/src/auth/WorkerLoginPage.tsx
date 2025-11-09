@@ -45,7 +45,11 @@ const WorkerLoginPage: React.FC = () => {
                 type="email"
                 placeholder="Your email here…"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => {
+                  const v = e.target.value
+                  setEmail(v)
+                  if (emailError && v.trim()) setEmailError(null)
+                }}
                 className="auth-input"
                 aria-invalid={!!emailError}
                 required
@@ -58,7 +62,11 @@ const WorkerLoginPage: React.FC = () => {
                 type="password"
                 placeholder="Your password here…"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={e => {
+                  const v = e.target.value
+                  setPassword(v)
+                  if (passwordError && v.trim()) setPasswordError(null)
+                }}
                 className="auth-input"
                 aria-invalid={!!passwordError}
                 required

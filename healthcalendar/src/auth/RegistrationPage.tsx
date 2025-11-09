@@ -52,7 +52,11 @@ const RegistrationPage: React.FC = () => {
                 type="text"
                 placeholder="Your name here…"
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={e => {
+                  const v = e.target.value
+                  setName(v)
+                  if (nameError && v.trim()) setNameError(null)
+                }}
                 className="auth-input"
                 aria-invalid={!!nameError}
                 required
@@ -65,7 +69,14 @@ const RegistrationPage: React.FC = () => {
                 type="email"
                 placeholder="Your email here…"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => {
+                  const v = e.target.value
+                  setEmail(v)
+                  const patternOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+                  if (emailError) {
+                    if (v.trim() && patternOk) setEmailError(null)
+                  }
+                }}
                 className="auth-input"
                 aria-invalid={!!emailError}
                 required
@@ -78,7 +89,13 @@ const RegistrationPage: React.FC = () => {
                 type="password"
                 placeholder="Your password here…"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={e => {
+                  const v = e.target.value
+                  setPassword(v)
+                  if (passwordError) {
+                    if (v.length >= 6) setPasswordError(null)
+                  }
+                }}
                 className="auth-input"
                 aria-invalid={!!passwordError}
                 required

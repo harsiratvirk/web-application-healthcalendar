@@ -63,8 +63,9 @@ export default function NewEventForm({ availableDays, onClose, onSave }: Props) 
   const formatDateOption = (iso: string) => {
     // Use English weekday and dd-MM-yyyy numeric format, timezone-safe
     const d = new Date(`${iso}T00:00:00Z`)
-    const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'UTC' }).format(d)
-    const day = iso.slice(8, 10)
+  // Use full weekday name for clarity
+  const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone: 'UTC' }).format(d)
+  const day = iso.slice(8, 10)
     const month = iso.slice(5, 7)
     const year = iso.slice(0, 4)
     const ddMMyyyy = `${day}-${month}-${year}`
@@ -104,18 +105,44 @@ export default function NewEventForm({ availableDays, onClose, onSave }: Props) 
         <form className="form" onSubmit={submit}>
           <label>
             Title
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g., Medication Reminder" aria-invalid={!!titleError} />
+            <input
+              value={title}
+              onChange={e => {
+                const v = e.target.value
+                setTitle(v)
+                if (titleError && v.trim()) setTitleError(null)
+              }}
+              placeholder="e.g., Medication Reminder"
+              aria-invalid={!!titleError}
+            />
             {titleError && <small className="field-error">{titleError}</small>}
           </label>
           <label>
             Location
-            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g., Home" aria-invalid={!!locationError} />
+            <input
+              value={location}
+              onChange={e => {
+                const v = e.target.value
+                setLocation(v)
+                if (locationError && v.trim()) setLocationError(null)
+              }}
+              placeholder="e.g., Home"
+              aria-invalid={!!locationError}
+            />
             {locationError && <small className="field-error">{locationError}</small>}
           </label>
           <div className="form__row">
             <label>
               Date
-              <select value={date} onChange={e => setDate(e.target.value)} aria-invalid={!!dateError}>
+              <select
+                value={date}
+                onChange={e => {
+                  const v = e.target.value
+                  setDate(v)
+                  if (dateError && v) setDateError(null)
+                }}
+                aria-invalid={!!dateError}
+              >
                 {validDays.map(d => (
                   <option key={d} value={d}>{formatDateOption(d)}</option>
                 ))}
