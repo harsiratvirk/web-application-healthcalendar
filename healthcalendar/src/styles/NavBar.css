@@ -2,8 +2,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 1.1rem 2rem; /* increased vertical padding for more height */
-	min-height: 80px; /* ensure a taller bar visually */
+	padding: 1.1rem 2rem; 
+	min-height: 80px;
 	background: #ffffff;
 	border-bottom: 2px solid #5183EE22;
 	box-shadow: 0 2px 4px rgba(0,0,0,0.06);
@@ -17,15 +17,14 @@
 }
 
 .navbar__logo {
-	/* Larger logo while keeping approximate aspect ratio */
-	width: 86px; /* ~1.346 * 64px height to match previous ratio */
+	width: 86px;
 	height: 64px;
 	object-fit: contain;
 }
 
 .navbar__title {
-	font-size: 2rem; /* larger name */
-	font-weight: 600; /* revert from 800 to a lighter weight */
+	font-size: 2rem; 
+	font-weight: 600; 
 	color: #5183EE;
 	letter-spacing: 0.5px;
 }
@@ -37,12 +36,12 @@
 
 .navbar__link {
 	text-decoration: none;
-	font-weight: 500; /* lighter than before */
+	font-weight: 500; 
 	color: #2562E8;
 	padding: 0.6rem 1rem;
 	border-radius: 8px;
 	transition: background 0.15s ease, color 0.15s ease;
-	font-size: 1.25rem; /* larger button font */
+	font-size: 1.25rem;
 }
 
 .navbar__link:hover {
@@ -55,8 +54,7 @@
 }
 
 .navbar__link--primary:hover {
-	/* Darker shade for stronger contrast + clearer hover state */
-	background: #1D54C9; /* WCAG AA contrast against white text maintained */
+	background: #1D54C9;
 }
 
 .navbar__link--primary:focus-visible {
@@ -69,7 +67,7 @@
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 0.75rem;
-		padding: 0.9rem 1rem; /* slightly reduce on small screens */
+		padding: 0.9rem 1rem; 
 		min-height: 64px;
 	}
 	.navbar__right {

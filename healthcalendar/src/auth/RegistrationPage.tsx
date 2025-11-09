@@ -46,7 +46,7 @@ const RegistrationPage: React.FC = () => {
           <img src="/images/register_login.png" alt="Register" className="auth-image" />
         </section>
         <section className="auth-right">
-          <h1 className="auth-title">Create your account</h1>
+          <h1 className="auth-title auth-title--nowrap">Create your account</h1>
           {error && <div className="auth-banner auth-banner--error">{error}</div>}
           <form className="auth-form" onSubmit={onSubmit} noValidate>
             <label>

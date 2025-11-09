@@ -108,6 +108,7 @@ export default function CalendarGrid({
                       title={`${e.title} @ ${e.location}\n${e.startTime} - ${e.endTime}`}
                     >
                       <div className="cal-grid__event-title">{e.title}</div>
+                      <div className="cal-grid__event-location">{e.location}</div>
                       <div className="cal-grid__event-meta">{e.startTime} - {e.endTime}</div>
                       <button className="cal-grid__event-edit" aria-label="Edit event" onClick={(ev) => { ev.stopPropagation(); onEdit?.(e) }}>
                         <img src="/images/edit.png" alt="Edit" />

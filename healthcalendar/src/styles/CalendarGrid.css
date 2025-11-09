@@ -3,7 +3,7 @@
     --primary: #5183EE;
     --primary-strong: #2562E8;
     --bg: #E8F9FF;
-    --slot-h: 36px; /* height of each 30-min slot */
+    --slot-h: clamp(42px, 5.2vh, 56px);
 }
 
 .cal-grid {
@@ -13,7 +13,7 @@
     border: 1px solid #e5e7eb;
     display: flex;
     flex-direction: column;
-    min-height: 0; /* allow flex parent to control height */
+    min-height: 0;
 }
 
 .cal-grid__header {
@@ -28,11 +28,13 @@
 
 .cal-grid__corner {
     height: 56px;
+    border-right: 1px solid #e5e7eb; 
 }
 
 .cal-grid__day {
-    padding: 0.5rem;
+    padding: 0.9rem;
     text-align: center;
+    border-right: 1px solid #e5e7eb;
 }
 
 .cal-grid__dayname {
@@ -49,9 +51,31 @@
     display: grid;
     grid-template-columns: 80px 1fr;
     overflow: auto;
-    flex: 1; /* take remaining height under sticky header */
+    flex: 1; 
     min-height: 0;
 }
+
+/* Restore visible scrollbars while ensuring full scroll reach */
+.cal-grid__body {
+    scrollbar-width: auto; /* Firefox */
+}
+
+/* WebKit visible thin scrollbar styling (optional subtle) */
+.cal-grid__body::-webkit-scrollbar {
+    width: 8px;
+}
+.cal-grid__body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+.cal-grid__body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.cal-grid__body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.cal-grid__days { padding-bottom: 4px; }
 
 .cal-grid__times {
     background: #f9fafb;
@@ -67,8 +91,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
+    font-size: clamp(0.95rem, 1.2vw, 1.1rem);
     color: #6b7280;
+    border-bottom: 1px solid #d7dde6;
 }
 
 .cal-grid__days {
@@ -79,6 +104,7 @@
 
 .cal-grid__col {
     position: relative;
+    border-right: 1px solid #e5e7eb;
 }
 
 .cal-grid__col--today {
@@ -92,7 +118,15 @@
 
 .cal-grid__slot {
     height: var(--slot-h);
-    border-bottom: 1px dashed #eef2f7;
+    border-bottom: 1px solid #d7dde6;
+}
+
+@media (max-width: 900px) {
+    :root { --slot-h: clamp(38px, 6vh, 48px); }
+}
+
+@media (max-height: 750px) {
+    :root { --slot-h: clamp(30px, 5.5vh, 42px); }
 }
 
 .cal-grid__event {
@@ -114,11 +148,19 @@
 .cal-grid__event-title {
     font-weight: 800;
     color: #1f2937;
-    font-size: 0.95rem;
+    font-size: 1rem;
+}
+
+.cal-grid__event-location {
+    font-size: 1rem;
+    color: #334155; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .cal-grid__event-meta {
-    font-size: 0.8rem;
+    font-size: 1rem;
     color: #374151;
 }
 
@@ -133,6 +175,6 @@
 }
 
 .cal-grid__event-edit img {
-    width: 16px;
-    height: 16px;
+    width: 26px;
+    height: 26px;
 }

@@ -14,7 +14,7 @@
 
 .event-main {
     flex: 1;
-    padding: 1.25rem clamp(2rem,4vw,5rem) 2.5rem;
+    padding: 3rem clamp(2rem,4vw,5rem) 2.5rem;
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
@@ -29,17 +29,24 @@
     justify-content: space-between;
     align-items: flex-start;
     flex-wrap: wrap;
-    gap: 1.25rem;
+    gap: 20rem;
+}
+
+.event-header__right {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1rem, 2vw, 1rem);
 }
 
 .event-title {
-    font-size: 1.6rem;
+    font-size: 2rem;
     font-weight: 800;
-    margin: 0;
+    margin: 0 0 clamp(0.35rem, 1.5vw, 0.8rem);
     color: #1f2937;
 }
 
 .event-week {
+    font-size: 1.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -48,7 +55,7 @@
 .icon-btn {
     background: #ffffff;
     border: 1px solid #d1d5db;
-    width: 36px;
+    width: 30px;
     height: 36px;
     display: flex;
     align-items: center;
@@ -58,8 +65,8 @@
 }
 
 .icon-btn img {
-    width: 18px;
-    height: 18px;
+    width: 25px;
+    height: 25px;
 }
 
 .event-week__range {
@@ -71,9 +78,9 @@
     background: #2562E8;
     color: #fff;
     border: none;
-    padding: 0.6rem 1rem;
+    padding: 0.8rem 1.3rem;
     border-radius: 8px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
 }
 
@@ -189,6 +196,20 @@
     justify-content: flex-end;
     gap: .75rem;
     flex-wrap: wrap;
+}
+
+.form__actions--edit {
+    justify-content: flex-end;
+    position: relative;
+    width: 100%;
+}
+
+.form__actions--edit .btn.btn--danger {
+    order: -1;
+}
+
+.form__actions-spacer {
+    flex: 1 1 auto;
 }
 
 .btn {

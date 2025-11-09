@@ -104,10 +104,11 @@ export default function EditEventForm({ event, onClose, onSave, onDelete }: Prop
               </select>
             </label>
           </div>
-          <div className="form__actions">
+          <div className="form__actions form__actions--edit">
+            <button type="button" className="btn btn--danger" onClick={remove} disabled={deleting}>{deleting ? 'Deleting…' : 'Delete'}</button>
+            <div className="form__actions-spacer" />
             <button type="button" className="btn" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn--primary" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
-            <button type="button" className="btn btn--danger" onClick={remove} disabled={deleting}>{deleting ? 'Deleting…' : 'Delete'}</button>
           </div>
         </form>
       </div>

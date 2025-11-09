@@ -2,6 +2,7 @@
 :root {
   --primary: #5183EE;
   --primary-strong: #2562E8;
+  --primary-darker: #1747B5;
   --bg: #E8F9FF;
   --text: #1f2937;
 }
@@ -19,8 +20,8 @@
   display: grid;
   grid-template-columns: 1.25fr 0.75fr;
   align-items: center;
-  gap: clamp(1.5rem, 3vw, 3.5rem);
-  padding: clamp(1.25rem, 2.5vw, 3.5rem) clamp(2rem, 4vw, 5rem) clamp(2rem, 4vw, 4.5rem);
+  gap: clamp(1.45rem, 3vw, 3.4rem);
+  padding: clamp(0.55rem, 1.2vw, 2.1rem) clamp(2rem, 4vw, 5rem) clamp(1.9rem, 3.8vw, 4.4rem);
   width: 100%;
   max-width: none;
   margin: 0;
@@ -32,11 +33,12 @@
 }
 
 .home-title {
-  font-size: clamp(1.75rem, 3vw, 3rem);
-  line-height: 1.2;
-  font-weight: 800;
+  font-size: clamp(3.1rem, 6.2vw, 5rem);
+  line-height: 1.08;
+  font-weight: 900;
+  letter-spacing: -1px;
   color: var(--text);
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .home-title span {
@@ -44,25 +46,37 @@
 }
 
 .home-subtitle {
-  font-size: 1.05rem;
+  font-size: 1.65rem; 
+  font-weight: 700;
   color: #374151;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  line-height: 1.48; 
+  max-width: 50ch;
 }
 
 .home-cta {
   display: inline-block;
   background: var(--primary-strong);
   color: #fff;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
+  padding: 1.2rem 2.6rem;
+  border-radius: 14px;
   text-decoration: none;
   font-weight: 600;
+  font-size: 1.8rem;
   letter-spacing: 0.3px;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .home-cta:hover {
-  background: var(--primary);
+  background: var(--primary-darker);
+  transform: translateY(-2px);
+}
+
+.home-cta:focus-visible {
+  background: var(--primary-darker);
+  outline: 3px solid #A8C7FF;
+  outline-offset: 3px;
+  transform: translateY(-2px);
 }
 
 .home-main__right {
@@ -72,11 +86,10 @@
 
 .home-image {
   width: 100%;
-  max-width: 560px;
+  max-width: 700px;
   height: auto;
   border-radius: 16px;
   object-fit: cover;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
 @media (max-width: 960px) {
@@ -89,6 +102,7 @@
 }
 
 @media (max-width: 640px) {
-  .home-title { font-size: clamp(1.6rem, 6vw, 2.4rem); }
-  .home-subtitle { font-size: 0.95rem; }
+  .home-title { font-size: clamp(2.6rem, 12vw, 3.3rem); letter-spacing: -0.5px; }
+  .home-subtitle { font-size: 1.45rem; font-weight: 700; line-height: 1.42; }
+  .home-cta { padding: 1.1rem 1.9rem; font-size: 1.3rem; }
 }

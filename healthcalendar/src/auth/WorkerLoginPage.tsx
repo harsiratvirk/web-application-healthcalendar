@@ -36,7 +36,7 @@ const WorkerLoginPage: React.FC = () => {
           <img src="/images/register_login.png" alt="Worker Login" className="auth-image" />
         </section>
         <section className="auth-right">
-          <h1 className="auth-title">Healthcare Personnel Login</h1>
+          <h1 className="auth-title">Personnel Login</h1>
           {error && <div className="auth-banner auth-banner--error">{error}</div>}
           <form className="auth-form" onSubmit={onSubmit} noValidate>
             <label>

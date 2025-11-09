@@ -1,2 +1,15 @@
 /* Registration page reuses the auth styles; we import a separate file for clarity and future overrides */
 @import './LoginPage.css';
+
+/* Keep the title on a single line for Registration */
+.auth-title--nowrap {
+	white-space: nowrap;
+}
+
+@media (max-width: 960px) {
+	/* Slightly adjust size on small screens to avoid overflow while staying single-line */
+	.auth-title--nowrap {
+		font-size: clamp(2.1rem, 6vw, 2.9rem);
+		letter-spacing: -0.4px;
+	}
+}

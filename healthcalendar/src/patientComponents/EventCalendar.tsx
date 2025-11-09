@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { Event } from '../types/event'
 import { apiService } from '../services/apiService'
 import CalendarGrid from '../components/CalendarGrid'
 import '../styles/EventCalendar.css'
-import NavBar from '../shared/NavBar'
 import { useToast } from '../shared/toastContext'
 import NewEventForm from './NewEventForm'
 import EditEventForm from './EditEventForm'
@@ -38,6 +38,7 @@ export default function EventCalendar() {
   const [weekStartISO, setWeekStartISO] = useState(startOfWeekMondayISO(new Date()))
   const [showNew, setShowNew] = useState(false)
   const [editing, setEditing] = useState<Event | null>(null)
+  const navigate = useNavigate()
 
   const weekRangeText = useMemo(() => {
     const startDate = new Date(weekStartISO)
@@ -47,7 +48,7 @@ export default function EventCalendar() {
     const monthFormatter = new Intl.DateTimeFormat('en-GB', { month: 'long' })
     const month = monthFormatter.format(startDate)
     const year = startDate.getFullYear()
-    return `${startDay}–${endDay} ${month} ${year}`
+    return `${startDay} – ${endDay} ${month} ${year}`
   }, [weekStartISO])
 
   const availableDays = useMemo(() => (
@@ -132,7 +133,6 @@ export default function EventCalendar() {
 
   return (
     <div className="event-page">
-      <NavBar />
       <main className="event-main">
         <header className="event-header">
           <div className="event-header__left">
@@ -148,11 +148,11 @@ export default function EventCalendar() {
             </div>
           </div>
           <div className="event-header__right">
-            <button className="add-btn" onClick={() => setShowNew(true)}>+ Add New Event</button>
-            <button className="logout-btn">
+            <button className="logout-btn" onClick={() => navigate('/login')}>
               <img src="/images/logout.png" alt="Logout" />
               <span>Log Out</span>
             </button>
+            <button className="add-btn" onClick={() => setShowNew(true)}>+ Add New Event</button>
           </div>
         </header>
 
