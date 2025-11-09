@@ -129,9 +129,7 @@ export default function NewEventForm({ availableDays, onClose, onSave }: Props) 
           </div>
           <div className="form__actions">
             <button type="button" className="btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn--primary" disabled={saving || validDays.length === 0}>
-              {saving ? 'Saving…' : 'Save'}
-            </button>
+            <button type="submit" className="btn btn--primary" disabled={saving || validDays.length === 0}>Save</button>
           </div>
         </form>
       </div>

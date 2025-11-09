@@ -73,6 +73,18 @@
     line-height: 1.3;
 }
 
+/* Small inline error under inputs */
+.field-error {
+    color: var(--error);
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+.auth-input[aria-invalid="true"] {
+    border-color: var(--error);
+    box-shadow: 0 0 0 3px #E4483A22;
+}
+
 .auth-input {
     padding: 1.15rem 1.35rem;
     border: 2px solid var(--field-border);
@@ -112,18 +124,7 @@
     outline-offset: 2px;
 }
 
-.auth-banner {
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    margin-bottom: 0.75rem;
-    font-weight: 600;
-}
-
-.auth-banner--error {
-    background: #ffe9e7;
-    color: var(--error);
-    border: 1px solid var(--error);
-}
+/* Removed global/top banner error styles in favor of inline field errors */
 
 .auth-alt {
     margin-top: 1.15rem;

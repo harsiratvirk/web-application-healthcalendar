@@ -7,22 +7,23 @@ const WorkerLoginPage: React.FC = () => {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
-    if (!email || !password) {
-      setError('Email and password are required.')
-      return
-    }
+    setEmailError(null)
+    setPasswordError(null)
+    let hasError = false
+  if (!email) { setEmailError('Email is required.'); hasError = true }
+  if (!password) { setPasswordError('Password is required.'); hasError = true }
+    if (hasError) return
     try {
       setLoading(true)
       await new Promise(res => setTimeout(res, 400))
       navigate('/worker')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed, please retry.')
     } finally {
       setLoading(false)
     }
@@ -37,7 +38,6 @@ const WorkerLoginPage: React.FC = () => {
         </section>
         <section className="auth-right">
           <h1 className="auth-title">Personnel Login</h1>
-          {error && <div className="auth-banner auth-banner--error">{error}</div>}
           <form className="auth-form" onSubmit={onSubmit} noValidate>
             <label>
               Email
@@ -47,8 +47,10 @@ const WorkerLoginPage: React.FC = () => {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 className="auth-input"
+                aria-invalid={!!emailError}
                 required
               />
+              {emailError && <small className="field-error">{emailError}</small>}
             </label>
             <label>
               Password
@@ -58,13 +60,13 @@ const WorkerLoginPage: React.FC = () => {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 className="auth-input"
+                aria-invalid={!!passwordError}
                 required
                 minLength={6}
               />
+              {passwordError && <small className="field-error">{passwordError}</small>}
             </label>
-            <button className="auth-btn" type="submit" disabled={loading}>
-              {loading ? 'Logging in…' : 'Log In'}
-            </button>
+            <button className="auth-btn" type="submit" disabled={loading}>Log In</button>
           </form>
           <p className="auth-alt">
             Are you a private person? <Link to="/login">Log in here</Link>

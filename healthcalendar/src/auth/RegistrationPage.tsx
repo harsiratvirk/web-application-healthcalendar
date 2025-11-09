@@ -8,31 +8,29 @@ const RegistrationPage: React.FC = () => {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [nameError, setNameError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
-    if (!name || !email || !password) {
-      setError('All fields are required.')
-      return
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Please enter a valid email address.')
-      return
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.')
-      return
-    }
+    setNameError(null)
+    setEmailError(null)
+    setPasswordError(null)
+    let hasError = false
+    if (!name) { setNameError('Name is required.'); hasError = true }
+    if (!email) { setEmailError('Email is required.'); hasError = true }
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setEmailError('Enter a valid email address (e.g., name@example.com).'); hasError = true }
+    if (!password) { setPasswordError('Password is required.'); hasError = true }
+  else if (password.length < 6) { setPasswordError('Password must be at least 6 characters.'); hasError = true }
+    if (hasError) return
     try {
       setLoading(true)
       // Mock async sign up
       await new Promise(res => setTimeout(res, 500))
       navigate('/patient/events')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed, please try again.')
     } finally {
       setLoading(false)
     }
@@ -47,7 +45,6 @@ const RegistrationPage: React.FC = () => {
         </section>
         <section className="auth-right">
           <h1 className="auth-title auth-title--nowrap">Create your account</h1>
-          {error && <div className="auth-banner auth-banner--error">{error}</div>}
           <form className="auth-form" onSubmit={onSubmit} noValidate>
             <label>
               Name
@@ -57,8 +54,10 @@ const RegistrationPage: React.FC = () => {
                 value={name}
                 onChange={e => setName(e.target.value)}
                 className="auth-input"
+                aria-invalid={!!nameError}
                 required
               />
+              {nameError && <small className="field-error">{nameError}</small>}
             </label>
             <label>
               Email
@@ -68,8 +67,10 @@ const RegistrationPage: React.FC = () => {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 className="auth-input"
+                aria-invalid={!!emailError}
                 required
               />
+              {emailError && <small className="field-error">{emailError}</small>}
             </label>
             <label>
               Password
@@ -79,13 +80,13 @@ const RegistrationPage: React.FC = () => {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 className="auth-input"
+                aria-invalid={!!passwordError}
                 required
                 minLength={6}
               />
+              {passwordError && <small className="field-error">{passwordError}</small>}
             </label>
-            <button className="auth-btn" type="submit" disabled={loading}>
-              {loading ? 'Signing up…' : 'Sign Up'}
-            </button>
+            <button className="auth-btn" type="submit" disabled={loading}>Sign Up</button>
           </form>
           <p className="auth-alt">
             Have an account? <Link to="/login">Log in here</Link>

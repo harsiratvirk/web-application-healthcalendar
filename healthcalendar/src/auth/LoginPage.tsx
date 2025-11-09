@@ -7,24 +7,26 @@ const LoginPage: React.FC = () => {
 	const navigate = useNavigate()
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
-	const [error, setError] = useState<string | null>(null)
+	const [emailError, setEmailError] = useState<string | null>(null)
+	const [passwordError, setPasswordError] = useState<string | null>(null)
 	const [loading, setLoading] = useState(false)
 
 	const onSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
-		setError(null)
-		if (!email || !password) {
-			setError('Email and password are required.')
-			return
-		}
+		setEmailError(null)
+		setPasswordError(null)
+		let hasError = false
+		if (!email) { setEmailError('Email is required.'); hasError = true }
+		if (!password) { setPasswordError('Password is required.'); hasError = true }
+		if (hasError) return
 		try {
 			setLoading(true)
 			// Mock async login
 			await new Promise(res => setTimeout(res, 400))
-			// Navigate to patient events view for MVP
+			// Navigate to patient events view
 			navigate('/patient/events')
 		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Login failed, please try again.')
+			// Keep silent (no top banner); could show a generic small message near button if desired
 		} finally {
 			setLoading(false)
 		}
@@ -39,7 +41,6 @@ const LoginPage: React.FC = () => {
 				</section>
 				<section className="auth-right">
 					<h1 className="auth-title">Welcome back</h1>
-					{error && <div className="auth-banner auth-banner--error">{error}</div>}
 					<form className="auth-form" onSubmit={onSubmit} noValidate>
 						<label>
 							Email
@@ -49,8 +50,10 @@ const LoginPage: React.FC = () => {
 								value={email}
 								onChange={e => setEmail(e.target.value)}
 								className="auth-input"
+								aria-invalid={!!emailError}
 								required
 							/>
+							{emailError && <small className="field-error">{emailError}</small>}
 						</label>
 						<label>
 							Password
@@ -60,13 +63,13 @@ const LoginPage: React.FC = () => {
 								value={password}
 								onChange={e => setPassword(e.target.value)}
 								className="auth-input"
+								aria-invalid={!!passwordError}
 								required
 								minLength={6}
 							/>
+							{passwordError && <small className="field-error">{passwordError}</small>}
 						</label>
-						<button className="auth-btn" type="submit" disabled={loading}>
-							{loading ? 'Logging in…' : 'Log In'}
-						</button>
+						<button className="auth-btn" type="submit" disabled={loading}>Log In</button>
 					</form>
 					<p className="auth-alt">
 						Don’t have an account? <Link to="/register">Register here</Link>
