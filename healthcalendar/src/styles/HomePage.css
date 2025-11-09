@@ -1,8 +1,6 @@
 /* Home Page styles */
 :root {
-  --primary: #5183EE;
-  --primary-strong: #2562E8;
-  --primary-darker: #1747B5;
+  /* Use global primary tokens from index.css; keep local bg/text only */
   --bg: #E8F9FF;
   --text: #1f2937;
 }
@@ -13,6 +11,7 @@
   display: flex;
   flex-direction: column;
   background: var(--bg);
+  overscroll-behavior: contain; /* limit bounce inside this scroll container */
 }
 
 .home-main {
@@ -65,18 +64,23 @@
   font-size: 1.8rem;
   letter-spacing: 0.3px;
   transition: background 0.15s ease, transform 0.15s ease;
+  text-shadow: 0 1px 2px rgba(0,0,0,.15); 
 }
 
 .home-cta:hover {
-  background: var(--primary-darker);
+  background: var(--primary-hover);
+  color: #fff; 
   transform: translateY(-2px);
+}
+
+a.home-cta:hover {
+  color: #fff;
 }
 
 .home-cta:focus-visible {
   background: var(--primary-darker);
   outline: 3px solid #A8C7FF;
   outline-offset: 3px;
-  transform: translateY(-2px);
 }
 
 .home-main__right {

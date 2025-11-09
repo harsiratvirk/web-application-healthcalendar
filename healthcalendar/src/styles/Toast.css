@@ -34,7 +34,7 @@
 }
 
 .toast--info {
-    border-left-color: #2562E8;
+    border-left-color: var(--primary-strong);
 }
 
 .toast__close {

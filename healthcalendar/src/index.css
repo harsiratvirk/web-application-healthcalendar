@@ -5,12 +5,22 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* App global background */
+  --bg: #E8F9FF;
+  background-color: var(--bg);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Design tokens (global) */
+  --primary: #5183EE;           /* Base interactive / brand accent */
+  --primary-strong: #2562E8;    /* Default filled button background */
+  --primary-hover: #5183EE;     /* Slightly lighter hover than strong */
+  --primary-darker: #1747B5;    /* Optional darker shade (focus or active) */
+  --primary-ring: #5183EE33;    /* Focus ring / subtle halo */
+  --primary-hairline: #5183EE22;/* Very light border lines */
 }
 
 a {
@@ -27,6 +37,9 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
+  background-color: var(--bg);
+  overflow-x: hidden; /* prevent horizontal drag whitespace */
+  overscroll-behavior: none; /* reduce rubber-band/scroll chaining */
 }
 
 body {
@@ -63,7 +76,7 @@ button:focus-visible {
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
+    background-color: var(--bg);
   }
   a:hover {
     color: #747bff;

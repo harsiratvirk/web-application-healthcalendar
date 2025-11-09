@@ -1,7 +1,6 @@
 /* Shared auth page styles */
+/* Local tokens removed in favor of global (index.css) --primary, --primary-strong, etc. */
 :root {
-    --primary: #5183EE;
-    --primary-strong: #2562E8;
     --bg: #E8F9FF;
     --error: #E4483A;
     --field-border: #4097F5;
@@ -13,6 +12,7 @@
     display: flex;
     flex-direction: column;
     background: var(--bg);
+    overscroll-behavior: contain;
 }
 
 .auth-main {
@@ -97,7 +97,7 @@
 }
 
 .auth-input:focus {
-    box-shadow: 0 0 0 3px #5183EE33;
+    box-shadow: 0 0 0 3px var(--primary-ring);
 }
 
 .auth-btn {
@@ -124,7 +124,6 @@
     outline-offset: 2px;
 }
 
-/* Removed global/top banner error styles in favor of inline field errors */
 
 .auth-alt {
     margin-top: 1.15rem;
