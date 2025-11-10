@@ -11,12 +11,17 @@ namespace HealthCalendar.Models
 
         // Specifies Day of Week 
         public DayOfWeek DayOfWeek { get; set; }
-        // Specifies sepcific date, overrides corresponding DayOfWeek
+        // Specifies sepcific date, overrides overlapping Availability where Date is null
         public DateOnly? Date { get; set; }
 
         // Foreign Key (User.Id)
         public string UserId { get; set; } = string.Empty;
         // Navigation Property
-        public virtual User Patient { get; set; } = default!;
+        public virtual User Worker { get; set; } = default!;
+
+        // Foreign Key (Event.EventId)
+        public int EventId { get; set; }
+        // Navigation property
+        public virtual Event Event { get; set; } = default!;
     }
 }

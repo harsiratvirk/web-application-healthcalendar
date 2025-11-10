@@ -128,7 +128,6 @@ namespace HealthCalendar.Controllers
             {
                 _logger.LogError("[AuthController] Error from GenerateJwtToken(): \n" +
                                  "JWT Key is missing from configuration.");
-                // throws Exception, this WILL crash the program
                 throw new InvalidOperationException("JWT Key is missing from configuration.");
             }
             // Reads key from configuration

@@ -10,7 +10,6 @@ public class HealthCalendarDbContext : DbContext
 
     public DbSet<Availability> Availability { get; set; }
     public DbSet<Event> Events { get; set; }
-    public DbSet<Schedule> Schedules { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
