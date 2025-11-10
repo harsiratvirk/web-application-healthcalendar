@@ -138,9 +138,7 @@ namespace HealthCalendar.Controllers
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Name),          // Token's subject
-                // CHANGE DONE HERE
                 new Claim(JwtRegisteredClaimNames.UserName, user.UserName), // User's Email
-                // CHANGE DONE HERE
                 new Claim(ClaimTypes.NameIdentifier, user.Id),              // User's unique Id
                 new Claim(ClaimTypes.Role, user.Role),                      // User's Role
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // Token's unique Id
@@ -148,13 +146,11 @@ namespace HealthCalendar.Controllers
                           DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())    // Timestamp token was Issued at
             };
             // Related Worker's Id (For Patients only)
-            // CHANGE DONE HERE
             if (user.Role == Roles.Patient) 
             {
                 if (!Patient.WorkerId == null) claims.Append(new Claim("WorkerId", user.WorkerId!))
                 else claims.Append(new Claim("WorkerId", "-1")) // "-1" means Patient does not have related worker
             }
-            // CHANGE DONE HERE
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
