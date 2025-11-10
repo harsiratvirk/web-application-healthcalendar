@@ -18,10 +18,5 @@ namespace HealthCalendar.Models
         public string UserId { get; set; } = string.Empty;
         // Navigation Property
         public virtual User Worker { get; set; } = default!;
-
-        // Foreign Key (Event.EventId)
-        public int EventId { get; set; }
-        // Navigation property
-        public virtual Event Event { get; set; } = default!;
     }
 }
