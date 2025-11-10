@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import '../styles/WorkerLoginPage.css'
 import NavBar from '../shared/NavBar'
+import { useAuth } from './AuthContext'
 
 const WorkerLoginPage: React.FC = () => {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
@@ -21,10 +23,10 @@ const WorkerLoginPage: React.FC = () => {
     if (hasError) return
     try {
       setLoading(true)
-      await new Promise(res => setTimeout(res, 400))
-      navigate('/worker')
+  await login({ email, password })
+  navigate('/worker')
     } catch (err) {
-      console.debug('Worker login failed (suppressed UI error)', err)
+      console.debug('Invalid email or password', err)
     } finally {
       setLoading(false)
     }

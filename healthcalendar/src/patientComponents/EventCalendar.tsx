@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import type { Event } from '../types/event'
 import { apiService } from '../services/apiService'
 import CalendarGrid from '../components/CalendarGrid'
@@ -39,6 +40,17 @@ export default function EventCalendar() {
   const [showNew, setShowNew] = useState(false)
   const [editing, setEditing] = useState<Event | null>(null)
   const navigate = useNavigate()
+  const { logout, user } = useAuth()
+
+  // Derive a friendly display name: prefer local part of email, else sub, else generic label
+  const calendarOwner = useMemo(() => {
+    if (!user) return 'Patient'
+    const rawEmail = (user as any).email
+    if (typeof rawEmail === 'string' && rawEmail.includes('@')) return rawEmail.split('@')[0]
+    const sub = (user as any).sub
+    if (typeof sub === 'string' && sub.length) return sub
+    return 'Patient'
+  }, [user])
 
   const weekRangeText = useMemo(() => {
     const startDate = new Date(weekStartISO)
@@ -136,7 +148,7 @@ export default function EventCalendar() {
       <main className="event-main">
         <header className="event-header">
           <div className="event-header__left">
-            <h1 className="event-title">Alice’s Event Calendar</h1>
+            <h1 className="event-title">{calendarOwner}’s Event Calendar</h1>
             <div className="event-week">
               <button className="icon-btn" onClick={gotoPrevWeek} aria-label="Previous week">
                 <img src="/images/backarrow.png" alt="Previous week" />
@@ -148,7 +160,16 @@ export default function EventCalendar() {
             </div>
           </div>
           <div className="event-header__right">
-            <button className="logout-btn" onClick={() => navigate('/login')}>
+            <button
+              className="logout-btn"
+              onClick={async () => {
+                try {
+                  await logout()
+                } finally {
+                  navigate('/login')
+                }
+              }}
+            >
               <img src="/images/logout.png" alt="Logout" />
               <span>Log Out</span>
             </button>

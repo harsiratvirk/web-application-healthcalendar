@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import '../styles/LoginPage.css'
 import NavBar from '../shared/NavBar'
+import { useAuth } from './AuthContext'
 
 const LoginPage: React.FC = () => {
 	const navigate = useNavigate()
+	const { login } = useAuth()
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
 	const [emailError, setEmailError] = useState<string | null>(null)
@@ -21,12 +23,10 @@ const LoginPage: React.FC = () => {
 		if (hasError) return
 		try {
 			setLoading(true)
-			// Mock async login
-			await new Promise(res => setTimeout(res, 400))
-			// Navigate to patient events view
+			await login({ email, password })
 			navigate('/patient/events')
 		} catch (err) {
-			console.debug('Login failed (suppressed UI error)', err)
+			console.debug('Invalid email or password', err)
 		} finally {
 			setLoading(false)
 		}

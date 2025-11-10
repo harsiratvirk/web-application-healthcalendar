@@ -2,9 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import '../styles/RegistrationPage.css'
 import NavBar from '../shared/NavBar'
+import { useAuth } from './AuthContext'
+import { registerPatient as apiRegister } from './AuthService'
 
 const RegistrationPage: React.FC = () => {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -27,11 +30,12 @@ const RegistrationPage: React.FC = () => {
     if (hasError) return
     try {
       setLoading(true)
-      // Mock async sign up
-      await new Promise(res => setTimeout(res, 500))
+  await apiRegister({ name, email, password })
+      // Optionally auto-login after registration
+      await login({ email, password })
       navigate('/patient/events')
     } catch (err) {
-      console.debug('Registration failed (suppressed UI error)', err)
+      console.debug('Registration failed', err)
     } finally {
       setLoading(false)
     }

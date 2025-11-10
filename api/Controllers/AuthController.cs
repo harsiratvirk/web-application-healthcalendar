@@ -91,7 +91,7 @@ namespace HealthCalendar.Controllers
                 // For when login doesn't succeed
                 _logger.LogWarning("[AuthController] Warning from Login(): \n " +
                                   $"User was unauthorized");
-                return Unauthorized(new { Message = "User was unathorized" });
+                return Unauthorized(new { Message = "User was unauthorized" });
             }
             catch (Exception e) // In case of unexpected exception
             {
@@ -108,9 +108,9 @@ namespace HealthCalendar.Controllers
             try
             {
                 await _signInManager.SignOutAsync();
-                _logger.LogInformation("[AuthController] Information from Login(): \n " +
-                                       "Logout was successfull");
-                return Ok(new { Message = "Logout was successfull" });
+                _logger.LogInformation("[AuthController] Information from Logout(): \n " +
+                                       "Logout was successful");
+                return Ok(new { Message = "Logout was successful" });
             }
             catch (Exception e) // In case of unexpected exception
             {
@@ -135,10 +135,11 @@ namespace HealthCalendar.Controllers
             // Uses HMAC SHA256 algorithm to sign the token
             var credentials = new SigningCredentials(SecurityKey, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Name),     // Token's subject
-                new Claim(JwtRegisteredClaimNames.Email, user.Email!), // User's Email
+                // Use UserName as email identifier to avoid null Email property
+                new Claim(JwtRegisteredClaimNames.Email, user.UserName ?? string.Empty), // Email (from UserName)
                 new Claim(ClaimTypes.NameIdentifier, user.Id),         // User's unique Id
                 new Claim(ClaimTypes.Role, user.Role),                 // User's Role
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // Token's unique Id
@@ -146,13 +147,16 @@ namespace HealthCalendar.Controllers
                           DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())    // Timestamp token was Issued at
             };
             // Related Worker's Id (For Patients only)
-            if (user.Role == Roles.Patient) claims.Append(new Claim("WorkerId", user.WorkerId!));
+            if (user.Role == Roles.Patient && !string.IsNullOrEmpty(user.WorkerId))
+            {
+                claims.Add(new Claim("WorkerId", user.WorkerId));
+            }
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(1),  // Expiration time set to 1 hour
+                expires: DateTime.UtcNow.AddHours(1),  // Expiration time set to 1 hour (UTC)
                 signingCredentials: credentials);   // Token is signed with specified credentials
 
             _logger.LogInformation("[AuthController] Information from GenerateJwtToken(): \n " +
