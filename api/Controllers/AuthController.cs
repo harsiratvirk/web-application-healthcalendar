@@ -65,7 +65,7 @@ namespace HealthCalendar.Controllers
             catch (Exception e) // In case of unexpected exception
             {
                 _logger.LogError("[AuthController] Error from RegisterPatient(): \n" +
-                                 "Something went wrong when registrating Patient, " +
+                                 "Something went wrong when registering Patient, " +
                                 $"Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
