@@ -24,7 +24,7 @@ public class AvailabilityRepo : IAvailabilityRepo
             await _db.SaveChangesAsync();
             return OperationStatus.Ok;
         }
-        catch (Exception e)
+        catch (Exception e) // In case of unexpected exception
         {
             _logger.LogError("[AvailabilityRepo] Error from createAvailability(): \n" +
                              "Something went wrong when creating Availability " +
@@ -32,6 +32,44 @@ public class AvailabilityRepo : IAvailabilityRepo
             return OperationStatus.Error;
         }
     }
-    //public async Task<(List<Availability>?, OperationStatus)> getWeeksDoWAvailability(int workerId);
-    //public async Task<(List<Availability>?, OperationStatus)> getWeeksDateAvailability(int workerId, DateOnly monday, DateOnly sunday);
+
+    // method for retreiving a Worker's Availability where Date is null
+    public async Task<(List<Availability>, OperationStatus)> getWeeksDoWAvailability(string userId)
+    {
+        try
+        {
+            var availability = await _db.Availability
+                .Where(a => a.UserId == userId && a.Date == null)
+                .ToListAsync();
+            return (availability, OperationStatus.Ok);
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            _logger.LogError("[AvailabilityRepo] Error from getWeeksDoWAvailability(): \n" +
+                             "Something went wrong when retreiving Availability where " +
+                            $"workerId = {userId} and Date = null, Error message: {e}");
+            return ([], OperationStatus.Error);
+        }
+    }
+
+    // method for retreiving a Worker's Availability for the week where Date is not null
+    public async Task<(List<Availability>?, OperationStatus)> 
+        getWeeksDateAvailability(string userId, DateOnly monday, DateOnly sunday)
+    {
+        try
+        {
+            // retreives list of availability between given dates for monday and sunday
+            var availability = await _db.Availability
+                .Where(a => a.UserId == userId && a.Date >= monday && a.Date <= sunday)
+                .ToListAsync();
+            return (availability, OperationStatus.Ok);
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            _logger.LogError("[AvailabilityRepo] Error from getWeeksDateAvailability(): \n" +
+                             "Something went wrong when retreiving Availability where " +
+                            $"workerId = {userId} and Date = null, Error message: {e}");
+            return ([], OperationStatus.Error);
+        }
+    }
 }
