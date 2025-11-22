@@ -48,12 +48,12 @@ public class ScheduleRepo : IScheduleRepo
         }
         catch (Exception e) // In case of unexpected exception
         {
-            // makes string listign all AvailabilityIds
-            var AvailabilityIdsString = String.Join(", ", availabilityIds);
+            // makes string listing all AvailabilityIds
+            var availabilityIdsString = String.Join(", ", availabilityIds);
 
             _logger.LogError("[ScheduleRepo] Error from getSchedulesByAvailabilityIds(): \n" +
                              "Something went wrong when retreiving Schedules with list of" +
-                            $"AvailabilityIds {AvailabilityIdsString}, Error message: {e}");
+                            $"AvailabilityIds {availabilityIdsString}, Error message: {e}");
             return ([], OperationStatus.Error);
         }
     }

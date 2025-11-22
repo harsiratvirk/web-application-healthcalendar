@@ -102,7 +102,7 @@ namespace HealthCalendar.Controllers
             catch (Exception e) // In case of unexpected exception
             {
                 _logger.LogError("[scheduleController] Error from findScheduledEventId(): \n" +
-                                 "Something went wrong when trying to find an Event wher " + 
+                                 "Something went wrong when trying to find an Event where " + 
                                 $"DATE = {date} from Schedule with AvailabilityId = " +
                                 $"{availabilityId}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
@@ -111,7 +111,73 @@ namespace HealthCalendar.Controllers
 
 
         // HTTP PUT functions
-        
+
+        // method that updates Schedules by replacing old Availability with new Availability
+        [HttpPut("updateScheduledAvailability")]
+        [Authorize(Roles="Worker")]
+        public async Task<IActionResult> 
+            updateScheduledAvailability([FromQuery] int[] oldAvailabilityIds, 
+                                        [FromQuery] int newAvailabilityId)
+        {
+            try
+            {
+                // retreives new Availability
+                var (newAvailability, getAvailabilityStatus) = 
+                    await _availabilityRepo.getAvailabilityById(newAvailabilityId);
+                // In case getAvailabilityById() did not succeed
+                if (getAvailabilityStatus == OperationStatus.Error || newAvailability == null)
+                {
+                    _logger.LogError("[ScheduleController] Error from updateScheduledAvailability(): \n" +
+                                     "Could not retreive Availability with getAvailabilityById() " + 
+                                     "from AvailabilityRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Schedules");
+                }
+
+                // retreives list Schedules to be updated
+                var (schedules, getSchedulesStatus) = 
+                    await _scheduleRepo.getSchedulesByAvailabilityIds(oldAvailabilityIds);
+                // In case getSchedulesByEventIds() did not succeed
+                if (getSchedulesStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[ScheduleController] Error from updateScheduledAvailability(): \n" +
+                                     "Could not retreive Schedules with getSchedulesByEventIds() " + 
+                                     "from ScheduleRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Schedules");
+                }
+
+                // replaces all Availability properties in schedules with newAvailability
+                schedules.ForEach(s =>
+                {
+                    s.AvailabilityId = newAvailabilityId;
+                    s.Availability = newAvailability;
+                });
+
+                // updates table with updated schedules
+                var updateStatus = await _scheduleRepo.updateSchedules(schedules);
+                // In case updateSchedules() did not succeed
+                if (getSchedulesStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[ScheduleController] Error from updateScheduledAvailability(): \n" +
+                                     "Could not update Schedules with updateSchedules() from ScheduleRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Schedules");
+                }
+
+                return Ok(new { Message = "Schedules have been updated" });
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                // makes string listing all oldAvailabilityIds
+                var oldAvailabilityIdsString = String.Join(", ", oldAvailabilityIds);
+                
+                _logger.LogError("[scheduleController] Error from updateScheduledAvailability(): \n" +
+                                 "Something went wrong when trying to update Schedules by replacing old " + 
+                                $"Availability with AvailabilityIds {oldAvailabilityIdsString} with " +
+                                $"new Availability with AvailabilityId = {newAvailabilityId}, " + 
+                                $"Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
 
         // HTTP DELETE functions
 
