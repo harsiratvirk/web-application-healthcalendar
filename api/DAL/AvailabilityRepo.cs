@@ -174,7 +174,7 @@ public class AvailabilityRepo : IAvailabilityRepo
         }
         catch (Exception e) // In case of unexpected exception
         {
-            // makes string listing all availability
+            // makes string listing all Availability
             var availabilityStrings = availabilityRange.ConvertAll(a => $"{@a}");
             var availabilityRangeString = String.Join(", ", availabilityStrings);
             

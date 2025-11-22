@@ -34,6 +34,29 @@ public class EventRepo : IEventRepo
         }
     }
 
+    // method for retreiving range of Events with list of EventIds
+    public async Task<(List<Event>, OperationStatus)> getEventsByIds(int[] eventIds)
+    {
+        try
+        {
+            var events = await _db.Events
+                .Where(a => eventIds.Contains(a.EventId))
+                .ToListAsync();
+            return (events, OperationStatus.Ok);
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            // makes string listing all EventIds
+            var eventIdsString = String.Join(", ", eventIds);
+
+            _logger.LogError("[EventRepo] Error from getEventsByIds(): \n" +
+                             "Something went wrong when retreiving range of Events " +
+                            $"with list of EventIds {eventIdsString}, " + 
+                            $"Error message: {e}");
+            return ([], OperationStatus.Error);
+        }
+    }
+
 
     // DELETE FUNCTIONS:
 
@@ -51,6 +74,28 @@ public class EventRepo : IEventRepo
             _logger.LogError("[EventRepo] Error from deleteEvent(): \n" +
                              "Something went wrong when deleting Event " +
                             $"{@eventt}, Error message: {e}");
+            return OperationStatus.Error;
+        }
+    }
+
+    // method for deleting range of Events from table
+    public async Task<OperationStatus> deleteEvents(List<Event> events)
+    {
+        try 
+        {
+            _db.RemoveRange(events);
+            await _db.SaveChangesAsync();
+            return OperationStatus.Ok;
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            // makes string listing all Events
+            var eventStrings = events.ConvertAll(e => $"{@e}");
+            var eventsString = String.Join(", ", eventStrings);
+            
+            _logger.LogError("[EventRepo] Error from deleteEvents(): \n" +
+                             "Something went wrong when deleting range of Events " +
+                            $"{eventsString}, Error message: {e}");
             return OperationStatus.Error;
         }
     }
