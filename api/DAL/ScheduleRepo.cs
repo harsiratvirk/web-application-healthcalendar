@@ -77,6 +77,28 @@ public class ScheduleRepo : IScheduleRepo
         }
     }
 
+    // method that returns all Schedules with EventId in list of EventIds
+    public async Task<(List<Schedule>, OperationStatus)> getSchedulesByEventIds(int[] eventIds)
+    {
+        try
+        {
+            var schedules = await _db.Schedule
+                .Where(s => eventIds.Contains(s.EventId))
+                .ToListAsync();
+            return (schedules, OperationStatus.Ok);
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            // makes string listing all EventIds
+            var eventIdsString = String.Join(", ", eventIds);
+
+            _logger.LogError("[ScheduleRepo] Error from getSchedulesByEventIds(): \n" +
+                             "Something went wrong when retreiving Scheduless with list of " +
+                            $"EventIds {eventIdsString}, Error message: {e}");
+            return ([], OperationStatus.Error);
+        }
+    }
+
 
     // UPDATE FUNCTIONS:
 
