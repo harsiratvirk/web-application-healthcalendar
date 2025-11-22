@@ -15,7 +15,7 @@ public class AvailabilityRepo : IAvailabilityRepo
         _logger = logger;
     }
 
-    // GET FUNCTIONS
+    // GET FUNCTIONS:
 
     // method for retreiving Availability by AvailabilityId
     public async Task<(Availability? availability, OperationStatus)> getAvailabilityById(int availabilityId)
@@ -77,7 +77,7 @@ public class AvailabilityRepo : IAvailabilityRepo
     }
 
 
-    // CREATE FUNCTIONS
+    // CREATE FUNCTIONS:
 
     // method for adding Availability into table
     public async Task<OperationStatus> createAvailability(Availability availability)
@@ -97,7 +97,8 @@ public class AvailabilityRepo : IAvailabilityRepo
         }
     }
 
-    // DELETE FUNCTIONS
+
+    // DELETE FUNCTIONS:
 
     // method for deleting Availability from table
     public async Task<OperationStatus> deleteAvailability(Availability availability)
@@ -110,7 +111,7 @@ public class AvailabilityRepo : IAvailabilityRepo
         }
         catch (Exception e) // In case of unexpected exception
         {
-            _logger.LogError("[AvailabilityRepo] Error from deleteAvailabilityById(): \n" +
+            _logger.LogError("[AvailabilityRepo] Error from deleteAvailability(): \n" +
                              "Something went wrong when deleting Availability " +
                             $"{@availability}, Error message: {e}");
             return OperationStatus.Error;

@@ -6,4 +6,5 @@ namespace HealthCalendar.DAL;
 public interface IScheduleRepo
 {
     Task<(List<Schedule>, OperationStatus)> getSchedulesByAvailabilityId(int availabilityId);
+    Task<(List<Schedule>, OperationStatus)> getSchedulesByEventId(int eventId);
 }
