@@ -10,4 +10,5 @@ public interface IAvailabilityRepo
     Task<(List<Availability>, OperationStatus)> getWeeksDoWAvailability(string userId);
     Task<(List<Availability>, OperationStatus)> getWeeksDateAvailability(string userId, DateOnly monday, DateOnly sunday);
     Task<OperationStatus> createAvailability(Availability availability);
+    Task<OperationStatus> deleteAvailability(Availability availability);
 }

@@ -38,25 +38,25 @@ namespace HealthCalendar.Controllers
                 var weeksAvailability = new List<Availability>();
                 
                 // retreives list of Worker's availability where Date = null
-                var (doWAvailability, status1) = await _availabilityRepo.getWeeksDoWAvailability(userId);
+                var (doWAvailability, getDoWStatus) = await _availabilityRepo.getWeeksDoWAvailability(userId);
                 // In case getWeeksDoWAvailability() did not succeed
-                if (status1 == OperationStatus.Error)
+                if (getDoWStatus == OperationStatus.Error)
                 {
-                    _logger.LogError("[AvailabilityController] Error from createAvailability(): \n" +
-                                    "Something went wrong with getWeeksDoWAvailability() " + 
+                    _logger.LogError("[AvailabilityController] Error from getWeeksAvailability(): \n" +
+                                    "Could not retreive Availability with getWeeksDoWAvailability() " + 
                                     "from AvailabilityRepo.");
                     return StatusCode(500, "Something went wrong when retreiving Week's DoW Availability");
                 }
 
                 var sunday = monday.AddDays(6);
                 // retreives list of Worker's availability where Date != null and between monday and sunday
-                var (dateAvailability, status2) = await _availabilityRepo
+                var (dateAvailability, getDateStatus) = await _availabilityRepo
                     .getWeeksDateAvailability(userId, monday, sunday);
                 // In case getWeeksDateAvailability() did not succeed
-                if (status2 == OperationStatus.Error)
+                if (getDateStatus == OperationStatus.Error)
                 {
-                    _logger.LogError("[AvailabilityController] Error from createAvailability(): \n" +
-                                    "Something went wrong with getWeeksDateAvailability() " + 
+                    _logger.LogError("[AvailabilityController] Error from getWeeksAvailability(): \n" +
+                                    "Could not retreive Availability with getWeeksDateAvailability() " + 
                                     "from AvailabilityRepo.");
                     return StatusCode(500, "Something went wrong when retreiving Week's Date Availability");
                 }
@@ -79,7 +79,7 @@ namespace HealthCalendar.Controllers
 
         // HTTP POST functions
 
-        // method that creates new Availability and calls function to add it into database
+        // method that creates new Availability and calls function to add it into table
         [HttpPost("createAvailability")]
         [Authorize(Roles="Worker")]
         public async Task<IActionResult> createAvailability([FromBody] AvailabilityDTO availabilityDTO)
@@ -105,7 +105,7 @@ namespace HealthCalendar.Controllers
                 if (status == OperationStatus.Error)
                 {
                     _logger.LogError("[AvailabilityController] Error from createAvailability(): \n" +
-                                     "Something went wrong with createAvailability() " + 
+                                     "Could not create Availability with createAvailability() " + 
                                      "from AvailabilityRepo.");
                     return StatusCode(500, "Something went wrong when creating Availability");
                 }
@@ -115,19 +115,52 @@ namespace HealthCalendar.Controllers
             catch (Exception e) // In case of unexpected exception
             {
                 _logger.LogError("[AvailabilityController] Error from createAvailability(): \n" +
-                                 "Something went wrong when trying to create new Availability, " +
-                                $"with AvailabilityDTO {@availabilityDTO} Error message: {e}");
+                                 "Something went wrong when trying to create new Availability " +
+                                $"with AvailabilityDTO {@availabilityDTO}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
 
         // HTTP DELETE FUNCTIONS
 
+        // method that deletes Availability from table
         [HttpPost("deleteAvailability/{availabilityId}")]
         [Authorize(Roles="Worker")]
         public async Task<IActionResult> deleteAvailability(int availabilityId)
         {
-            return Ok();
+            try
+            {
+                // retreives Availability that should be deleted
+                var (availability, getStatus) = await _availabilityRepo.getAvailabilityById(availabilityId);
+                // In case getAvailabilityById() did not succeed
+                if (getStatus == OperationStatus.Error || availability == null)
+                {
+                    _logger.LogError("[AvailabilityController] Error from deleteAvailability(): \n" +
+                                     "Could not retreive Availability with getAvailabilityById() " + 
+                                     "from AvailabilityRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Availability");
+                }
+
+                // deletes availability from table
+                var deleteStatus = await _availabilityRepo.deleteAvailability(availability);
+                // In case deleteAvailability() did not succeed
+                if (deleteStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from deleteAvailability(): \n" +
+                                     "Could not delete Availability with deleteAvailability() " + 
+                                     "from AvailabilityRepo.");
+                    return StatusCode(500, "Something went wrong when deleting Availability");
+                }
+                
+                return Ok(new { Message = "Availability has been deleted" });
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[AvailabilityController] Error from deleteAvailability(): \n" +
+                                 "Something went wrong when trying to delete Availability " +
+                                $"with AvailabilityId = {availabilityId} Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
 
