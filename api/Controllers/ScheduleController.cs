@@ -33,11 +33,11 @@ namespace HealthCalendar.Controllers
 
         // HTTP GET functions
 
-        // method that finds Event set upon given Date from Schedules with given AvailabilityId
-        [HttpGet("findScheduledEvent")]
+        // method that retreives finds Event's EventId 
+        // The Event is from Schedule with given AvailabilityId
+        [HttpGet("getScheduledEventId")]
         [Authorize(Roles="Worker")]
-        public async Task<IActionResult> 
-            findScheduledEvent([FromQuery] int availabilityId, [FromQuery] DateOnly date)
+        public async Task<IActionResult> getScheduledEventId(int availabilityId)
         {
             try
             {
@@ -47,7 +47,44 @@ namespace HealthCalendar.Controllers
                 // In case getSchedulesByAvailabilityId() did not succeed
                 if (status == OperationStatus.Error)
                 {
-                    _logger.LogError("[ScheduleController] Error from findScheduledEvent(): \n" +
+                    _logger.LogError("[ScheduleController] Error from getScheduledEventId(): \n" +
+                                    "Could not retreive Schedules with getSchedulesByAvailabilityId() " + 
+                                    "from ScheduleRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Schedules");
+                }
+                
+                // if schedules is empty, no Event is scheduled
+                if (!schedules.Any()) return Ok(null);
+                // EventId of first Schedule is returned because schedules will only contain one EventId
+                return Ok(schedules.First().EventId);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[scheduleController] Error from getScheduledEventId(): \n" +
+                                 "Something went wrong when trying to find an Event " + 
+                                $"from Schedule with AvailabilityId = {availabilityId}, " +
+                                $"Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+
+        // method that finds Event's EventId 
+        // The Event is from Schedule with given AvailabilityId where Date is same as given date
+        [HttpGet("findScheduledEventId")]
+        [Authorize(Roles="Worker")]
+        public async Task<IActionResult> 
+            findScheduledEventId([FromQuery] int availabilityId, [FromQuery] DateOnly date)
+        {
+            try
+            {
+                // retreives list of schedules where AvailabilityId == availabilityId
+                var (schedules, status) = await _scheduleRepo
+                    .getSchedulesByAvailabilityId(availabilityId);
+                // In case getSchedulesByAvailabilityId() did not succeed
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[ScheduleController] Error from findScheduledEventId(): \n" +
                                     "Could not retreive Schedules with getSchedulesByAvailabilityId() " + 
                                     "from ScheduleRepo.");
                     return StatusCode(500, "Something went wrong when retreiving Schedules");
@@ -58,11 +95,13 @@ namespace HealthCalendar.Controllers
                     .Select(s => s.Event)
                     .Where(e => e.Date == date)
                     .FirstOrDefault();
-                return Ok(eventt);
+
+                if (eventt == null) return Ok(null);
+                return Ok(eventt.EventId);
             }
             catch (Exception e) // In case of unexpected exception
             {
-                _logger.LogError("[scheduleController] Error from findScheduledEvent(): \n" +
+                _logger.LogError("[scheduleController] Error from findScheduledEventId(): \n" +
                                  "Something went wrong when trying to find an Event wher " + 
                                 $"DATE = {date} from Schedule with AvailabilityId = " +
                                 $"{availabilityId}, Error message: {e}");
