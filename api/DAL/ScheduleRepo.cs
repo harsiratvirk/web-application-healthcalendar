@@ -15,6 +15,7 @@ public class ScheduleRepo : IScheduleRepo
         _logger = logger;
     }
 
+    // method that returns all Schedules with given AvailabilityId
     public async Task<(List<Schedule>, OperationStatus)> getSchedulesByAvailabilityId(int availabilityId)
     {
         try
