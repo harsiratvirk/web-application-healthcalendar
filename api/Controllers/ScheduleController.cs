@@ -31,6 +31,8 @@ namespace HealthCalendar.Controllers
             _logger = logger;
         }
 
+        // HTTP GET functions
+
         // method that finds Event set upon given Date from Schedules with given AvailabilityId
         [HttpGet("findScheduledEvent")]
         [Authorize(Roles="Worker")]
@@ -64,6 +66,49 @@ namespace HealthCalendar.Controllers
                                  "Something went wrong when trying to find an Event wher " + 
                                 $"DATE = {date} from Schedule with AvailabilityId = " +
                                 $"{availabilityId}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+
+        // HTTP DELETE functions
+
+        // method that deletes Schedules with given EventId from table
+        [HttpDelete("deleteSchedulesByEventId")]
+        [Authorize(Roles="Worker")]
+        public async Task<IActionResult> deleteSchedulesByEventId([FromQuery] int eventId)
+        {
+            try
+            {
+                // retreives list of Schedules to be deleted
+                var (schedules, getStatus) = await _scheduleRepo.getSchedulesByEventId(eventId);
+                // In case getSchedulesByEventId() did not succeed
+                if (getStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[ScheduleController] Error from deleteSchedulesByEventId(): \n" +
+                                     "Could not retreive Schedules with getSchedulesByEventId() " + 
+                                     "from ScheduleRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Schedules");
+                }
+
+                // deletes schedules from table
+                var deleteStatus = await _scheduleRepo.deleteSchedules(schedules);
+                // In case deleteSchedules() did not succeed
+                if (deleteStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[ScheduleController] Error from deleteSchedulesByEventId(): \n" +
+                                     "Could not delete Schedules with deleteSchedules() " + 
+                                     "from ScheduleRepo.");
+                    return StatusCode(500, "Something went wrong when deleting Schedules");
+                }
+                
+                return Ok(new { Message = "Schedules have been deleted" });
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[ScheduleController] Error from deleteSchedulesByEventId(): \n" +
+                                 "Something went wrong when trying to delete Schedules " +
+                                $"where EventId = {eventId}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }

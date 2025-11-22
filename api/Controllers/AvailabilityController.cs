@@ -175,7 +175,7 @@ namespace HealthCalendar.Controllers
             {
                 _logger.LogError("[AvailabilityController] Error from deleteAvailability(): \n" +
                                  "Something went wrong when trying to delete Availability " +
-                                $"with AvailabilityId = {availabilityId} Error message: {e}");
+                                $"with AvailabilityId = {availabilityId}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
