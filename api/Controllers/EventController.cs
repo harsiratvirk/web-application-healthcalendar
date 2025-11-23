@@ -121,13 +121,57 @@ namespace HealthCalendar.Controllers
             catch (Exception e) // In case of unexpected exception
             {
                 // makes string listing all patients
-                var patientStrings = patients.ConvertAll(u => $"{@u}");
+                var patientStrings = patients.ConvertAll(e => $"{@e}");
                 var patientsString = String.Join(", ", patientStrings);
                 
                 _logger.LogError("[EventController] Error from getWeeksEventsForWorker(): \n" +
                                  "Something went wrong when trying to retreive week's events for " + 
                                 $"Patients {patientsString} where monday is on the date {monday}, " +
                                 $"Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // method that validates Event for a future Create method
+        [HttpGet("validateEventForCreate")]
+        [Authorize(Roles="Patient")]
+        public async Task<IActionResult> validateEventForCreate([FromBody] EventDTO eventDTO)
+        {
+            try
+            {
+                var (datesEvents, getStatus) = 
+                    await _eventRepo.getEventsByDate(eventDTO.UserId, eventDTO.Date);
+                // In case getEventsByDate() did not succeed
+                if (getStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[EventController] Error from validateEventForCreate(): \n" +
+                                     "Could not retreive Events with getEventsByDate() " + 
+                                     "from EventRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving " + 
+                                           "Events for the date");
+                }
+                
+                // validates eventDTO and checks if it overlaps with any Event in datesEvents
+                var validationStatus = validateEvent(eventDTO, datesEvents);
+                // In case something went wrong in validateEvent()
+                if (validationStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[EventController] Error from validateEventForCreate(): \n" +
+                                     "Could not validate Event with validateEvent() " + 
+                                     "from EventRepo.");
+                    return StatusCode(500, "Something went wrong when validating Event");
+                }
+                // In case eventDTO was Not acceptable, status code for Not Acceptable is returned
+                if (validationStatus == OperationStatus.NotAcceptable) 
+                    return StatusCode(406, "Event was found Not Acceptable");
+                
+                return Ok(new { Message = "Event was found Acceptable" });
+            }
+            catch (Exception e) // In case of unexpected exception
+            {   
+                _logger.LogError("[EventController] Error from validateEventForCreate(): \n" +
+                                 "Something went wrong when trying to validate eventDTO " + 
+                                $"{@eventDTO}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -219,6 +263,61 @@ namespace HealthCalendar.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+
+        // PRIVATE functions
+
+        // method that checks if given EventDTO is valid and doesn't overlap with other Events
+        private OperationStatus validateEvent(EventDTO eventDTO, List<Event> datesEvents)
+        {
+            try
+            {
+                var from = eventDTO.From;
+                var to = eventDTO.To;
+                var date = eventDTO.Date;
+                // calculates factor of difference between to and from, divided by 30 min
+                // timeDifference must be divisible by 30 min for Event to be valid
+                var timeDifference = to.ToTimeSpan() - from.ToTimeSpan();
+                var timeDifferenceFactor = timeDifference.Divide(TimeSpan.FromMinutes(30));
+                // Checks to see if Event is invalid
+                if (from >= to || date < DateOnly.FromDateTime(DateTime.Today) || 
+                    timeDifferenceFactor != Math.Round(timeDifferenceFactor))
+                {
+                    _logger.LogInformation("[EventController] Information from " + 
+                                           "validateEvent(): \n" +
+                                          $"Event {@eventDTO} was not acceptable.");
+                    return OperationStatus.NotAcceptable;
+                }
+
+                // Iterates through datesEvents and looks for overlap with eventDTO
+                foreach (var eventt in datesEvents)
+                {
+                    // checks if eventDTO and eventt overlaps
+                    if (from < eventt.To && eventt.From < to)
+                    {
+                        _logger.LogInformation("[EventController] Information from " + 
+                                               "validateEvent(): \n" +
+                                              $"Event {@eventDTO} was not acceptable.");
+                        return OperationStatus.NotAcceptable;
+                    }
+                }
+
+                return OperationStatus.Ok;
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                // makes string listing all date's Events
+                var dateseventStrings = datesEvents.ConvertAll(e => $"{@e}");
+                var dateseventsString = String.Join(", ", dateseventStrings);
+
+                _logger.LogError("[EventController] Error from validateEvent(): \n" +
+                                 "Something went wrong when trying to validate Event " +
+                                $"{@eventDTO} with list of Events {dateseventsString}, " + 
+                                $"Error message: {e}");
+                return OperationStatus.Error;
+            }
+        }
+
 
     }
 }
