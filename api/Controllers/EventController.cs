@@ -28,8 +28,53 @@ namespace HealthCalendar.Controllers
 
         // HTTP GET functions
 
+        // method for retreiving Patient's Events for the week
+        [HttpGet("getWeeksEventsForPatient")]
+        [Authorize(Roles="Patient")]
+        public async Task<IActionResult> 
+            getWeeksEventsForPatient([FromQuery] string userId, [FromQuery] DateOnly monday)
+        {
+            try {
+                // retreives list of Patient's Events
+                var sunday = monday.AddDays(6);
+                var (weeksEvents, status) = 
+                        await _eventRepo.getWeeksEventsForPatient(userId, monday, sunday);
+                // In case getWeeksEventsForPatient() did not succeed
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[EventController] Error from getWeeksEventsForWorker(): \n" +
+                                         "Could not retreive Events with getWeeksEventsForPatient() " + 
+                                         "from EventRepo.");
+                        return StatusCode(500, "Something went wrong when retreiving Events for the week");
+                }
+
+                // makes list of EventDTOs from weeksEvents
+                var weeksEventDTOs = weeksEvents.Select(e => new EventDTO
+                {
+                    EventId = e.EventId,
+                    From = e.From,
+                    To = e.To,
+                    Date = e.Date,
+                    Title = e.Title,
+                    Location = e.Title,
+                    UserId = userId
+                });
+
+                return Ok(weeksEventDTOs);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {   
+                _logger.LogError("[EventController] Error from getWeeksEventsForPatient(): \n" +
+                                 "Something went wrong when trying to retreive week's events where " + 
+                                $"UserId == {userId} and monday is on the date {monday}, " +
+                                $"Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+
         // method for retreiving Events of Worker's Patients for the week
-        [HttpDelete("getWeeksEventsForWorker")]
+        [HttpGet("getWeeksEventsForWorker")]
         [Authorize(Roles="Worker")]
         public async Task<IActionResult> getWeeksEventsForWorker([FromBody] List<UserDTO> patients, 
                                                                  [FromQuery] DateOnly monday)
