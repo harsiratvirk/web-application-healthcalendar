@@ -53,10 +53,10 @@ namespace HealthCalendar.Controllers
                     return StatusCode(500, "Something went wrong when retreiving Schedules");
                 }
                 
-                // if schedules is empty, no Event is scheduled
-                if (!schedules.Any()) return Ok(null);
-                // EventId of first Schedule is returned because schedules will only contain one EventId
-                return Ok(schedules.First().EventId);
+                // EventId of first Schedule is retreived since schedules will only contain one distinct EventId
+                var eventId = schedules.Select(s => s.EventId).FirstOrDefault();
+                
+                return Ok(eventId);
             }
             catch (Exception e) // In case of unexpected exception
             {
@@ -126,14 +126,13 @@ namespace HealthCalendar.Controllers
                     return StatusCode(500, "Something went wrong when retreiving Schedules");
                 }
                 
-                // retreives Event where Date == date from schedules if it exists
-                var eventt = schedules
-                    .Select(s => s.Event)
-                    .Where(e => e.Date == date)
+                // retreives EventId from schedule where Date == date from schedules if it exists
+                var eventId = schedules
+                    .Where(s => s.Date == date)
+                    .Select(s => s.EventId)
                     .FirstOrDefault();
 
-                if (eventt == null) return Ok(null);
-                return Ok(eventt.EventId);
+                return Ok(eventId);
             }
             catch (Exception e) // In case of unexpected exception
             {
