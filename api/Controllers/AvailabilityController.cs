@@ -210,29 +210,16 @@ namespace HealthCalendar.Controllers
                 var from = eventDTO.From;
                 var to = eventDTO.To;
 
-                // retreives relevant Availability where date is null
-                var dayOfWeek = date.DayOfWeek;
-                var (doWAvailabilityRange, getDoWStatus) = await _availabilityRepo
-                    .getTimeslotsDoWAvailability(userId, dayOfWeek, from, to);
-                // In case getTimeslotsDoWAvailability() did not succeed
-                if (getDoWStatus == OperationStatus.Error)
+                // retreives relevant Availability
+                var (doWAvailabilityRange, dateAvailabilityRange, getStatus) = 
+                    await getTimeslotsAvailability(userId, date, from, to);
+                // In case getTimeslotsAvailability() did not succeed
+                if (getStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[AvailabilityController] Error from checkAvailabilityForCreate(): \n" +
-                                     "Could not retreive Availability with getTimeslotsDoWAvailability() " + 
-                                     "from AvailabilityRepo.");
-                    return StatusCode(500, "Something went wrong when retreiving DoW Availability");
-                }
-
-                // retreives relevant Availability where date is not null
-                var (dateAvailabilityRange, getDateStatus) = await _availabilityRepo
-                    .getTimeslotsDateAvailability(userId, date, from, to);
-                // In case getTimeslotsDateAvailability() did not succeed
-                if (getDateStatus == OperationStatus.Error)
-                {
-                    _logger.LogError("[AvailabilityController] Error from checkAvailabilityForCreate(): \n" +
-                                     "Could not retreive Availability with getTimeslotsDateAvailability() " + 
-                                     "from AvailabilityRepo.");
-                    return StatusCode(500, "Something went wrong when retreiving Date Availability");
+                                     "Could not retreive Availability with getTimeslotsAvailability() " + 
+                                     "from AvailabilityController.");
+                    return StatusCode(500, "Something went wrong when retreiving Availability");
                 }
                 
                 // checks if doWAvailabilityRange and dateAvailabilityRange is continuous
@@ -438,6 +425,48 @@ namespace HealthCalendar.Controllers
 
 
         // PRIVATE functions
+
+        // method that retreives Worker's availability
+        private async Task<(List<Availability>, List<Availability>, OperationStatus)> 
+            getTimeslotsAvailability(string userId, DateOnly date, TimeOnly from, TimeOnly to)
+        {
+            try
+            {
+                // retreives relevant Availability where date is null
+                var dayOfWeek = date.DayOfWeek;
+                var (doWAvailabilityRange, getDoWStatus) = await _availabilityRepo
+                    .getTimeslotsDoWAvailability(userId, dayOfWeek, from, to);
+                // In case getTimeslotsDoWAvailability() did not succeed
+                if (getDoWStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from getTimeslotsAvailability(): \n" +
+                                     "Could not retreive Availability with getTimeslotsDoWAvailability() " + 
+                                     "from AvailabilityRepo.");
+                    return ([], [], OperationStatus.Error);
+                }
+
+                // retreives relevant Availability where date is not null
+                var (dateAvailabilityRange, getDateStatus) = await _availabilityRepo
+                    .getTimeslotsDateAvailability(userId, date, from, to);
+                // In case getTimeslotsDateAvailability() did not succeed
+                if (getDateStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from getTimeslotsAvailability(): \n" +
+                                     "Could not retreive Availability with getTimeslotsDateAvailability() " + 
+                                     "from AvailabilityRepo.");
+                    return ([], [], OperationStatus.Error);
+                }
+
+                return (doWAvailabilityRange, dateAvailabilityRange, OperationStatus.Ok);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[AvailabilityController] Error from getTimeslotsAvailability(): \n" +
+                                 "Something went wrong when retreiving range of Availability where " + 
+                                $"UserId = {userId}, from {from} to {to}, Error message: {e}");
+                return ([], [], OperationStatus.Error);
+            }
+        }
 
         // method for checking if given lists of Availability is continuous
         private (int[], OperationStatus) checkAvailability(List<Availability> dateAvailabilityRange, 
