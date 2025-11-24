@@ -99,6 +99,30 @@ public class ScheduleRepo : IScheduleRepo
         }
     }
 
+    
+    // CREATE FUNCTIONS:
+
+    // Adds range of Schedules to table
+    public async Task<OperationStatus> createSchedules(List<Schedule> schedules)
+    {
+        try
+        {
+            _db.Schedule.AddRange(schedules);
+            await _db.SaveChangesAsync();
+            return OperationStatus.Ok;
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            // makes string listing all schedules
+            var scheduleStrings = schedules.ConvertAll(s => $"{@s}");
+            var schedulesString = String.Join(", ", scheduleStrings);
+            
+            _logger.LogError("[ScheduleRepo] Error from createSchedules(): \n" +
+                             "Something went wrong when creating Schedules " +
+                            $"{schedulesString}, Error message: {e}");
+            return OperationStatus.Error;
+        }
+    }
 
     // UPDATE FUNCTIONS:
 
