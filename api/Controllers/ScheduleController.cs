@@ -145,6 +145,75 @@ namespace HealthCalendar.Controllers
         }
 
 
+        // HTTP POST functions
+
+        // method that creates range of Schedules from given parameters and adds them into table
+        [HttpPut("createSchedules")]
+        [Authorize(Roles="Patient")]
+        public async Task<IActionResult> createSchedules([FromQuery] int[] availabilityIds, 
+                                                         [FromQuery] int eventId, [FromQuery] DateOnly date)
+        {
+            try {
+                // retreives Scheduled Event
+                var (eventt, getEventStatus) = await _eventRepo.getEventById(eventId);
+                // In case getEventById() did not succeed
+                if (getEventStatus == OperationStatus.Error || eventt == null)
+                {
+                    _logger.LogError("[ScheduleController] Error from createSchedules(): \n" +
+                                     "Could not retreive Event with getEventById() " + 
+                                     "from EventRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Event");
+                }
+
+                // retreives Scheduled Availability
+                var (availabilityRange, getAvailabilityStatus) = 
+                    await _availabilityRepo.getAvailabilityByIds(availabilityIds);
+                // In case getAvailabilityByIds() did not succeed
+                if (getEventStatus == OperationStatus.Error || eventt == null)
+                {
+                    _logger.LogError("[ScheduleController] Error from createSchedules(): \n" +
+                                     "Could not retreive range of Availability with " + 
+                                     "getAvailabilityByIds() from AvailabilityRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Availability");
+                }
+                
+                // creates list of new Schedules and adds them into table
+                var schedules = availabilityRange.Select(a => new Schedule
+                {
+                    Date = date,
+                    AvailabilityId = a.AvailabilityId,
+                    Availability = a,
+                    EventId = eventId,
+                    Event = eventt
+                }).ToList();
+                var status = await _scheduleRepo.createSchedules(schedules);
+
+                // In case createSchedules() did not succeed
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[ScheduleController] Error from createSchedules(): \n" +
+                                     "Could not create Schedules with createSchedules() " + 
+                                     "from ScheduleRepo.");
+                    return StatusCode(500, "Something went wrong when creating Schedules");
+                }
+                return Ok(new { Message = "Schedules have been created" });
+
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                // makes string listing all availabilityIds
+                var availabilityIdsString = String.Join(", ", availabilityIds);
+                
+                _logger.LogError("[ScheduleController] Error from createSchedules(): \n" +
+                                 "Something went wrong when trying to create new Schedules " +
+                                $"with Date = {date}, eventId = {eventId} and range of " + 
+                                $"AvailabilityIds {availabilityIds}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+
+
         // HTTP PUT functions
 
         // method that updates Schedules by replacing old Availability with new Availability
