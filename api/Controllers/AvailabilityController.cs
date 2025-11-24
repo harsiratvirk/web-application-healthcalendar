@@ -212,13 +212,13 @@ namespace HealthCalendar.Controllers
                 
                 // checks if Availability needed for Create is continuous
                 var (continuousAvailabilityIds, checkStatus) = 
-                    await checkUnoccupiedAvailability(userId, date, from, to);
+                    await getAndCheckAvailability(userId, date, from, to);
                 // In case something went wrong in checkAvailability()
                 if (checkStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[AvailabilityController] Error from checkAvailabilityForCreate(): \n" +
                                      "Could not check if Availability was continuous with " + 
-                                     "checkUnoccupiedAvailability() from AvailabilityController.");
+                                     "getAndCheckAvailability() from AvailabilityController.");
                     return StatusCode(500, "Something went wrong when checking Availability");
                 }
                 // In case eventDTO was not continuous, status code for Not Acceptable is returned
@@ -414,48 +414,50 @@ namespace HealthCalendar.Controllers
 
         // PRIVATE functions
 
+        // method for checking if Worker's Availability is continuous for certain timeslot
+        // If it is continuous list of relevant AvailabilityIds is returned
         private async Task<(int[], OperationStatus)> 
-            checkUnoccupiedAvailability(string userId, DateOnly date, TimeOnly from, TimeOnly to) {
-                try
+            getAndCheckAvailability(string userId, DateOnly date, TimeOnly from, TimeOnly to) {
+            try
+            {
+                // retreives relevant Availability
+                var (doWAvailabilityRange, dateAvailabilityRange, getStatus) = 
+                    await getTimeslotsAvailability(userId, date, from, to);
+                // In case getTimeslotsAvailability() did not succeed
+                if (getStatus == OperationStatus.Error)
                 {
-                    // retreives relevant Availability
-                    var (doWAvailabilityRange, dateAvailabilityRange, getStatus) = 
-                        await getTimeslotsAvailability(userId, date, from, to);
-                    // In case getTimeslotsAvailability() did not succeed
-                    if (getStatus == OperationStatus.Error)
-                    {
-                        _logger.LogError("[AvailabilityController] Error from checkUnoccupiedAvailability(): \n" +
-                                        "Could not retreive Availability with getTimeslotsAvailability() " + 
-                                        "from AvailabilityController.");
-                        return ([], getStatus);
-                    }
-                    
-                    // checks if doWAvailabilityRange and dateAvailabilityRange is continuous
-                    var (continuousAvailabilityIds, checkStatus) = 
-                        checkAvailability(dateAvailabilityRange, doWAvailabilityRange, from, to);
-                    // In case something went wrong in checkAvailability()
-                    if (checkStatus == OperationStatus.Error)
-                    {
-                        _logger.LogError("[AvailabilityController] Error from checkUnoccupiedAvailability(): \n" +
-                                        "Could not check if Availability was continuous with checkAvailability() " + 
-                                        "from AvailabilityController.");
-                        return ([], checkStatus);
-                    }
-                    // In case eventDTO was not continuous, status code for Not Acceptable is returned
-                    if (checkStatus == OperationStatus.NotAcceptable) return ([], checkStatus);
-                    
-                    return (continuousAvailabilityIds, OperationStatus.Ok);
+                    _logger.LogError("[AvailabilityController] Error from getAndCheckAvailability(): \n" +
+                                     "Could not retreive Availability with getTimeslotsAvailability() " + 
+                                     "from AvailabilityController.");
+                    return ([], getStatus);
                 }
-                catch (Exception e) // In case of unexpected exception
-                {   
-                    _logger.LogError("[AvailabilityController] Error from checkUnoccupiedAvailability(): \n" +
-                                    "Something went wrong when trying to check if there" + 
-                                    "was continuous Availability for Worker with UserId == " + 
-                                    $"{userId} on date {date} from {from} to {to}, " + 
-                                    $"Error message: {e}");
-                    return ([], OperationStatus.Error);
+                    
+                // checks if doWAvailabilityRange and dateAvailabilityRange is continuous
+                var (continuousAvailabilityIds, checkStatus) = 
+                    checkAvailability(dateAvailabilityRange, doWAvailabilityRange, from, to);
+                // In case something went wrong in checkAvailability()
+                if (checkStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from getAndCheckAvailability(): \n" +
+                                     "Could not check if Availability was continuous with checkAvailability() " + 
+                                     "from AvailabilityController.");
+                    return ([], checkStatus);
                 }
+                // In case eventDTO was not continuous, status code for Not Acceptable is returned
+                if (checkStatus == OperationStatus.NotAcceptable) return ([], checkStatus);
+                    
+                return (continuousAvailabilityIds, OperationStatus.Ok);
             }
+            catch (Exception e) // In case of unexpected exception
+            {   
+                _logger.LogError("[AvailabilityController] Error from getAndCheckAvailability(): \n" +
+                                 "Something went wrong when trying to check if there" + 
+                                 "was continuous Availability for Worker with UserId == " + 
+                                $"{userId} on date {date} from {from} to {to}, " + 
+                                $"Error message: {e}");
+                return ([], OperationStatus.Error);
+            }
+        }
 
         // method that retreives Worker's availability for given timeslot
         private async Task<(List<Availability>, List<Availability>, OperationStatus)> 
