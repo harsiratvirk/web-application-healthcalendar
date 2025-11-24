@@ -158,7 +158,7 @@ namespace HealthCalendar.Controllers
                 {
                     _logger.LogError("[EventController] Error from validateEventForCreate(): \n" +
                                      "Could not validate Event with validateEvent() " + 
-                                     "from EventRepo.");
+                                     "from EventController.");
                     return StatusCode(500, "Something went wrong when validating Event");
                 }
                 // In case eventDTO was Not acceptable, status code for Not Acceptable is returned

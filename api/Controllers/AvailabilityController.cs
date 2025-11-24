@@ -198,6 +198,66 @@ namespace HealthCalendar.Controllers
             }
         }
 
+        // method for checking if Worker's Availability for given Date is continuous, is for a Create function
+        [HttpGet("checkAvailabilityForCreate")]
+        [Authorize(Roles="Patient")]
+        public async Task<IActionResult> 
+            checkAvailabilityForCreate([FromQuery] string userId, [FromQuery] DateOnly date, 
+                                       [FromQuery] TimeOnly from, [FromQuery] TimeOnly to)
+        {
+            try
+            {
+                // retreives relevant Availability where date is null
+                var dayOfWeek = date.DayOfWeek;
+                var (doWAvailabilityRange, getDoWStatus) = await _availabilityRepo
+                    .getTimeslotsDoWAvailability(userId, dayOfWeek, from, to);
+                // In case getTimeslotsDoWAvailability() did not succeed
+                if (getDoWStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from checkAvailabilityForCreate(): \n" +
+                                     "Could not retreive Availability with getTimeslotsDoWAvailability() " + 
+                                     "from AvailabilityRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving DoW Availability");
+                }
+
+                // retreives relevant Availability where date is not null
+                var (dateAvailabilityRange, getDateStatus) = await _availabilityRepo
+                    .getTimeslotsDateAvailability(userId, date, from, to);
+                // In case getTimeslotsDateAvailability() did not succeed
+                if (getDateStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from checkAvailabilityForCreate(): \n" +
+                                     "Could not retreive Availability with getTimeslotsDateAvailability() " + 
+                                     "from AvailabilityRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Date Availability");
+                }
+                
+                // checks if doWAvailabilityRange and dateAvailabilityRange is continuous
+                var (continuousAvailabilityIds, validationStatus) = 
+                    checkAvailability(dateAvailabilityRange, doWAvailabilityRange, from, to);
+                // In case something went wrong in checkAvailability()
+                if (validationStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from checkAvailabilityForCreate(): \n" +
+                                     "Could not check if Availability was continuous with checkAvailability() " + 
+                                     "from AvailabilityController.");
+                    return StatusCode(500, "Something went wrong when validating Event");
+                }
+                // In case eventDTO was not continuous, status code for Not Acceptable is returned
+                if (validationStatus == OperationStatus.NotAcceptable) 
+                    return StatusCode(406, "Availability was not continuous");
+                
+                return Ok(continuousAvailabilityIds);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {   
+                _logger.LogError("[AvailabilityController] Error from checkAvailabilityForCreate(): \n" +
+                                 "Something went wrong when trying to check if User with UserId == " + 
+                                $"{userId}, had continuous Availability for date {date} " + 
+                                $"from {from} to {to}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
 
 
         // HTTP POST functions
@@ -373,5 +433,72 @@ namespace HealthCalendar.Controllers
             }
         }
 
+
+        // PRIVATE functions
+
+        // method for checking if given lists of Availability is continuous
+        private (int[], OperationStatus) checkAvailability(List<Availability> dateAvailabilityRange, 
+                                                           List<Availability> doWAvailabilityRange, 
+                                                           TimeOnly from, TimeOnly to)
+        {
+            try
+            {
+                var continuousAvailability = new List<Availability>();
+                // calculates factor of difference between to and from, divided by 30 min
+                var timeDifference = to.ToTimeSpan() - from.ToTimeSpan();
+                var wantedSize = timeDifference.Divide(TimeSpan.FromMinutes(30));
+                // size of both Availability lists combined must be equal to wantedSize 
+                // If not, Availability cannot be continuous
+                if ((dateAvailabilityRange.Count() + doWAvailabilityRange.Count()) != wantedSize)
+                {
+                    _logger.LogInformation("[EventController] Information from " + 
+                                           "checkAvailability(): \n" +
+                                          $"Availability from given lists was not continuous.");
+                    return ([], OperationStatus.NotAcceptable);
+                }
+
+                // Iterates through dateAvailabilityRange and doWAvailabilityRange
+                // looks for availability that overlap
+                foreach (var dateAvailability in dateAvailabilityRange)
+                {
+                    var dateFrom = dateAvailability.From;
+                    foreach (var doWAvailability in doWAvailabilityRange)
+                    {
+                        // checks if dateAvailability and doWAvailability overlap
+                        if (dateFrom == doWAvailability.From)
+                        {
+                            _logger.LogInformation("[EventController] Information from " + 
+                                                   "checkAvailability(): \n" +
+                                                  $"Availability from given lists was not continuous.");
+                            return ([], OperationStatus.NotAcceptable);
+                        }
+                    }
+                }
+
+                // Converts lists of Availability to list of AvailabilityIds
+                continuousAvailability.AddRange(doWAvailabilityRange);
+                continuousAvailability.AddRange(dateAvailabilityRange);
+                var continuousAvailabilityIds = 
+                    continuousAvailability.Select(a => a.AvailabilityId).ToArray();
+
+                return (continuousAvailabilityIds, OperationStatus.Ok);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                // makes string listing all Availability where Date is null
+                var doWAvailabilityStrings = doWAvailabilityRange.ConvertAll(a => $"{@a}");
+                var doWAvailabilityRangeString = String.Join(", ", doWAvailabilityStrings);
+                // makes string listing all Availability where Date is not null
+                var dateAvailabilityStrings = dateAvailabilityRange.ConvertAll(a => $"{@a}");
+                var dateAvailabilityRangeString = String.Join(", ", dateAvailabilityStrings);
+
+                _logger.LogError("[AvailabilityController] Error from checkAvailability(): \n" +
+                                 "Something went wrong when checking if list of Availability " +
+                                 "where Date is null and list of Availability where Date is not " + 
+                                $"null, {doWAvailabilityRangeString} and {dateAvailabilityRangeString} " + 
+                                $"is continuous from {from} to {to}, Error message: {e}");
+                return ([], OperationStatus.Error);
+            }
+        }
     }
 }
