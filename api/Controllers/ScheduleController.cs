@@ -368,6 +368,51 @@ namespace HealthCalendar.Controllers
             }
         }
 
+        // method that deletes necessary Schedules after an Event update
+        [HttpDelete("deleteSchedulesAfterEventUpdate")]
+        [Authorize(Roles="Patient")]
+        public async Task<IActionResult> 
+            deleteSchedulesAfterEventUpdate([FromQuery] int eventId, [FromQuery] int[] availabilityIds)
+        {
+            try
+            {
+                // retreives list of Schedules to be deleted
+                var (schedules, getStatus) = 
+                    await _scheduleRepo.getSchedulesAfterEventUpdate(eventId, availabilityIds);
+                // In case getSchedulesAfterEventUpdate() did not succeed
+                if (getStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[ScheduleController] Error from deleteSchedulesAfterEventUpdate(): \n" +
+                                     "Could not retreive Schedules with getSchedulesAfterEventUpdate() " + 
+                                     "from ScheduleRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Schedules");
+                }
+
+                // deletes schedules from table
+                var deleteStatus = await _scheduleRepo.deleteSchedules(schedules);
+                // In case deleteSchedules() did not succeed
+                if (deleteStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[ScheduleController] Error from deleteSchedulesAfterEventUpdate(): \n" +
+                                     "Could not delete Schedules with deleteSchedules() " + 
+                                     "from ScheduleRepo.");
+                    return StatusCode(500, "Something went wrong when deleting Schedules");
+                }
+                
+                return Ok(new { Message = "Schedules have been deleted" });
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                // makes string listing all AvailabilityIds
+                var availabilityIdsString = String.Join(", ", availabilityIds);
+                
+                _logger.LogError("[ScheduleController] Error from deleteSchedulesAfterEventUpdate(): \n" +
+                                 "Something went wrong when trying to delete range Schedules " +
+                                $"with EventId {eventId} AvailabilityIds {availabilityIdsString}, " + 
+                                $"Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
 
     }
 }

@@ -99,6 +99,29 @@ public class ScheduleRepo : IScheduleRepo
         }
     }
 
+    // method for retreiving necessary Schedules for deletion and updating of Schedules after Event deletion
+    public async Task<(List<Schedule>, OperationStatus)> getSchedulesAfterEventUpdate(int eventId, int[] availabilityIds)
+    {
+        try
+        {
+            var schedules = await _db.Schedule
+                .Where(s => s.EventId == eventId && availabilityIds.Contains(s.AvailabilityId))
+                .ToListAsync();
+            return (schedules, OperationStatus.Ok);
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            // makes string listing all AvailabilityIds
+            var availabilityIdsString = String.Join(", ", availabilityIds);
+
+            _logger.LogError("[ScheduleRepo] Error from getSchedulesAfterEventUpdate(): \n" +
+                             "Something went wrong when retreiving Scheduless with " +
+                            $"EventId {eventId} and AvailabilityIds {availabilityIdsString}, " + 
+                            $"Error message: {e}");
+            return ([], OperationStatus.Error);
+        }
+    }
+
     
     // CREATE FUNCTIONS:
 
