@@ -28,6 +28,32 @@ namespace HealthCalendar.Controllers
 
         // HTTP GET functions
 
+        // method for retreiving Event by its EventId
+        [HttpGet("getEvent/{eventId}")]
+        [Authorize(Roles="Patient")]
+        public async Task<IActionResult> getEvent(int eventId)
+        {
+            try
+            {
+                var (eventt, status) = await _eventRepo.getEventById(eventId);
+                // In case getEventById() did not succeed
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[EventController] Error from getEvent(): \n" +
+                                         "Could not retreive Event with getEventById() from EventRepo.");
+                        return StatusCode(500, "Something went wrong when retreiving Events for the week");
+                }
+                return Ok(eventt);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {   
+                _logger.LogError("[EventController] Error from getEvent(): \n" +
+                                 "Something went wrong when trying to retreive Event with " + 
+                                $"EventId == {eventId}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         // method for retreiving Patient's Events for the week
         [HttpGet("getWeeksEventsForPatient")]
         [Authorize(Roles="Patient")]
