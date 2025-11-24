@@ -10,6 +10,7 @@ public interface IEventRepo
     Task<(List<Event>, OperationStatus)> getEventsByDate(string userId, DateOnly date);
     Task<(List<Event>, OperationStatus)> getWeeksEventsForPatient(string userId, DateOnly monady, DateOnly sunday);
     Task<OperationStatus> createEvent(Event eventt);
+    Task<OperationStatus> updateEvent(Event eventt);
     Task<OperationStatus> deleteEvent(Event eventt);
     Task<OperationStatus> deleteEvents(List<Event> events);
 }

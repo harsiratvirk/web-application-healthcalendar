@@ -234,7 +234,7 @@ namespace HealthCalendar.Controllers
                     _logger.LogError("[ScheduleController] Error from updateScheduledAvailability(): \n" +
                                      "Could not retreive Availability with getAvailabilityById() " + 
                                      "from AvailabilityRepo.");
-                    return StatusCode(500, "Something went wrong when retreiving Schedules");
+                    return StatusCode(500, "Something went wrong when retreiving Availability");
                 }
 
                 // retreives list Schedules to be updated
@@ -244,12 +244,12 @@ namespace HealthCalendar.Controllers
                 if (getSchedulesStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[ScheduleController] Error from updateScheduledAvailability(): \n" +
-                                     "Could not retreive Schedules with getSchedulesByEventIds() " + 
+                                     "Could not retreive Schedules with getSchedulesByAvailabilityIds() " + 
                                      "from ScheduleRepo.");
                     return StatusCode(500, "Something went wrong when retreiving Schedules");
                 }
 
-                // replaces all Availability properties in schedules with newAvailability
+                // replaces all Availability properties in schedules with new Availability
                 schedules.ForEach(s =>
                 {
                     s.AvailabilityId = newAvailabilityId;
@@ -263,7 +263,7 @@ namespace HealthCalendar.Controllers
                 {
                     _logger.LogError("[ScheduleController] Error from updateScheduledAvailability(): \n" +
                                      "Could not update Schedules with updateSchedules() from ScheduleRepo.");
-                    return StatusCode(500, "Something went wrong when retreiving Schedules");
+                    return StatusCode(500, "Something went wrong when updating Schedules");
                 }
 
                 return Ok(new { Message = "Schedules have been updated" });
@@ -281,6 +281,71 @@ namespace HealthCalendar.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        // method that updates Schedules by replacing old Event with updated Event
+        [HttpPut("updateScheduledEvent")]
+        [Authorize(Roles="Worker")]
+        public async Task<IActionResult> 
+            updateScheduledEvent([FromQuery] int eventId, [FromQuery] int[] availabilityIds)
+        {
+            try
+            {
+                // retreives updated Event
+                var (eventt, getEventStatus) = await _eventRepo.getEventById(eventId);
+                // In case getEventById() did not succeed
+                if (getEventStatus == OperationStatus.Error || eventt == null)
+                {
+                    _logger.LogError("[ScheduleController] Error from updateScheduledEvent(): \n" +
+                                     "Could not retreive Availability with getEventById() " + 
+                                     "from EventRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Event");
+                }
+
+                // retreives list of Schedules to be updated
+                var (schedules, getSchedulesStatus) = 
+                    await _scheduleRepo.getSchedulesAfterEventUpdate(eventId, availabilityIds);
+                // In case getSchedulesAfterEventUpdate() did not succeed
+                if (getSchedulesStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[ScheduleController] Error from updateScheduledEvent(): \n" +
+                                     "Could not retreive Schedules with getSchedulesAfterEventUpdate() " + 
+                                     "from ScheduleRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Schedules");
+                }
+
+                // replaces all Event properties in schedules with updated Event
+                schedules.ForEach(s =>
+                {
+                    s.EventId = eventId;
+                    s.Event = eventt;
+                });
+
+                // updates table with updated schedules
+                var updateStatus = await _scheduleRepo.updateSchedules(schedules);
+                // In case updateSchedules() did not succeed
+                if (getSchedulesStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[ScheduleController] Error from updateScheduledEvent(): \n" +
+                                     "Could not update Schedules with updateSchedules() from ScheduleRepo.");
+                    return StatusCode(500, "Something went wrong when updating Schedules");
+                }
+
+                return Ok(new { Message = "Schedules have been updated" });
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                // makes string listing all oldAvailabilityIds
+                var availabilityIdsString = String.Join(", ", availabilityIds);
+                
+                _logger.LogError("[scheduleController] Error from updateScheduledAvailability(): \n" +
+                                 "Something went wrong when trying to update Schedules where " + 
+                                $"AvailabilityId is in {availabilityIdsString} by replacing old " + 
+                                $"Event with updated Event new Event where EventId = {eventId}, " + 
+                                $"Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
 
 
         // HTTP DELETE functions
@@ -368,6 +433,51 @@ namespace HealthCalendar.Controllers
             }
         }
 
+        // method that deletes necessary Schedules after an Event update
+        [HttpDelete("deleteSchedulesAfterEventUpdate")]
+        [Authorize(Roles="Patient")]
+        public async Task<IActionResult> 
+            deleteSchedulesAfterEventUpdate([FromQuery] int eventId, [FromQuery] int[] availabilityIds)
+        {
+            try
+            {
+                // retreives list of Schedules to be deleted
+                var (schedules, getStatus) = 
+                    await _scheduleRepo.getSchedulesAfterEventUpdate(eventId, availabilityIds);
+                // In case getSchedulesAfterEventUpdate() did not succeed
+                if (getStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[ScheduleController] Error from deleteSchedulesAfterEventUpdate(): \n" +
+                                     "Could not retreive Schedules with getSchedulesAfterEventUpdate() " + 
+                                     "from ScheduleRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Schedules");
+                }
+
+                // deletes schedules from table
+                var deleteStatus = await _scheduleRepo.deleteSchedules(schedules);
+                // In case deleteSchedules() did not succeed
+                if (deleteStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[ScheduleController] Error from deleteSchedulesAfterEventUpdate(): \n" +
+                                     "Could not delete Schedules with deleteSchedules() " + 
+                                     "from ScheduleRepo.");
+                    return StatusCode(500, "Something went wrong when deleting Schedules");
+                }
+                
+                return Ok(new { Message = "Schedules have been deleted" });
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                // makes string listing all AvailabilityIds
+                var availabilityIdsString = String.Join(", ", availabilityIds);
+                
+                _logger.LogError("[ScheduleController] Error from deleteSchedulesAfterEventUpdate(): \n" +
+                                 "Something went wrong when trying to delete range Schedules " +
+                                $"with EventId {eventId} AvailabilityIds {availabilityIdsString}, " + 
+                                $"Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
 
     }
 }

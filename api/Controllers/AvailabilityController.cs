@@ -201,7 +201,7 @@ namespace HealthCalendar.Controllers
         // method for checking if Worker's Availability for given Date is continuous for Create Event function
         [HttpGet("checkAvailabilityForCreate")]
         [Authorize(Roles="Patient")]
-        public async Task<IActionResult> checkAvailabilityForCreate([FromBody] Event eventDTO)
+        public async Task<IActionResult> checkAvailabilityForCreate([FromBody] EventDTO eventDTO)
         {
             try
             {
@@ -209,32 +209,20 @@ namespace HealthCalendar.Controllers
                 var date = eventDTO.Date;
                 var from = eventDTO.From;
                 var to = eventDTO.To;
-
-                // retreives relevant Availability
-                var (doWAvailabilityRange, dateAvailabilityRange, getStatus) = 
-                    await getTimeslotsAvailability(userId, date, from, to);
-                // In case getTimeslotsAvailability() did not succeed
-                if (getStatus == OperationStatus.Error)
-                {
-                    _logger.LogError("[AvailabilityController] Error from checkAvailabilityForCreate(): \n" +
-                                     "Could not retreive Availability with getTimeslotsAvailability() " + 
-                                     "from AvailabilityController.");
-                    return StatusCode(500, "Something went wrong when retreiving Availability");
-                }
                 
-                // checks if doWAvailabilityRange and dateAvailabilityRange is continuous
-                var (continuousAvailabilityIds, validationStatus) = 
-                    checkAvailability(dateAvailabilityRange, doWAvailabilityRange, from, to);
-                // In case something went wrong in checkAvailability()
-                if (validationStatus == OperationStatus.Error)
+                // checks if Availability needed for Create is continuous
+                var (continuousAvailabilityIds, checkStatus) = 
+                    await getAndCheckAvailability(userId, date, from, to);
+                // In case something went wrong in getandCheckAvailability()
+                if (checkStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[AvailabilityController] Error from checkAvailabilityForCreate(): \n" +
-                                     "Could not check if Availability was continuous with checkAvailability() " + 
-                                     "from AvailabilityController.");
-                    return StatusCode(500, "Something went wrong when validating Event");
+                                     "Could not check if Availability was continuous with " + 
+                                     "getAndCheckAvailability() from AvailabilityController.");
+                    return StatusCode(500, "Something went wrong when checking Availability");
                 }
-                // In case eventDTO was not continuous, status code for Not Acceptable is returned
-                if (validationStatus == OperationStatus.NotAcceptable) 
+                // In case Availability was not continuous, status code for Not Acceptable is returned
+                if (checkStatus == OperationStatus.NotAcceptable) 
                     return StatusCode(406, "Availability was not continuous");
                 
                 return Ok(continuousAvailabilityIds);
@@ -243,8 +231,187 @@ namespace HealthCalendar.Controllers
             {   
                 _logger.LogError("[AvailabilityController] Error from checkAvailabilityForCreate(): \n" +
                                  "Something went wrong when trying to check if there" + 
-                                $"was continuous Availability so Event {eventDTO} " + 
+                                $"was continuous Availability so Event {@eventDTO} " + 
                                 $"can be created, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // method for checking if Worker's Availability for given Date is continuous for Update Event function
+        [HttpGet("checkAvailabilityForUpdate")]
+        [Authorize(Roles="Patient")]
+        public async Task<IActionResult> 
+            checkAvailabilityForUpdate([FromBody] EventDTO updatedEventDTO, [FromBody] EventDTO oldEventDTO)
+        {
+            try
+            {
+                // list of AvailabilityIds that new Schedules need to be created for
+                int[] forCreateSchedules = {};
+                // list of AvailabilityIds that existing Schedules need to be deleted for
+                int[] forDeleteSchedules = {};
+                // list of AvailabilityIds that existing Schedules need to be updated for
+                int[] forUpdateSchedules = {};
+                
+                var userId = updatedEventDTO.UserId;
+                var updatedDate = updatedEventDTO.Date;
+                var updatedFrom = updatedEventDTO.From;
+                var updatedTo = updatedEventDTO.To;
+                var oldDate = oldEventDTO.Date;
+                var oldFrom = oldEventDTO.From;
+                var oldTo = oldEventDTO.To;
+
+                // Used to get AvailabilityIds for Schedules that need to be updated
+                var updateFrom = updatedFrom;
+                var updateTo = updatedTo;
+
+                // In case update moves Event's From backwards in time, Schedules need to be created
+                if (updatedDate < oldDate || updatedFrom < oldFrom)
+                {
+                    // New Schedules need to be created so Availability continuity needs to be checked 
+                    // Must be checked from where updated Event starts to where old Event starts or updated Event ends
+                    var checkTo = 
+                        updatedDate < oldDate || updatedTo < oldFrom ? updatedTo : oldFrom;
+                    var (continuousAvailabilityIds, checkStatus) = 
+                        await getAndCheckAvailability(userId, updatedDate, updatedFrom, checkTo);
+                    // In case something went wrong in getandCheckAvailability()
+                    if (checkStatus == OperationStatus.Error)
+                    {
+                        _logger.LogError("[AvailabilityController] Error from checkAvailabilityForUpdate(): \n" +
+                                         "Could not check if Availability was continuous with " + 
+                                         "getAndCheckAvailability() from AvailabilityController.");
+                        return StatusCode(500, "Something went wrong when checking Availability");
+                    }
+                    // In case Availability was not continuous, status code for Not Acceptable is returned
+                    if (checkStatus == OperationStatus.NotAcceptable) 
+                        return StatusCode(406, "Availability was not continuous");
+
+                    foreach (var availabilityId in continuousAvailabilityIds)
+                    {
+                        forCreateSchedules.Append(availabilityId);
+                    }
+                    // Update of Schedules need to start where creation of these Schedules end
+                    updateFrom = checkTo;
+                }
+                // In case update moves Event's From forwards in time, Schedules need to be deleted
+                else if (oldDate < updatedDate || oldFrom < updatedFrom)
+                {
+                    // Existing Schedules need to be deleted so already continuous AvailabilityIds must be retreived
+                    // Must be retreived from where old Event starts to where updated Event starts or old Event ends
+                    var getTo = 
+                        oldDate < updatedDate || oldTo < updatedFrom ? oldTo : updatedFrom;
+                    var (continuousAvailabilityIds, checkStatus) = 
+                        await getContinuousAvailabilityIds(userId, oldDate, oldFrom, getTo);
+                    // In case something went wrong in getContinuousAvailabilityIds()
+                    if (checkStatus == OperationStatus.Error)
+                    {
+                        _logger.LogError("[AvailabilityController] Error from checkAvailabilityForUpdate(): \n" +
+                                         "Could not get Availability getContinuousAvailabilityIds()" + 
+                                         "from AvailabilityController.");
+                        return StatusCode(500, "Something went wrong when retreiving AvailabilityIds");
+                    }
+
+                    foreach (var availabilityId in continuousAvailabilityIds)
+                    {
+                        forDeleteSchedules.Append(availabilityId);
+                    }
+                    // Update of Schedules need to start where deletion of these Schedules end
+                    updateFrom = getTo;
+                }
+                
+                // In case update moves Event's To forwards in time, new Schedules need to be created
+                if (updatedDate > oldDate || updatedTo > oldTo)
+                {
+                    // New Schedules need to be created so Availability continuity needs to be checked 
+                    // Must be checked from where old Event ends or updated Event starts to updated Event ends
+                    var checkFrom = 
+                        updatedDate > oldDate || updatedFrom > oldTo ? updatedFrom : oldTo;
+                    var (continuousAvailabilityIds, checkStatus) = 
+                        await getAndCheckAvailability(userId, updatedDate, checkFrom, updatedTo);
+                    // In case something went wrong in getandCheckAvailability()
+                    if (checkStatus == OperationStatus.Error)
+                    {
+                        _logger.LogError("[AvailabilityController] Error from checkAvailabilityForUpdate(): \n" +
+                                         "Could not check if Availability was continuous with " + 
+                                         "getAndCheckAvailability() from AvailabilityController.");
+                        return StatusCode(500, "Something went wrong when checking Availability");
+                    }
+                    // In case Availability was not continuous, status code for Not Acceptable is returned
+                    if (checkStatus == OperationStatus.NotAcceptable) 
+                        return StatusCode(406, "Availability was not continuous");
+
+                    foreach (var availabilityId in continuousAvailabilityIds)
+                    {
+                        forCreateSchedules.Append(availabilityId);
+                    }
+                    // Update of Schedules need to end where creation of these Schedules start
+                    updateTo = checkFrom;
+                }
+                // In case update moves Event's To backwards in time, Schedules need to be deleted
+                else if (oldDate > updatedDate || oldTo > updatedTo)
+                {
+                    // Existing Schedules need to be deleted so already continuous AvailabilityIds must be retreived
+                    // Must be retreived from where old Event starts or updated Event ends to where old Event ends
+                    var getFrom = 
+                        oldDate > updatedDate || oldFrom > updatedTo ? oldFrom : updatedTo;
+                    var (continuousAvailabilityIds, checkStatus) = 
+                        await getContinuousAvailabilityIds(userId, oldDate, getFrom, oldTo);
+                    // In case something went wrong in getContinuousAvailabilityIds()
+                    if (checkStatus == OperationStatus.Error)
+                    {
+                        _logger.LogError("[AvailabilityController] Error from checkAvailabilityForUpdate(): \n" +
+                                         "Could not get Availability getContinuousAvailabilityIds()" + 
+                                         "from AvailabilityController.");
+                        return StatusCode(500, "Something went wrong when retreiving AvailabilityIds");
+                    }
+
+                    foreach (var availabilityId in continuousAvailabilityIds)
+                    {
+                        forDeleteSchedules.Append(availabilityId);
+                    }
+                    // Update of Schedules need to end where deletion of these Schedules start
+                    updateTo = getFrom;
+                }
+
+                // in case Schedules need to be updated
+                if (updatedDate == oldDate && updateFrom >= updatedFrom && updateTo <= updatedTo)
+                {
+                    // Retreives AvailabilityIds for schedules that must be Updated
+                    var (continuousAvailabilityIds, checkStatus) = 
+                        await getContinuousAvailabilityIds(userId, updatedDate, updateFrom, updateTo);
+                    // In case something went wrong in getContinuousAvailabilityIds()
+                    if (checkStatus == OperationStatus.Error)
+                    {
+                        _logger.LogError("[AvailabilityController] Error from checkAvailabilityForUpdate(): \n" +
+                                         "Could not get Availability getContinuousAvailabilityIds()" + 
+                                         "from AvailabilityController.");
+                        return StatusCode(500, "Something went wrong when retreiving AvailabilityIds");
+                    }
+                    // In case Availability was not continuous, status code for Not Acceptable is returned
+                    if (checkStatus == OperationStatus.NotAcceptable) 
+                        return StatusCode(406, "Availability was not continuous");
+
+                    foreach (var availabilityId in continuousAvailabilityIds)
+                    {
+                        forUpdateSchedules.Append(availabilityId);
+                    }
+                }
+                
+                // Adds all lists of AvailabilityIds into container DTO
+                var availabilityIdLists = new EventUpdateListsDTO
+                {
+                    ForCreateSchedules = forCreateSchedules,
+                    ForDeleteSchedules = forDeleteSchedules,
+                    ForUpdateSchedules = forUpdateSchedules
+                };
+                return Ok(availabilityIdLists);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {   
+                _logger.LogError("[AvailabilityController] Error from checkAvailabilityForCreate(): \n" +
+                                 "Something went wrong when trying to check if there " + 
+                                 "was continuous Availability so table can be updated with " + 
+                                $"Event could be updated from {@oldEventDTO} to {@updatedEventDTO}, " + 
+                                $"Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -426,7 +593,91 @@ namespace HealthCalendar.Controllers
 
         // PRIVATE functions
 
-        // method that retreives Worker's availability
+        // method that retreives list of continuous Availability's AvailabilityIds
+        private async Task<(int[], OperationStatus)> 
+            getContinuousAvailabilityIds(string userId, DateOnly date, TimeOnly from, TimeOnly to)
+        {
+            try
+            {
+                // retreives relevant Availability
+                var (doWAvailabilityRange, dateAvailabilityRange, getStatus) = 
+                    await getTimeslotsAvailability(userId, date, from, to);
+                // In case getTimeslotsAvailability() did not succeed
+                if (getStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from getAndCheckAvailability(): \n" +
+                                     "Could not retreive Availability with getTimeslotsAvailability() " + 
+                                     "from AvailabilityController.");
+                    return ([], getStatus);
+                }
+
+                
+                // Converts lists of continuous Availability to list of AvailabilityIds
+                var continuousAvailability = new List<Availability>();
+                continuousAvailability.AddRange(doWAvailabilityRange);
+                continuousAvailability.AddRange(dateAvailabilityRange);
+                var continuousAvailabilityIds = 
+                    continuousAvailability.Select(a => a.AvailabilityId).ToArray(); 
+                    
+                return (continuousAvailabilityIds, OperationStatus.Ok);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {   
+                _logger.LogError("[AvailabilityController] Error from getContinuousAvailabilityIds(): \n" +
+                                 "Something went wrong when trying to get list of continuous " + 
+                                 "Availability's AvailabilityIds for Worker with UserId == " + 
+                                $"{userId} on date {date} from {from} to {to}, Error message: {e}");
+                return ([], OperationStatus.Error);
+            }
+        }
+        
+        // method for checking if Worker's Availability is continuous for certain timeslot
+        // If it is list of continuous Availability's AvailabilityIds is returned
+        private async Task<(int[], OperationStatus)> 
+            getAndCheckAvailability(string userId, DateOnly date, TimeOnly from, TimeOnly to) 
+        {
+            try
+            {
+                // retreives relevant Availability
+                var (doWAvailabilityRange, dateAvailabilityRange, getStatus) = 
+                    await getTimeslotsAvailability(userId, date, from, to);
+                // In case getTimeslotsAvailability() did not succeed
+                if (getStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from getAndCheckAvailability(): \n" +
+                                     "Could not retreive Availability with getTimeslotsAvailability() " + 
+                                     "from AvailabilityController.");
+                    return ([], getStatus);
+                }
+                    
+                // checks if doWAvailabilityRange and dateAvailabilityRange is continuous
+                var (continuousAvailabilityIds, checkStatus) = 
+                    checkAvailability(dateAvailabilityRange, doWAvailabilityRange, from, to);
+                // In case something went wrong in checkAvailability()
+                if (checkStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from getAndCheckAvailability(): \n" +
+                                     "Could not check if Availability was continuous with checkAvailability() " + 
+                                     "from AvailabilityController.");
+                    return ([], checkStatus);
+                }
+                // In case eventDTO was not continuous, status code for Not Acceptable is returned
+                if (checkStatus == OperationStatus.NotAcceptable) return ([], checkStatus);
+                    
+                return (continuousAvailabilityIds, OperationStatus.Ok);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {   
+                _logger.LogError("[AvailabilityController] Error from getAndCheckAvailability(): \n" +
+                                 "Something went wrong when trying to check if there" + 
+                                 "was continuous Availability for Worker with UserId == " + 
+                                $"{userId} on date {date} from {from} to {to}, " + 
+                                $"Error message: {e}");
+                return ([], OperationStatus.Error);
+            }
+        }
+
+        // method that retreives Worker's availability for given timeslot
         private async Task<(List<Availability>, List<Availability>, OperationStatus)> 
             getTimeslotsAvailability(string userId, DateOnly date, TimeOnly from, TimeOnly to)
         {
@@ -442,7 +693,7 @@ namespace HealthCalendar.Controllers
                     _logger.LogError("[AvailabilityController] Error from getTimeslotsAvailability(): \n" +
                                      "Could not retreive Availability with getTimeslotsDoWAvailability() " + 
                                      "from AvailabilityRepo.");
-                    return ([], [], OperationStatus.Error);
+                    return ([], [], getDoWStatus);
                 }
 
                 // retreives relevant Availability where date is not null
@@ -454,7 +705,7 @@ namespace HealthCalendar.Controllers
                     _logger.LogError("[AvailabilityController] Error from getTimeslotsAvailability(): \n" +
                                      "Could not retreive Availability with getTimeslotsDateAvailability() " + 
                                      "from AvailabilityRepo.");
-                    return ([], [], OperationStatus.Error);
+                    return ([], [], getDateStatus);
                 }
 
                 return (doWAvailabilityRange, dateAvailabilityRange, OperationStatus.Ok);
@@ -475,7 +726,6 @@ namespace HealthCalendar.Controllers
         {
             try
             {
-                var continuousAvailability = new List<Availability>();
                 // calculates factor of difference between to and from, divided by 30 min
                 var timeDifference = to.ToTimeSpan() - from.ToTimeSpan();
                 var wantedSize = timeDifference.Divide(TimeSpan.FromMinutes(30));
@@ -507,7 +757,8 @@ namespace HealthCalendar.Controllers
                     }
                 }
 
-                // Converts lists of Availability to list of AvailabilityIds
+                // Converts lists of continuous Availability to list of AvailabilityIds
+                var continuousAvailability = new List<Availability>();
                 continuousAvailability.AddRange(doWAvailabilityRange);
                 continuousAvailability.AddRange(dateAvailabilityRange);
                 var continuousAvailabilityIds = 
