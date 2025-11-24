@@ -100,6 +100,27 @@ public class EventRepo : IEventRepo
     }
 
 
+    // CREATE FUNCTIONS:
+
+    // method for adding Event into table
+    public async Task<OperationStatus> createEvent(Event eventt)
+    {
+        try
+        {
+            _db.Events.Add(eventt);
+            await _db.SaveChangesAsync();
+            return OperationStatus.Ok;
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            _logger.LogError("[EventRepo] Error from createEvent(): \n" +
+                             "Something went wrong when creating Event " +
+                            $"{@eventt}, Error message: {e}");
+            return OperationStatus.Error;
+        }
+    }
+
+
     // DELETE FUNCTIONS:
 
     // method for deleting Event from table
