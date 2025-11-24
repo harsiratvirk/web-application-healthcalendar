@@ -274,7 +274,7 @@ namespace HealthCalendar.Controllers
                 var userId = eventDTO.UserId;
                 var patient = await _userManager.FindByIdAsync(userId);
                 
-                // creates new Event using eventDTO and worker
+                // creates new Event using eventDTO and patient
                 var eventt = new Event
                 {
                     From = eventDTO.From,
@@ -307,6 +307,50 @@ namespace HealthCalendar.Controllers
             }
         }
 
+
+        // HTTP PUT functions
+        [HttpPost("updateEvent")]
+        [Authorize(Roles="Patient")]
+        public async Task<IActionResult> updateEvent([FromBody] EventDTO eventDTO)
+        {
+            try {
+                // retreives Worker and adds it into availabilityDTO
+                var userId = eventDTO.UserId;
+                var patient = await _userManager.FindByIdAsync(userId);
+                
+                // updates new Event using eventDTO and patient
+                var eventt = new Event
+                {
+                    EventId = eventDTO.EventId,
+                    From = eventDTO.From,
+                    To = eventDTO.To,
+                    Date = eventDTO.Date,
+                    Title = eventDTO.Title,
+                    Location = eventDTO.Location,
+                    UserId = userId,
+                    Patient = patient!
+                };
+                var status = await _eventRepo.updateEvent(eventt);
+
+                // In case updateEvent() did not succeed
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[EventController] Error from updatedEvent(): \n" +
+                                     "Could not update Event with updateEvent() " + 
+                                     "from EventRepo.");
+                    return StatusCode(500, "Something went wrong when updating Event");
+                }
+                return Ok(new { Message = "Event has been updated" });
+
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[EventController] Error from updateEvent(): \n" +
+                                 "Something went wrong when trying to update Event " +
+                                $"with eventDTO {@eventDTO}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
 
         
         // HTTP DELETE functions
