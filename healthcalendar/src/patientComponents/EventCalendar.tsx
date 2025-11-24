@@ -182,12 +182,13 @@ export default function EventCalendar() {
       )}
 
       {editing && (
-        <EditEventForm
-          event={editing}
-          onClose={() => setEditing(null)}
-          onSave={onSaveEdit}
-          onDelete={onDelete}
-        />
+          <EditEventForm
+            event={editing}
+            availableDays={availableDays}
+            onClose={() => setEditing(null)}
+            onSave={onSaveEdit}
+            onDelete={onDelete}
+          />
       )}
     </div>
   )
