@@ -37,13 +37,24 @@ namespace HealthCalendar.Controllers
             {
                 var (eventt, status) = await _eventRepo.getEventById(eventId);
                 // In case getEventById() did not succeed
-                if (status == OperationStatus.Error)
+                if (status == OperationStatus.Error || eventt == null)
                 {
                     _logger.LogError("[EventController] Error from getEvent(): \n" +
                                          "Could not retreive Event with getEventById() from EventRepo.");
                         return StatusCode(500, "Something went wrong when retreiving Events for the week");
                 }
-                return Ok(eventt);
+
+                var eventDTO = new EventDTO
+                {
+                    EventId = eventId,
+                    From = eventt.From,
+                    To = eventt.To,
+                    Date = eventt.Date,
+                    Title = eventt.Title,
+                    Location = eventt.Title,
+                    UserId = eventt.UserId
+                };
+                return Ok(eventDTO);
             }
             catch (Exception e) // In case of unexpected exception
             {   
