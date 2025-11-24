@@ -10,8 +10,13 @@ public interface IAvailabilityRepo
     Task<(List<Availability>, OperationStatus)> getAvailabilityByDoW(DayOfWeek dayOfWeek, TimeOnly from);
     Task<(List<Availability>, OperationStatus)> getWeeksDoWAvailability(string userId);
     Task<(List<Availability>, OperationStatus)> getWeeksDateAvailability(string userId, DateOnly monday, DateOnly sunday);
+    
+    Task<(List<Availability>, OperationStatus)> 
+        getTimeslotsDoWAvailability(string userId, DayOfWeek dayOfWeek, TimeOnly from, TimeOnly to);
+    
+    Task<(List<Availability>, OperationStatus)> 
+        getTimeslotsDateAvailability(string userId, DateOnly date, TimeOnly from, TimeOnly to);
     Task<OperationStatus> createAvailability(Availability availability);
     Task<OperationStatus> deleteAvailability(Availability availability);
     Task<OperationStatus> deleteAvailabilityRange(List<Availability> availabilityRange);
-
 }

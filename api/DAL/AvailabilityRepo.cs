@@ -121,6 +121,52 @@ public class AvailabilityRepo : IAvailabilityRepo
         }
     }
 
+    // method for retreiving a Worker's Availability for timeslot where Date is null
+    public async Task<(List<Availability>, OperationStatus)> 
+        getTimeslotsDoWAvailability(string userId, DayOfWeek dayOfWeek, TimeOnly from, TimeOnly to)
+    {
+        try
+        {
+            // retreives list of availability for given dayOfWeek between given from and to
+            var availability = await _db.Availability
+                .Where(a => a.UserId == userId && a.DayOfWeek == dayOfWeek && 
+                       a.Date == null && a.From <= from && a.To >= to)
+                .ToListAsync();
+            return (availability, OperationStatus.Ok);
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            _logger.LogError("[AvailabilityRepo] Error from getTimeslotsDoWAvailability(): \n" +
+                             "Something went wrong when retreiving range of Availability " +
+                            $"between {from} and {to} where UserId = {userId}, DayOfWeek = " + 
+                            $"{dayOfWeek} and Date = null, Error message: {e}");
+            return ([], OperationStatus.Error);
+        }
+    }
+    
+    // method for retreiving a Worker's Availability for timeslot where Date is not null
+    public async Task<(List<Availability>, OperationStatus)> 
+        getTimeslotsDateAvailability(string userId, DateOnly date, TimeOnly from, TimeOnly to)
+    {
+        try
+        {
+            // retreives list of availability for given date between given from and to
+            var availability = await _db.Availability
+                .Where(a => a.UserId == userId && a.Date != null &&
+                       a.Date == date && a.From <= from && a.To >= to)
+                .ToListAsync();
+            return (availability, OperationStatus.Ok);
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            _logger.LogError("[AvailabilityRepo] Error from getTimeslotsDateAvailability(): \n" +
+                             "Something went wrong when retreiving range of Availability " +
+                            $"between {from} and {to} where UserId = {userId} and Date = " + 
+                            $"{date}, Error message: {e}");
+            return ([], OperationStatus.Error);
+        }
+    }
+
 
     // CREATE FUNCTIONS:
 
