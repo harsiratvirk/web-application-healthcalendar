@@ -34,7 +34,7 @@ function addDaysISO(iso: string, days: number) {
 
 export default function EventCalendar() {
   const { showSuccess, showError } = useToast()
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(false)
   const [weekStartISO, setWeekStartISO] = useState(startOfWeekMondayISO(new Date()))
@@ -138,7 +138,7 @@ export default function EventCalendar() {
       <main className="event-main">
         <header className="event-header">
           <div className="event-header__left">
-            <h1 className="event-title">Alice’s Event Calendar</h1>
+            <h1 className="event-title">{user?.name ? `${user.name}’s Event Calendar` : 'Event Calendar'}</h1>
             <div className="event-week">
               <button className="icon-btn" onClick={gotoPrevWeek} aria-label="Previous week">
                 <img src="/images/backarrow.png" alt="Previous week" />
