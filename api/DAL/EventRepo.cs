@@ -121,6 +121,27 @@ public class EventRepo : IEventRepo
     }
 
 
+    // UPDATE FUNCTIONS:
+
+    // method for updating Event
+    public async Task<OperationStatus> updateEvent(Event eventt)
+    {
+        try 
+        {
+            _db.Update(eventt);
+            await _db.SaveChangesAsync();
+            return OperationStatus.Ok;
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            _logger.LogError("[EventRepo] Error from updateEvent(): \n" +
+                             "Something went wrong when updating Event " +
+                            $"{@eventt}, Error message: {e}");
+            return OperationStatus.Error;
+        }
+    }
+
+
     // DELETE FUNCTIONS:
 
     // method for deleting Event from table
