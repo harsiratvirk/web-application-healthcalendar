@@ -158,7 +158,7 @@ namespace HealthCalendar.Controllers
             }
         }
 
-        // method that validates Event for a future Create method
+        // method that validates Event for a Create Event method
         [HttpGet("validateEventForCreate")]
         [Authorize(Roles="Patient")]
         public async Task<IActionResult> validateEventForCreate([FromBody] EventDTO eventDTO)
@@ -196,6 +196,54 @@ namespace HealthCalendar.Controllers
             catch (Exception e) // In case of unexpected exception
             {   
                 _logger.LogError("[EventController] Error from validateEventForCreate(): \n" +
+                                 "Something went wrong when trying to validate eventDTO " + 
+                                $"{@eventDTO}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // method that validates Event for an Update Event method
+        [HttpGet("validateEventForUpdate")]
+        [Authorize(Roles="Patient")]
+        public async Task<IActionResult> validateEventForUpdate([FromBody] EventDTO eventDTO)
+        {
+            try
+            {
+                var (datesEvents, getStatus) = 
+                    await _eventRepo.getEventsByDate(eventDTO.UserId, eventDTO.Date);
+                // In case getEventsByDate() did not succeed
+                if (getStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[EventController] Error from validateEventForUpdate(): \n" +
+                                     "Could not retreive Events with getEventsByDate() " + 
+                                     "from EventRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving " + 
+                                           "Events for the date");
+                }
+
+                // removes Event that will be updated from list
+                var eventId = eventDTO.EventId;
+                datesEvents.Where(e => e.EventId != eventId);
+                
+                // validates eventDTO and checks if it overlaps with any Event in datesEvents
+                var validationStatus = validateEvent(eventDTO, datesEvents);
+                // In case something went wrong in validateEvent()
+                if (validationStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[EventController] Error from validateEventForUpdate(): \n" +
+                                     "Could not validate Event with validateEvent() " + 
+                                     "from EventController.");
+                    return StatusCode(500, "Something went wrong when validating Event");
+                }
+                // In case eventDTO was Not acceptable, status code for Not Acceptable is returned
+                if (validationStatus == OperationStatus.NotAcceptable) 
+                    return StatusCode(406, "Event was found Not Acceptable");
+                
+                return Ok(new { Message = "Event was found Acceptable" });
+            }
+            catch (Exception e) // In case of unexpected exception
+            {   
+                _logger.LogError("[EventController] Error from validateEventForUpdate(): \n" +
                                  "Something went wrong when trying to validate eventDTO " + 
                                 $"{@eventDTO}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
