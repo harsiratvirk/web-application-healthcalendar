@@ -28,7 +28,7 @@ const RegistrationPage: React.FC = () => {
     if (hasError) return
     try {
       setLoading(true)
-      await registerPatient({ name, email, password })
+      await registerPatient({ Name: name, Email: email, Password: password })
       navigate('/patient/login')
     } catch (err: any) {
       console.debug('Registration failed', err)

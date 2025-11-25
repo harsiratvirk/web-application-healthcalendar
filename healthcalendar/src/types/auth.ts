@@ -4,7 +4,7 @@ export interface LoginDto {
 }
 
 export interface RegisterPatientDto {
-  name: string;
-  email: string;
-  password: string;
+  Name: string;
+  Email: string;
+  Password: string;
 }
