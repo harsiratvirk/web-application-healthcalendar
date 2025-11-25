@@ -16,19 +16,21 @@ public static class DbInit
         using var scope = app.ApplicationServices.CreateScope();
         var serviceProvider = scope.ServiceProvider;
 
-        /* ----- Seeding User table: ----- */
-
         // a UserManager, used to add Users securely
         var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
         // an AuthDbContext, used to check if User table is empty
-        AuthDbContext context = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+        AuthDbContext authContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+        // an HealthCalendarDbContext, used to do db operations
+        HealthCalendarDbContext context = scope.ServiceProvider.GetRequiredService<HealthCalendarDbContext>();
+
+        /* ----- Seeding User table: ----- */
 
         // Only seeds if User table is empty
-        if (!context.Users.Any())
+        if (!authContext.Users.Any())
         {
             var admin = new User
             {
-                Name = "Admin",
+                Name = "Adam",
                 UserName = "admin@admin.ad",
                 // Password = "Aaaa4@"
                 Role = Roles.Admin
@@ -37,16 +39,25 @@ public static class DbInit
 
             var worker1 = new User
             {
-                Name = "aaa",
+                Name = "Bob",
                 UserName = "aaa@aaa.aaa",
                 // Password = "Aaaa4@"
                 Role = Roles.Worker
             };
             await addUser(userManager, worker1, "Aaaa4@");
 
+            var worker2 = new User
+            {
+                Name = "Arne",
+                UserName = "ddd@ddd.ddd",
+                // Password = "Aaaa4@"
+                Role = Roles.Worker
+            };
+            await addUser(userManager, worker2, "Aaaa4@");
+
             var patient1 = new User
             {
-                Name = "bbb",
+                Name = "Beb",
                 UserName = "bbb@bbb.bbb",
                 // Password = "Aaaa4@"
                 Role = Roles.Patient,
@@ -57,7 +68,7 @@ public static class DbInit
 
             var patient2 = new User
             {
-                Name = "ccc",
+                Name = "Bib",
                 UserName = "ccc@ccc.ccc",
                 // Password = "Aaaa4@"
                 Role = Roles.Patient,
@@ -65,10 +76,299 @@ public static class DbInit
                 Worker = worker1
             };
             await addUser(userManager, patient2, "Aaaa4@");
+
+            var patient3 = new User
+            {
+                Name = "Bjarne",
+                UserName = "eee@eee.eee",
+                // Password = "Aaaa4@"
+                Role = Roles.Patient,
+                WorkerId = worker2.Id,
+                Worker = worker2
+            };
+            await addUser(userManager, patient3, "Aaaa4@");
+
+            var patient4 = new User
+            {
+                Name = "Clarne",
+                UserName = "fff@fff.fff",
+                // Password = "Aaaa4@"
+                Role = Roles.Patient,
+                WorkerId = worker2.Id,
+                Worker = worker2
+            };
+            await addUser(userManager, patient4, "Aaaa4@");
+
+            var patient5 = new User
+            {
+                Name = "Drarne",
+                UserName = "ggg@ggg.ggg",
+                // Password = "Aaaa4@"
+                Role = Roles.Patient,
+                WorkerId = worker2.Id,
+                Worker = worker2
+            };
+            await addUser(userManager, patient5, "Aaaa4@");
         }
 
-        /* ----- Seeding Other bs: ----- */
-        
+        /* ----- Seeding Availability table: ----- */
+        if (!context.Availability.Any())
+        {
+            // generates availability for Worker "Bob"
+            var worker1 = await userManager.FindByNameAsync("aaa@aaa.aaa");
+            
+            var availabilityRange1 = 
+                generateContinuousAvailability(TimeOnly.Parse("09:00:00"), TimeOnly.Parse("15:00:00"),
+                                               DayOfWeek.Monday, null, worker1!);
+            context.AddRange(availabilityRange1);
+            await context.SaveChangesAsync();
+            var availabilityRange2 = 
+                generateContinuousAvailability(TimeOnly.Parse("09:00:00"), TimeOnly.Parse("15:00:00"),
+                                               DayOfWeek.Tuesday, null, worker1!);
+            context.AddRange(availabilityRange2);
+            await context.SaveChangesAsync();
+            var availabilityRange3 = 
+                generateContinuousAvailability(TimeOnly.Parse("09:00:00"), TimeOnly.Parse("15:00:00"),
+                                               DayOfWeek.Wednesday, null, worker1!);
+            context.AddRange(availabilityRange3);
+            await context.SaveChangesAsync();
+            var availabilityRange4 = 
+                generateContinuousAvailability(TimeOnly.Parse("09:00:00"), TimeOnly.Parse("15:00:00"),
+                                               DayOfWeek.Thursday, null, worker1!);
+            context.AddRange(availabilityRange4);
+            await context.SaveChangesAsync();
+            var availabilityRange5 = 
+                generateContinuousAvailability(TimeOnly.Parse("10:00:00"), TimeOnly.Parse("14:00:00"),
+                                               DayOfWeek.Friday, DateOnly.Parse("12/5/2025"), worker1!);
+            context.AddRange(availabilityRange5);
+            await context.SaveChangesAsync();
+            var availabilityRange6 = 
+                generateContinuousAvailability(TimeOnly.Parse("10:00:00"), TimeOnly.Parse("11:00:00"),
+                                               DayOfWeek.Wednesday, DateOnly.Parse("12/10/2025"), worker1!);
+            context.AddRange(availabilityRange6);
+            await context.SaveChangesAsync();
+            var availabilityRange7 = 
+                generateContinuousAvailability(TimeOnly.Parse("10:00:00"), TimeOnly.Parse("11:00:00"),
+                                               DayOfWeek.Thursday, DateOnly.Parse("12/11/2025"), worker1!);
+            context.AddRange(availabilityRange7);
+            await context.SaveChangesAsync();
+            var availabilityRange8 = 
+                generateContinuousAvailability(TimeOnly.Parse("13:00:00"), TimeOnly.Parse("15:00:00"),
+                                               DayOfWeek.Friday, DateOnly.Parse("12/12/2025"), worker1!);
+            context.AddRange(availabilityRange8);
+
+            // generates availability for Worker "Arne"
+            var worker2 = await userManager.FindByNameAsync("ddd@ddd.ddd");
+
+            var availabilityRange9 = 
+                generateContinuousAvailability(TimeOnly.Parse("10:00:00"), TimeOnly.Parse("14:00:00"),
+                                               DayOfWeek.Monday, null, worker2!);
+            context.AddRange(availabilityRange9);
+            await context.SaveChangesAsync();
+            var availabilityRange10 = 
+                generateContinuousAvailability(TimeOnly.Parse("10:00:00"), TimeOnly.Parse("14:00:00"),
+                                               DayOfWeek.Tuesday, null, worker2!);
+            context.AddRange(availabilityRange10);
+            await context.SaveChangesAsync();
+            var availabilityRange11 = 
+                generateContinuousAvailability(TimeOnly.Parse("10:00:00"), TimeOnly.Parse("14:00:00"),
+                                               DayOfWeek.Wednesday, null, worker2!);
+            context.AddRange(availabilityRange11);
+            await context.SaveChangesAsync();
+            var availabilityRange12 = 
+                generateContinuousAvailability(TimeOnly.Parse("10:00:00"), TimeOnly.Parse("14:00:00"),
+                                               DayOfWeek.Thursday, null, worker2!);
+            context.AddRange(availabilityRange12);
+            await context.SaveChangesAsync();
+            var availabilityRange13 = 
+                generateContinuousAvailability(TimeOnly.Parse("10:00:00"), TimeOnly.Parse("14:00:00"),
+                                               DayOfWeek.Friday, null, worker2!);
+            context.AddRange(availabilityRange13);
+            await context.SaveChangesAsync();
+            var availabilityRange14 = 
+                generateContinuousAvailability(TimeOnly.Parse("14:00:00"), TimeOnly.Parse("16:00:00"),
+                                               DayOfWeek.Thursday, DateOnly.Parse("12/4/2025"), worker2!);
+            context.AddRange(availabilityRange14);
+            await context.SaveChangesAsync();
+            var availabilityRange15 = 
+                generateContinuousAvailability(TimeOnly.Parse("10:00:00"), TimeOnly.Parse("14:00:00"),
+                                               DayOfWeek.Friday, DateOnly.Parse("12/5/2025"), worker2!);
+            context.AddRange(availabilityRange15);
+            await context.SaveChangesAsync();
+            var availabilityRange16 = 
+                generateContinuousAvailability(TimeOnly.Parse("08:00:00"), TimeOnly.Parse("10:00:00"),
+                                               DayOfWeek.Wednesday, DateOnly.Parse("12/10/2025"), worker2!);
+            context.AddRange(availabilityRange16);
+            await context.SaveChangesAsync();
+        }
+
+        /* ----- Seeding Events and Schedules table: ----- */
+
+        if (!context.Events.Any())
+        {
+            // generates Events and Schedules for Patient "Beb"
+            var patient1 = await userManager.FindByNameAsync("bbb@bbb.bbb");
+
+            var event1 = new Event
+            {
+                From = TimeOnly.Parse("10:30:00"),
+                To = TimeOnly.Parse("12:00:00"),
+                Date = DateOnly.Parse("12/5/2025"),
+                Title = "I wanna take a walk.",
+                Location = "Outside",
+                UserId = patient1!.Id,
+                Patient = patient1
+            };
+            context.Add(event1);
+            await context.SaveChangesAsync();
+            await addSchedules(context, event1);
+            var event2 = new Event
+            {
+                From = TimeOnly.Parse("11:00:00"),
+                To = TimeOnly.Parse("14:00:00"),
+                Date = DateOnly.Parse("12/8/2025"),
+                Title = "I wanna not take a walk.",
+                Location = "Inside",
+                UserId = patient1!.Id,
+                Patient = patient1
+            };
+            context.Add(event2);
+            await context.SaveChangesAsync();
+            await addSchedules(context, event2);
+
+            // generates Events and Schedules for Patient "Beb"
+            var patient2 = await userManager.FindByNameAsync("ccc@ccc.ccc");
+
+            var event3 = new Event
+            {
+                From = TimeOnly.Parse("13:00:00"),
+                To = TimeOnly.Parse("15:00:00"),
+                Date = DateOnly.Parse("12/12/2025"),
+                Title = "I wanna do something.",
+                Location = "The Moon",
+                UserId = patient2!.Id,
+                Patient = patient2
+            };
+            context.Add(event3);
+            await context.SaveChangesAsync();
+            await addSchedules(context, event3);
+            var event4 = new Event
+            {
+                From = TimeOnly.Parse("10:00:00"),
+                To = TimeOnly.Parse("12:00:00"),
+                Date = DateOnly.Parse("12/9/2025"),
+                Title = "I wanna do nothing.",
+                Location = "The Moon",
+                UserId = patient2!.Id,
+                Patient = patient2
+            };
+            context.Add(event4);
+            await context.SaveChangesAsync();
+            await addSchedules(context, event4);
+            var event5 = new Event
+            {
+                From = TimeOnly.Parse("11:00:00"),
+                To = TimeOnly.Parse("14:00:00"),
+                Date = DateOnly.Parse("12/11/2025"),
+                Title = "I wanna dance.",
+                Location = "Mars",
+                UserId = patient2!.Id,
+                Patient = patient2
+            };
+            context.Add(event5);
+            await context.SaveChangesAsync();
+            await addSchedules(context, event5);
+
+            // generates Events and Schedules for Patient "Bjarne"
+            var patient3 = await userManager.FindByNameAsync("eee@eee.eee");
+
+            var event6 = new Event
+            {
+                From = TimeOnly.Parse("13:00:00"),
+                To = TimeOnly.Parse("15:00:00"),
+                Date = DateOnly.Parse("12/4/2025"),
+                Title = "I wanna scream.",
+                Location = "In public",
+                UserId = patient3!.Id,
+                Patient = patient3
+            };
+            context.Add(event6);
+            await context.SaveChangesAsync();
+            await addSchedules(context, event6);
+            var event7 = new Event
+            {
+                From = TimeOnly.Parse("10:00:00"),
+                To = TimeOnly.Parse("12:00:00"),
+                Date = DateOnly.Parse("12/8/2025"),
+                Title = "I wanna shout.",
+                Location = "In public",
+                UserId = patient3!.Id,
+                Patient = patient3
+            };
+            context.Add(event7);
+            await context.SaveChangesAsync();
+            await addSchedules(context, event7);
+
+            // generates Events and Schedules for Patient "Clarne"
+            var patient4 = await userManager.FindByNameAsync("fff@fff.fff");
+
+            var event8 = new Event
+            {
+                From = TimeOnly.Parse("10:00:00"),
+                To = TimeOnly.Parse("13:00:00"),
+                Date = DateOnly.Parse("12/4/2025"),
+                Title = "Help me.",
+                Location = "Outer space",
+                UserId = patient4!.Id,
+                Patient = patient4
+            };
+            context.Add(event8);
+            await context.SaveChangesAsync();
+            await addSchedules(context, event8);
+            var event9 = new Event
+            {
+                From = TimeOnly.Parse("09:00:00"),
+                To = TimeOnly.Parse("11:30:00"),
+                Date = DateOnly.Parse("12/10/2025"),
+                Title = "Help me X2.",
+                Location = "Outer space",
+                UserId = patient4!.Id,
+                Patient = patient4
+            };
+            context.Add(event9);
+            await context.SaveChangesAsync();
+            await addSchedules(context, event9);
+
+            // generates Events and Schedules for Patient "Drarne"
+            var patient5 = await userManager.FindByNameAsync("ggg@ggg.ggg");
+
+            var event10 = new Event
+            {
+                From = TimeOnly.Parse("10:00:00"),
+                To = TimeOnly.Parse("10:30:00"),
+                Date = DateOnly.Parse("12/9/2025"),
+                Title = "Feed me.",
+                Location = "Dinner table",
+                UserId = patient5!.Id,
+                Patient = patient5
+            };
+            context.Add(event10);
+            await context.SaveChangesAsync();
+            await addSchedules(context, event10);
+            var event11 = new Event
+            {
+                From = TimeOnly.Parse("12:30:00"),
+                To = TimeOnly.Parse("13:30:00"),
+                Date = DateOnly.Parse("12/11/2025"),
+                Title = "Wash my dishes.",
+                Location = "The kitchen",
+                UserId = patient5!.Id,
+                Patient = patient5
+            };
+            context.Add(event11);
+            await context.SaveChangesAsync();
+            await addSchedules(context, event11);
+        }
     }
     
     // adds User to User table
@@ -83,5 +383,57 @@ public static class DbInit
                              $"user {@user} to User table: \n");
             Console.WriteLine(String.Join("\n",result.Errors));
         }
+    }
+
+    // generates list of continuous Availability
+    private static async Task<List<Availability>> 
+        generateContinuousAvailability(TimeOnly from, TimeOnly to, DayOfWeek dayOfWeek, 
+                                       DateOnly? date, User worker)
+    {
+        var continuousAvailability = new List<Availability>();
+        var userId = worker.Id;
+        while (from < to)
+        {
+            var availability = new Availability
+            {
+                From = from,
+                To = from.AddMinutes(30),
+                DayOfWeek = dayOfWeek,
+                Date = date,
+                UserId = userId,
+                Worker = worker
+            };
+            continuousAvailability.Add(availability);
+        }
+        return continuousAvailability;
+    }
+
+    // adds list of Schedules to db
+    private static async Task addSchedules(HealthCalendarDbContext context, Event eventt)
+    {
+        var date = eventt.Date;
+        var dayOfWeek = date.DayOfWeek;
+        
+        var availability = await context.Availability
+                .Where(a => a.UserId == eventt.UserId && a.From <= eventt.From && 
+                       a.To >= eventt.To && a.DayOfWeek == dayOfWeek)
+                .ToListAsync();
+        
+        var schedules = new List<Schedule>();
+        availability.ForEach(a =>
+        {
+            var schedule = new Schedule
+            {
+                Date = date,
+                AvailabilityId = a.AvailabilityId,
+                Availability = a,
+                EventId = eventt.EventId,
+                Event = eventt
+            };
+            schedules.Add(schedule);
+        });
+
+        context.AddRange(schedules);
+        await context.SaveChangesAsync();
     }
 }
