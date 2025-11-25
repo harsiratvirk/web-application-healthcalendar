@@ -168,8 +168,10 @@ export const apiService = {
 	async checkAvailabilityForCreate(event: NewEventInput, userId: string): Promise<number[]> {
 		try {
 			const eventDTO = toEventDTO(event, userId);
+			// Debug log: print payload before sending
+			console.debug('checkAvailabilityForCreate payload:', eventDTO);
 			const response = await fetch(
-				`${API_BASE_URL}/Availability/checkAvailabilityForCreate`,
+				`${API_BASE_URL}/Availability/checkAvailabilityForCreate?userId=${encodeURIComponent(userId)}`,
 				{
 					method: 'POST',
 					headers: getHeaders(),
@@ -195,11 +197,10 @@ export const apiService = {
 					body: JSON.stringify(eventDTO)
 				}
 			);
-			await handleResponse<any>(response);
-			// Backend doesn't return the created event, so we construct it
-			// In a real scenario, you might want to fetch it again or have backend return it
+			const result = await handleResponse<{ eventId: number }>(response);
+			// Backend returns the created event's ID
 			return {
-				eventId: 0, // Will be set by backend
+				eventId: result.eventId,
 				...input
 			};
 		} catch (err) {

@@ -1,9 +1,10 @@
 import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
-import type { Event } from '../types/event';
+import type { Event, Availability } from '../types/event';
 import '../styles/CalendarGrid.css';
 
 export type CalendarGridProps = {
   events: Event[]
+  availability?: Availability[] // Worker's availability for the week
   weekStartISO: string // Monday of the week in YYYY-MM-DD
   startHour?: number // default 8
   endHour?: number // default 20
@@ -40,6 +41,7 @@ const addDays = (iso: string, days: number) => {
 
 export default function CalendarGrid({
   events,
+  availability = [],
   weekStartISO,
   startHour = 8,
   endHour = 20,
@@ -56,6 +58,22 @@ export default function CalendarGrid({
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStartISO, i));
   const now = new Date();
   const todayISO = toLocalISO(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+
+  // Helper to check if a specific time slot is available for a given day
+  const dayNamesMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const isSlotAvailable = (dayISO: string, slotStartMins: number, slotEndMins: number): boolean => {
+    const dateObj = new Date(dayISO + 'T00:00:00');
+    const dayName = dayNamesMap[dateObj.getDay()];
+    
+    // Check if any availability block covers this slot
+    return availability.some(a => {
+      if (a.day !== dayName) return false;
+      const availStart = toMinutes(a.startTime);
+      const availEnd = toMinutes(a.endTime);
+      // Slot is available if it falls completely within an availability block
+      return slotStartMins >= availStart && slotEndMins <= availEnd;
+    });
+  };
 
   // refs
   const columnContainerRef = useRef<HTMLDivElement | null>(null);
@@ -174,12 +192,20 @@ export default function CalendarGrid({
         <div className="cal-grid__days" ref={columnContainerRef}>
           {days.map((d, idx) => {
             const evs = eventsByDay[idx];
+            const colClasses = `cal-grid__col${d === todayISO ? ' cal-grid__col--today' : ''}`;
             return (
-              <div className={`cal-grid__col${d === todayISO ? ' cal-grid__col--today' : ''}`} key={d}>
+              <div className={colClasses} key={d}>
                 {/* slots background */}
-                {timeLabels.map((m, si) => (
-                  <div className="cal-grid__slot" key={m + d} />
-                ))}
+                {timeLabels.map((m, si) => {
+                  if (si === timeLabels.length - 1) return null; // Skip last label (it's just a boundary)
+                  const slotStart = m;
+                  const slotEnd = m + slotMinutes;
+                  const isAvailable = isSlotAvailable(d, slotStart, slotEnd);
+                  const slotClasses = `cal-grid__slot${!isAvailable ? ' cal-grid__slot--unavailable' : ''}`;
+                  return (
+                    <div className={slotClasses} key={m + d} />
+                  );
+                })}
                 {/* events */}
                 {evs.map(e => {
                   const rect = eventRects[e.eventId];

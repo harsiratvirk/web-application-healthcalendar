@@ -1,26 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Event } from '../types/event'
+import type { Event, Availability } from '../types/event'
 import '../styles/EventFormsBase.css'
 
 type Props = {
   availableDays: string[]
+  availability: Availability[]
   onClose: () => void
   onSave: (e: Omit<Event, 'eventId'>) => void | Promise<void>
 }
 
-const times = (() => {
-  const arr: string[] = []
-  for (let h = 8; h <= 20; h++) {
-    for (let m = 0; m < 60; m += 30) {
-      const hh = String(h).padStart(2, '0')
-      const mm = String(m).padStart(2, '0')
-      arr.push(`${hh}:${mm}`)
-    }
-  }
-  return arr
-})()
-
-export default function NewEventForm({ availableDays, onClose, onSave }: Props) {
+export default function NewEventForm({ availableDays, availability, onClose, onSave }: Props) {
   const [title, setTitle] = useState('')
   const [location, setLocation] = useState('')
   // Derive today's local ISO (YYYY-MM-DD) to compare with provided ISO dates safely
@@ -35,20 +24,71 @@ export default function NewEventForm({ availableDays, onClose, onSave }: Props) 
   const validDays = useMemo(() => availableDays.filter(d => d >= todayISO), [availableDays, todayISO])
 
   const [date, setDate] = useState(validDays[0] ?? '')
-  const [startTime, setStartTime] = useState('09:00')
-  const [endTime, setEndTime] = useState('09:30')
+  const [startTime, setStartTime] = useState('')
+  const [endTime, setEndTime] = useState('')
   const [titleError, setTitleError] = useState<string | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
   const [dateError, setDateError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
-  const endTimeOptions = useMemo(() => times.filter(t => t > startTime), [startTime])
+  // Get available start times for the selected date
+  const startTimeOptions = useMemo(() => {
+    if (!date) return []
+    
+    // Get day of week for the selected date
+    const selectedDate = new Date(`${date}T12:00:00`)
+    const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' })
+    
+    // Filter availability slots for this day
+    const daySlots = availability.filter(a => a.day === dayName)
+    
+    // Get unique start times and sort them
+    const startTimes = [...new Set(daySlots.map(a => a.startTime))].sort()
+    return startTimes
+  }, [date, availability])
 
-  useEffect(() => {
-    if (!endTimeOptions.includes(endTime)) {
-      setEndTime(endTimeOptions[0] ?? '')
+  // Get available end times based on selected start time
+  const endTimeOptions = useMemo(() => {
+    if (!date || !startTime) return []
+    
+    const selectedDate = new Date(`${date}T12:00:00`)
+    const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' })
+    
+    // Get all slots for this day, sorted by start time
+    const daySlots = availability
+      .filter(a => a.day === dayName)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime))
+    
+    // Build contiguous end times starting from selected start time
+    const endTimes: string[] = []
+    let currentTime = startTime
+    
+    for (const slot of daySlots) {
+      if (slot.startTime === currentTime) {
+        endTimes.push(slot.endTime)
+        currentTime = slot.endTime
+      } else if (slot.startTime > currentTime) {
+        // Gap in availability
+        break
+      }
     }
-  }, [startTime, endTimeOptions, endTime])
+    
+    return endTimes
+  }, [date, startTime, availability])
+
+  // Update start time when options change
+  useEffect(() => {
+    if (startTimeOptions.length > 0 && !startTimeOptions.includes(startTime)) {
+      setStartTime(startTimeOptions[0])
+    }
+  }, [startTimeOptions])
+
+  // Update end time when options change
+  useEffect(() => {
+    if (endTimeOptions.length > 0 && !endTimeOptions.includes(endTime)) {
+      setEndTime(endTimeOptions[0])
+    }
+  }, [endTimeOptions])
 
   // Keep selected date within valid future/today range when week changes
   useEffect(() => {
@@ -146,20 +186,28 @@ export default function NewEventForm({ availableDays, onClose, onSave }: Props) 
             </label>
             <label>
               Start Time
-              <select value={startTime} onChange={e => setStartTime(e.target.value)}>
-                {times.map(t => (<option key={t} value={t}>{t}</option>))}
+              <select value={startTime} onChange={e => setStartTime(e.target.value)} disabled={startTimeOptions.length === 0}>
+                {startTimeOptions.length === 0 ? (
+                  <option value="">No times available</option>
+                ) : (
+                  startTimeOptions.map(t => (<option key={t} value={t}>{t}</option>))
+                )}
               </select>
             </label>
             <label>
               End Time
-              <select value={endTime} onChange={e => setEndTime(e.target.value)}>
-                {endTimeOptions.map(t => (<option key={t} value={t}>{t}</option>))}
+              <select value={endTime} onChange={e => setEndTime(e.target.value)} disabled={endTimeOptions.length === 0}>
+                {endTimeOptions.length === 0 ? (
+                  <option value="">No times available</option>
+                ) : (
+                  endTimeOptions.map(t => (<option key={t} value={t}>{t}</option>))
+                )}
               </select>
             </label>
           </div>
           <div className="form__actions">
             <button type="button" className="btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn--primary" disabled={saving || validDays.length === 0}>Save</button>
+            <button type="submit" className="btn btn--primary" disabled={saving || validDays.length === 0 || startTimeOptions.length === 0 || endTimeOptions.length === 0}>Save</button>
           </div>
         </form>
       </div>
