@@ -34,7 +34,7 @@ namespace HealthCalendar.Controllers
 
         // method for registering User with Patient Role
         [HttpPost("registerPatient")]
-        public async Task<IActionResult> RegisterPatient([FromBody] RegisterDTO registerDTO)
+        public async Task<IActionResult> registerPatient([FromBody] RegisterDTO registerDTO)
         {
             try
             {
@@ -52,7 +52,7 @@ namespace HealthCalendar.Controllers
                 // For when registration succeeds
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("[AuthController] Information from RegisterPatient(): \n " +
+                    _logger.LogInformation("[AuthController] Information from registerPatient(): \n " +
                                           $"Registration succeeded for Patient: {patient.Name}");
                     return Ok(new { Message = "Patient has been registered" });
                 }
@@ -73,7 +73,7 @@ namespace HealthCalendar.Controllers
 
         // method for logging in User
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
+        public async Task<IActionResult> login([FromBody] LoginDTO loginDTO)
         {
             try
             {
@@ -85,13 +85,13 @@ namespace HealthCalendar.Controllers
                     _logger.LogInformation("[AuthController] Information from Login(): \n " +
                                           $"User {user.Name} was authorized");
                     // Generates and returns JWT Token
-                    var token = GenerateJwtToken(user);
+                    var token = generateJwtToken(user);
                     return Ok(new { Token = token });
                 }
-
+                
                 // For when login doesn't succeed
                 _logger.LogWarning("[AuthController] Warning from Login(): \n " +
-                                  $"User was unauthorized");
+                                   "User was unauthorized");
                 return Unauthorized(new { Message = "User was unauthorized" });
             }
             catch (Exception e) // In case of unexpected exception
@@ -102,9 +102,61 @@ namespace HealthCalendar.Controllers
             }
         }
 
+        // method for changing User's Password
+        [Authorize]
+        [HttpPost("changePassword")]
+        public async Task<IActionResult> changePassword(ChangePasswordDTO changePasswordDTO)
+        {
+            try
+            {
+                var newPassword = changePasswordDTO.NewPassword;
+                var newPasswordRepeated = changePasswordDTO.NewPasswordRepeated;
+                if (newPassword != newPasswordRepeated)
+                {
+                    _logger.LogWarning("[AuthController] Warning from changePassword(): \n " +
+                                       "Password change was unauthorized.");
+                    return Unauthorized(new { Message = "Password change was unauthorized" });
+                }
+
+                // Retreives User with UserID in changePasswordDTO
+                var userId = changePasswordDTO.UserId;
+                var user = await _userManager.FindByIdAsync(changePasswordDTO.UserId);
+                // In case User was not retreived
+                if (user == null)
+                {
+                    _logger.LogError("[AuthController] Error from changePassword(): \n" +
+                                     "Could not retreive User.");
+                    return StatusCode(500, "Could not retreive User");
+                }
+
+                // Attempts to change the password
+                var currentPassword = changePasswordDTO.CurrentPassword;
+                var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+                
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("[AuthController] Information from changePassword(): \n " +
+                                          $"Password change succeeded for User: {user.Name}");
+                    return Ok(new { Message = "Password was changed" });
+                }
+                
+                // For when password change doesn't succeed
+                _logger.LogWarning("[AuthController] Warning from changePassword(): \n " +
+                                   "Password change was unauthorized.");
+                return Unauthorized(new { Message = "Password change was unauthorized" });
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[AuthController] Error from changePassword(): \n" +
+                                $"Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+
         [Authorize]
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout()
+        public async Task<IActionResult> logout()
         {
             try
             {
@@ -122,7 +174,7 @@ namespace HealthCalendar.Controllers
         }
 
         // method for generating JWT token for user with Patient Role
-        private string GenerateJwtToken(User user)
+        private string generateJwtToken(User user)
         {
             var jwtKey = _configuration["Jwt:Key"]; // Sectret key used for the signature
             if (string.IsNullOrEmpty(jwtKey))       // In case key is either null or empty
