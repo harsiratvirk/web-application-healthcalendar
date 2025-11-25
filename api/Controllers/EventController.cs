@@ -311,7 +311,7 @@ namespace HealthCalendar.Controllers
 
                 // removes Event that will be updated from list
                 var eventId = eventDTO.EventId;
-                datesEvents.Where(e => e.EventId != eventId);
+                datesEvents = datesEvents.Where(e => e.EventId != eventId).ToList();
                 
                 // validates eventDTO and checks if it overlaps with any Event in datesEvents
                 var validationStatus = validateEvent(eventDTO, datesEvents);

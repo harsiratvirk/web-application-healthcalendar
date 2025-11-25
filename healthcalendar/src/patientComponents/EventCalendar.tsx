@@ -136,12 +136,13 @@ export default function EventCalendar() {
       await apiService.validateEventForUpdate(updatedEvent, user.nameid)
       
       // Step 2: Call checkAvailabilityForUpdate()
+      const workerId = (user as PatientUser).WorkerId
       const availabilityLists = await apiService.checkAvailabilityForUpdate(
         updatedEvent,
         originalEvent.date,
         originalEvent.startTime,
         originalEvent.endTime,
-        user.nameid
+        workerId
       )
       
       // Step 3: Call updateEvent()
@@ -182,7 +183,6 @@ export default function EventCalendar() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update event'
       showError(message)
-      throw err
     }
   }
 

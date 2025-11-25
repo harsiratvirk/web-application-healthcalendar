@@ -254,12 +254,14 @@ export const apiService = {
 		oldDate: string,
 		oldFrom: string,
 		oldTo: string,
-		userId: string
+		workerId: string
 	): Promise<{ forCreateSchedules: number[]; forDeleteSchedules: number[]; forUpdateSchedules: number[] }> {
 		try {
-			const eventDTO = toEventDTO(updatedEvent, userId);
+			// Get patientId from the event (for DTO), but use workerId for availability check
+			const patientId = (updatedEvent as any).userId || workerId; // fallback to workerId if userId not on event
+			const eventDTO = toEventDTO(updatedEvent, patientId);
 			const response = await fetch(
-				`${API_BASE_URL}/Availability/checkAvailabilityForUpdate?oldDate=${oldDate}&oldFrom=${oldFrom}:00&oldTo=${oldTo}:00`,
+				`${API_BASE_URL}/Availability/checkAvailabilityForUpdate?oldDate=${oldDate}&oldFrom=${oldFrom}:00&oldTo=${oldTo}:00&userId=${workerId}`,
 				{
 					method: 'POST',
 					headers: getHeaders(),
