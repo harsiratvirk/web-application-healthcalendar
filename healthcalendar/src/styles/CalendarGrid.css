@@ -1,7 +1,7 @@
 /* Calendar grid styles */
 :root {
     --bg: #E8F9FF;
-    --slot-h: clamp(42px, 5.2vh, 56px);
+    --slot-h: clamp(70px, 7.3vh, 73px);
 }
 
 .cal-grid {
@@ -66,14 +66,17 @@
 }
 
 .cal-grid__days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    display: flex;
     position: relative;
+    height: 100%;
 }
 
 .cal-grid__col {
     position: relative;
     border-right: 1px solid #e5e7eb;
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .cal-grid__col--today {
@@ -90,12 +93,18 @@
     border-bottom: 1px solid #d7dde6;
 }
 
+.cal-grid__slot,
+.cal-grid__time,
+.cal-grid__event {
+    box-sizing: border-box;
+}
+
 @media (max-width: 900px) {
-    :root { --slot-h: clamp(38px, 6vh, 48px); }
+    :root { --slot-h: clamp(50px, 8vh, 64px); }
 }
 
 @media (max-height: 750px) {
-    :root { --slot-h: clamp(30px, 5.5vh, 42px); }
+    :root { --slot-h: clamp(38px, 6vh, 50px); }
 }
 
 .cal-grid__event {
@@ -117,11 +126,11 @@
 .cal-grid__event-title {
     font-weight: 800;
     color: #1f2937;
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 .cal-grid__event-location {
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: #334155; 
     white-space: nowrap;
     overflow: hidden;
@@ -129,7 +138,7 @@
 }
 
 .cal-grid__event-meta {
-    font-size: 1rem;
+    font-size: 0.90rem;
     color: #374151;
 }
 

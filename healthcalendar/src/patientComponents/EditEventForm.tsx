@@ -5,6 +5,7 @@ import '../styles/ConfirmDialog.css'
 
 type Props = {
   event: Event
+  availableDays: string[]
   onClose: () => void
   onSave: (e: Event) => void | Promise<void>
   onDelete: (id: number) => void | Promise<void>
@@ -22,40 +23,40 @@ const times = (() => {
   return arr
 })()
 
-export default function EditEventForm({ event, onClose, onSave, onDelete }: Props) {
+export default function EditEventForm({ event, availableDays, onClose, onSave, onDelete }: Props) {
   const [title, setTitle] = useState(event.title)
   const [location, setLocation] = useState(event.location)
+  const [date, setDate] = useState(event.date)
   const [startTime, setStartTime] = useState(event.startTime)
   const [endTime, setEndTime] = useState(event.endTime)
   const [titleError, setTitleError] = useState<string | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
+  const [dateError, setDateError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
   const endTimeOptions = useMemo(() => times.filter(t => t > startTime), [startTime])
 
-  // Keep end time valid if start time moves past it
   useEffect(() => {
     if (!endTimeOptions.includes(endTime)) {
       setEndTime(endTimeOptions[0] ?? '')
     }
   }, [startTime, endTimeOptions, endTime])
 
-  // no date selector in edit form; keep times only
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Inline validation only
     setTitleError(null)
     setLocationError(null)
+    setDateError(null)
     let hasError = false
     if (!title) { setTitleError('Title is required.'); hasError = true }
     if (!location) { setLocationError('Location is required.'); hasError = true }
+    if (!date) { setDateError('Please select a date.'); hasError = true }
     if (hasError) return
     try {
       setSaving(true)
-      await onSave({ ...event, title, location, startTime, endTime })
+      await onSave({ ...event, title, location, date, startTime, endTime })
     } catch (err) {
       console.debug('Edit save failed (suppressed UI error)', err)
     } finally {
@@ -95,7 +96,7 @@ export default function EditEventForm({ event, onClose, onSave, onDelete }: Prop
               <img src="/images/exit.png" alt="Close" />
             </button>
           </header>
-          <form className="form" onSubmit={submit}>
+          <form className="form form--edit-event" onSubmit={submit}>
             <label>
               Title
               <input
@@ -123,6 +124,23 @@ export default function EditEventForm({ event, onClose, onSave, onDelete }: Prop
               {locationError && <small className="field-error">{locationError}</small>}
             </label>
             <div className="form__row">
+              <label>
+                Date
+                <select
+                  value={date}
+                  onChange={e => {
+                    const v = e.target.value
+                    setDate(v)
+                    if (dateError && v) setDateError(null)
+                  }}
+                  aria-invalid={!!dateError}
+                >
+                  {availableDays.map(d => (
+                    <option key={d} value={d}>{formatDate(d)}</option>
+                  ))}
+                </select>
+                {dateError && <small className="field-error">{dateError}</small>}
+              </label>
               <label>
                 Start Time
                 <select value={startTime} onChange={e => setStartTime(e.target.value)}>

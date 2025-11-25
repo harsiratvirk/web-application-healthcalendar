@@ -5,6 +5,7 @@ namespace HealthCalendar.Models
     {
         // Primary Key
         public int ScheduleId { get; set; }
+        public DateOnly Date { get; set; }
 
         // Foreign Key (Availability.AvailabilityId)
         public int AvailabilityId { get; set; }

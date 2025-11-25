@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { Event } from '../types/event'
-import { apiService } from '../services/apiService'
+import type { Event, Availability } from '../types/event'
+import type { PatientUser } from '../types/user'
+import { apiService } from '../services/eventService'
 import CalendarGrid from '../components/CalendarGrid'
 import '../styles/EventCalendar.css'
 import { useToast } from '../shared/toastContext'
@@ -17,7 +18,7 @@ function toLocalISO(date: Date) {
 }
 
 function startOfWeekMondayISO(d: Date) {
-  const date = new Date(d.getFullYear(), d.getMonth(), d.getDate()) // local midnight
+  const date = new Date(d.getFullYear(), d.getMonth(), d.getDate())
   const day = (date.getDay() + 6) % 7 // 0=Mon
   date.setDate(date.getDate() - day)
   return toLocalISO(date)
@@ -34,8 +35,9 @@ function addDaysISO(iso: string, days: number) {
 
 export default function EventCalendar() {
   const { showSuccess, showError } = useToast()
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const [events, setEvents] = useState<Event[]>([])
+  const [availability, setAvailability] = useState<Availability[]>([])
   const [loading, setLoading] = useState(false)
   const [weekStartISO, setWeekStartISO] = useState(startOfWeekMondayISO(new Date()))
   const [showNew, setShowNew] = useState(false)
@@ -57,38 +59,61 @@ export default function EventCalendar() {
     Array.from({ length: 7 }, (_, i) => addDaysISO(weekStartISO, i))
   ), [weekStartISO])
 
+  // Load patient's events and worker's availability for the current week
   useEffect(() => {
     const load = async () => {
+      if (!user?.nameid) return
+      
       try {
-        setLoading(true)
-        // First: load from localStorage if exists
-        const stored = localStorage.getItem('hc_events')
-        if (stored) {
-          setEvents(JSON.parse(stored))
-        } else {
-          const data = await apiService.getEvents()
-          setEvents(data)
-        }
+        // Step 1: Call getWeeksEventsForPatient() to retrieve patient's events
+        const eventsData = await apiService.getWeeksEventsForPatient(user.nameid, weekStartISO)
+        setEvents(eventsData)
+        // Step 2: Call getWeeksAvailabilityProper() to retrieve worker's availability
+        // Get workerId from patient's JWT token (WorkerId field)
+        const workerId = (user as PatientUser).WorkerId
+        const availabilityData = await apiService.getWeeksAvailabilityProper(workerId, weekStartISO)
+        setAvailability(availabilityData)
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load events'
+        const message = err instanceof Error ? err.message : 'Failed to load calendar data'
         showError(message)
-      } finally {
-        setLoading(false)
       }
     }
     load()
-  }, [showError])
+  }, [user, weekStartISO, showError])
 
+  // Complete create event workflow as per specification
   const onSaveNew = async (e: Omit<Event, 'eventId'>) => {
+    if (!user?.nameid) {
+      showError('User not authenticated')
+      return
+    }
+
     try {
-      const created = await apiService.createEvent(e)
-      setEvents(prev => {
-        const next = [...prev, created]
-        localStorage.setItem('hc_events', JSON.stringify(next))
-        return next
-      })
+      // Step 1: Call validateEventForCreate()
+      await apiService.validateEventForCreate(e, user.nameid)
+      
+      // Step 2: Call checkAvailabilityForCreate()
+      const availabilityIds = await apiService.checkAvailabilityForCreate(e, user.nameid)
+      
+      if (availabilityIds.length === 0) {
+        showError('No worker availability found for the selected time')
+        return
+      }
+      
+      // Step 3: Call createEvent()
+      const created = await apiService.createEvent(e, user.nameid)
+      
+      // Step 4: Call createSchedules() with eventId and availabilityIds
+      // Note: Backend should return the created event with its ID
+      // For now, we'll reload the events to get the correct ID
+      await apiService.createSchedules(created.eventId, e.date, availabilityIds)
+      
+      // Step 5: Reload events to show the new one
+      const eventsData = await apiService.getWeeksEventsForPatient(user.nameid, weekStartISO)
+      setEvents(eventsData)
+      
       setShowNew(false)
-      showSuccess('Event created')
+      showSuccess('Event created successfully')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create event'
       showError(message)
@@ -96,16 +121,60 @@ export default function EventCalendar() {
     }
   }
 
-  const onSaveEdit = async (e: Event) => {
+  // Complete update event workflow as per specification
+  const onSaveEdit = async (updatedEvent: Event, originalEvent: Event) => {
+    if (!user?.nameid) {
+      showError('User not authenticated')
+      return
+    }
+
     try {
-      const updated = await apiService.updateEvent(e)
-      setEvents(prev => {
-        const next = prev.map(p => p.eventId === updated.eventId ? updated : p)
-        localStorage.setItem('hc_events', JSON.stringify(next))
-        return next
-      })
+      // Step 1: Call validateEventForUpdate()
+      await apiService.validateEventForUpdate(updatedEvent, user.nameid)
+      
+      // Step 2: Call checkAvailabilityForUpdate()
+      const availabilityLists = await apiService.checkAvailabilityForUpdate(
+        updatedEvent,
+        originalEvent.date,
+        originalEvent.startTime,
+        originalEvent.endTime,
+        user.nameid
+      )
+      
+      // Step 3: Call updateEvent()
+      await apiService.updateEvent(updatedEvent, user.nameid)
+      
+      // Step 4: Call createSchedules() for new schedules
+      if (availabilityLists.forCreateSchedules.length > 0) {
+        await apiService.createSchedules(
+          updatedEvent.eventId,
+          updatedEvent.date,
+          availabilityLists.forCreateSchedules
+        )
+      }
+      
+      // Step 5: Call deleteSchedulesByAvailabilityIds() for removed schedules
+      if (availabilityLists.forDeleteSchedules.length > 0) {
+        await apiService.deleteSchedulesByAvailabilityIds(
+          updatedEvent.eventId,
+          availabilityLists.forDeleteSchedules
+        )
+      }
+      
+      // Step 6: Call updateScheduledEvent() for updated schedules
+      if (availabilityLists.forUpdateSchedules.length > 0) {
+        await apiService.updateScheduledEvent(
+          updatedEvent.eventId,
+          availabilityLists.forUpdateSchedules
+        )
+      }
+      
+      // Step 7: Reload events
+      const eventsData = await apiService.getWeeksEventsForPatient(user.nameid, weekStartISO)
+      setEvents(eventsData)
+      
       setEditing(null)
-      showSuccess('Event updated')
+      showSuccess('Event updated successfully')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update event'
       showError(message)
@@ -113,16 +182,26 @@ export default function EventCalendar() {
     }
   }
 
+  // Complete delete event workflow as per specification
   const onDelete = async (id: number) => {
+    if (!user?.nameid) {
+      showError('User not authenticated')
+      return
+    }
+
     try {
+      // Step 1: Call deleteSchedulesByEventId()
+      await apiService.deleteSchedulesByEventId(id)
+      
+      // Step 2: Call deleteEvent()
       await apiService.deleteEvent(id)
-      setEvents(prev => {
-        const next = prev.filter(p => p.eventId !== id)
-        localStorage.setItem('hc_events', JSON.stringify(next))
-        return next
-      })
+      
+      // Step 3: Reload events
+      const eventsData = await apiService.getWeeksEventsForPatient(user.nameid, weekStartISO)
+      setEvents(eventsData)
+      
       setEditing(null)
-      showSuccess('Event deleted')
+      showSuccess('Event deleted successfully')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete event'
       showError(message)
@@ -138,7 +217,7 @@ export default function EventCalendar() {
       <main className="event-main">
         <header className="event-header">
           <div className="event-header__left">
-            <h1 className="event-title">Alice’s Event Calendar</h1>
+            <h1 className="event-title">{user?.name ? `${user.name}’s Event Calendar` : 'Event Calendar'}</h1>
             <div className="event-week">
               <button className="icon-btn" onClick={gotoPrevWeek} aria-label="Previous week">
                 <img src="/images/backarrow.png" alt="Previous week" />
@@ -182,12 +261,13 @@ export default function EventCalendar() {
       )}
 
       {editing && (
-        <EditEventForm
-          event={editing}
-          onClose={() => setEditing(null)}
-          onSave={onSaveEdit}
-          onDelete={onDelete}
-        />
+          <EditEventForm
+            event={editing}
+            availableDays={availableDays}
+            onClose={() => setEditing(null)}
+            onSave={(updatedEvent) => onSaveEdit(updatedEvent, editing)}
+            onDelete={onDelete}
+          />
       )}
     </div>
   )

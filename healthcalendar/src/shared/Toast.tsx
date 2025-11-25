@@ -6,8 +6,6 @@ import type { ToastContextType } from './toastContext'
 
 type Toast = { id: number; type: 'success' | 'error' | 'info'; message: string }
 
-// Context and hook defined in toastContext.ts to satisfy react-refresh rule
-
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
   const idRef = useRef(1)

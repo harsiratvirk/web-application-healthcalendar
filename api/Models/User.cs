@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
-using HealthCalendar.Shared;
 
 namespace HealthCalendar.Models
 {
