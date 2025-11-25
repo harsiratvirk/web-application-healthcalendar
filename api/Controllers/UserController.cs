@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using HealthCalendar.DTOs;
 using HealthCalendar.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace HealthCalendar.Controllers
 {
@@ -66,7 +67,7 @@ namespace HealthCalendar.Controllers
             {
                 // retreives list of Users with "Patient" role
                 // converts list into UserDTOs
-                var userDTOs = _userManager.Users
+                var userDTOs = await _userManager.Users
                     .Where(u => u.WorkerId == workerId)
                     .Select(u => new UserDTO
                     {
@@ -75,7 +76,7 @@ namespace HealthCalendar.Controllers
                         Name = u.Name,
                         Role = u.Role,
                         WorkerId = u.WorkerId
-                    });
+                    }).ToListAsync();
                 return Ok(userDTOs);
             }
             catch (Exception e) // In case of unexpected exception
