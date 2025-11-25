@@ -193,7 +193,7 @@ namespace HealthCalendar.Controllers
                                      "from EventRepo.");
                     return StatusCode(500, "Something went wrong when creating Event");
                 }
-                return Ok(new { Message = "Event has been created" });
+                return Ok(new { EventId = eventt.EventId });
 
             }
             catch (Exception e) // In case of unexpected exception
@@ -426,7 +426,7 @@ namespace HealthCalendar.Controllers
         }
 
 
-        // PRIVATE functions
+         // PRIVATE functions
 
         // method that checks if given EventDTO is valid and doesn't overlap with other Events
         private OperationStatus validateEvent(EventDTO eventDTO, List<Event> datesEvents)

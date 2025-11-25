@@ -117,20 +117,30 @@ namespace HealthCalendar.Controllers
                 }
 
                 // Iterates through dateAvailability and doWAvailability
-                dateAvailability.ForEach(dA => {
-                    var from = dA.From;
-                    var dayOfWeek = dA.DayOfWeek;
-                    doWAvailability.ForEach(doWA =>
+                // Find overlaps safely
+                var removeFromDate = new List<Availability>();
+                var removeFromDoW = new List<Availability>();
+
+                foreach (var dA in dateAvailability)
+                {
+                    foreach (var doWA in doWAvailability)
                     {
-                        // Removes Availability that overlap with eachother
-                        if (from == doWA.From && dayOfWeek == doWA.DayOfWeek)
+                        if (dA.From == doWA.From && dA.DayOfWeek == doWA.DayOfWeek)
                         {
-                            dateAvailability.Remove(dA);
-                            doWAvailability.Remove(doWA);
-                            return;
+                            removeFromDate.Add(dA);
+                            removeFromDoW.Add(doWA);
                         }
-                    });
-                });
+                    }
+                }
+
+                // Remove after iteration
+                dateAvailability = dateAvailability
+                    .Except(removeFromDate)
+                    .ToList();
+
+                doWAvailability = doWAvailability
+                    .Except(removeFromDoW)
+                    .ToList();
                 
                 // converts retreived Availability to AvaillibilityDTOs
                 weeksAvailability.AddRange(doWAvailability);
@@ -711,48 +721,42 @@ namespace HealthCalendar.Controllers
         private (int[], OperationStatus) checkAvailability(List<Availability> dateAvailabilityRange, 
                                                            List<Availability> doWAvailabilityRange, 
                                                            TimeOnly from, TimeOnly to)
-        {
+         {
             try
             {
-                // calculates factor of difference between to and from, divided by 30 min
-                var timeDifference = to.ToTimeSpan() - from.ToTimeSpan();
-                var wantedSize = timeDifference.Divide(TimeSpan.FromMinutes(30));
-                // size of both Availability lists combined must be equal to wantedSize 
-                // If not, Availability cannot be continuous
-                if ((dateAvailabilityRange.Count() + doWAvailabilityRange.Count()) != wantedSize)
+                // Build a dictionary of time slots to availability IDs
+                // Date-specific availability overrides day-of-week availability
+                var availabilityMap = new Dictionary<TimeOnly, int>();
+                
+                // First, add day-of-week availability slots
+                foreach (var doWAvailability in doWAvailabilityRange)
                 {
-                    _logger.LogInformation("[EventController] Information from " + 
-                                           "checkAvailability(): \n" +
-                                          $"Availability from given lists was not continuous.");
-                    return ([], OperationStatus.NotAcceptable);
+                    availabilityMap[doWAvailability.From] = doWAvailability.AvailabilityId;
                 }
-
-                // Iterates through dateAvailabilityRange and doWAvailabilityRange
-                // looks for availability that overlap
+                
+                // Then, add date-specific availability slots (these override DoW)
                 foreach (var dateAvailability in dateAvailabilityRange)
                 {
-                    var dateFrom = dateAvailability.From;
-                    foreach (var doWAvailability in doWAvailabilityRange)
+                    availabilityMap[dateAvailability.From] = dateAvailability.AvailabilityId;
+                }
+                
+                // Now check if we have continuous coverage for the requested time range
+                var currentTime = from;
+                var availabilityIds = new List<int>();
+                
+                while (currentTime < to)
+                {
+                    if (!availabilityMap.ContainsKey(currentTime))
                     {
-                        // checks if dateAvailability and doWAvailability overlap
-                        if (dateFrom == doWAvailability.From)
-                        {
-                            _logger.LogInformation("[EventController] Information from " + 
-                                                   "checkAvailability(): \n" +
-                                                  $"Availability from given lists was not continuous.");
-                            return ([], OperationStatus.NotAcceptable);
-                        }
+                        _logger.LogInformation($"[AvailabilityController] checkAvailability: Missing slot at {currentTime}");
+                        return ([], OperationStatus.NotAcceptable);
                     }
+                    
+                    availabilityIds.Add(availabilityMap[currentTime]);
+                    currentTime = currentTime.AddMinutes(30);
                 }
 
-                // Converts lists of continuous Availability to list of AvailabilityIds
-                var continuousAvailability = new List<Availability>();
-                continuousAvailability.AddRange(doWAvailabilityRange);
-                continuousAvailability.AddRange(dateAvailabilityRange);
-                var continuousAvailabilityIds = 
-                    continuousAvailability.Select(a => a.AvailabilityId).ToArray();
-
-                return (continuousAvailabilityIds, OperationStatus.Ok);
+                return (availabilityIds.ToArray(), OperationStatus.Ok);
             }
             catch (Exception e) // In case of unexpected exception
             {

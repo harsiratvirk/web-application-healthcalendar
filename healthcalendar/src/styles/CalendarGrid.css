@@ -83,6 +83,12 @@
     background: #f6faff;
 }
 
+.cal-grid__slot--unavailable {
+    background: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
 .cal-grid__day--today .cal-grid__dayname,
 .cal-grid__day--today .cal-grid__daydate {
     color: var(--primary-strong);

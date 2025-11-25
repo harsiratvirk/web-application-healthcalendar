@@ -92,21 +92,18 @@ export default function EventCalendar() {
       // Step 1: Call validateEventForCreate()
       await apiService.validateEventForCreate(e, user.nameid)
       
-      // Step 2: Call checkAvailabilityForCreate()
-      const availabilityIds = await apiService.checkAvailabilityForCreate(e, user.nameid)
-      
-      if (availabilityIds.length === 0) {
-        showError('No worker availability found for the selected time')
-        return
-      }
+      // Step 2: Check if worker has availability for the requested time
+      // Events can only be created when worker is available
+      const workerId = (user as PatientUser).WorkerId
+      const availabilityIds = await apiService.checkAvailabilityForCreate(e, workerId)
       
       // Step 3: Call createEvent()
       const created = await apiService.createEvent(e, user.nameid)
       
-      // Step 4: Call createSchedules() with eventId and availabilityIds
-      // Note: Backend should return the created event with its ID
-      // For now, we'll reload the events to get the correct ID
-      await apiService.createSchedules(created.eventId, e.date, availabilityIds)
+      // Step 4: Call createSchedules() with eventId and availabilityIds (if any)
+      if (availabilityIds.length > 0) {
+        await apiService.createSchedules(created.eventId, e.date, availabilityIds)
+      }
       
       // Step 5: Reload events to show the new one
       const eventsData = await apiService.getWeeksEventsForPatient(user.nameid, weekStartISO)
@@ -247,6 +244,7 @@ export default function EventCalendar() {
 
         <CalendarGrid
           events={events}
+          availability={availability}
           weekStartISO={weekStartISO}
           onEdit={(e) => setEditing(e)}
         />
@@ -255,6 +253,7 @@ export default function EventCalendar() {
       {showNew && (
         <NewEventForm
           availableDays={availableDays}
+          availability={availability}
           onClose={() => setShowNew(false)}
           onSave={onSaveNew}
         />
