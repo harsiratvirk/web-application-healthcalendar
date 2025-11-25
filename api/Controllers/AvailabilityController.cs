@@ -405,7 +405,7 @@ namespace HealthCalendar.Controllers
                 }
 
                 // in case Schedules need to be updated
-                if (updatedDate == oldDate && updateFrom >= updatedFrom && updateTo <= updatedTo)
+                if (updatedDate == oldDate && updateFrom >= oldFrom && updateTo <= oldTo)
                 {
                     // Retreives AvailabilityIds for schedules that must be Updated
                     var (continuousAvailabilityIds, checkStatus) = 
