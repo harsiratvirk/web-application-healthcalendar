@@ -38,14 +38,11 @@ export default function EditEventForm({ event, availableDays, onClose, onSave, o
 
   const endTimeOptions = useMemo(() => times.filter(t => t > startTime), [startTime])
 
-  // Keep end time valid if start time moves past it
   useEffect(() => {
     if (!endTimeOptions.includes(endTime)) {
       setEndTime(endTimeOptions[0] ?? '')
     }
   }, [startTime, endTimeOptions, endTime])
-
-  // no date selector in edit form; keep times only
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()

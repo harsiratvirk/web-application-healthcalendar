@@ -44,7 +44,6 @@ export default function NewEventForm({ availableDays, onClose, onSave }: Props) 
 
   const endTimeOptions = useMemo(() => times.filter(t => t > startTime), [startTime])
 
-  // Ensure end time stays valid when start time changes
   useEffect(() => {
     if (!endTimeOptions.includes(endTime)) {
       setEndTime(endTimeOptions[0] ?? '')

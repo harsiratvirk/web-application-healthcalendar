@@ -18,7 +18,7 @@ function toLocalISO(date: Date) {
 }
 
 function startOfWeekMondayISO(d: Date) {
-  const date = new Date(d.getFullYear(), d.getMonth(), d.getDate()) // local midnight
+  const date = new Date(d.getFullYear(), d.getMonth(), d.getDate())
   const day = (date.getDay() + 6) % 7 // 0=Mon
   date.setDate(date.getDate() - day)
   return toLocalISO(date)

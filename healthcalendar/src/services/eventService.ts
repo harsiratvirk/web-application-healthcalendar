@@ -3,7 +3,7 @@
 
 import type { Event, Availability, NewEventInput, UpdateEventInput } from '../types/event';
 
-// Base API URL - adjust based on your backend configuration
+// Base API URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5080/api';
 
 // Helper to get auth token from localStorage

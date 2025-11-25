@@ -198,6 +198,51 @@ namespace HealthCalendar.Controllers
             }
         }
 
+
+        // HTTP POST functions
+
+        // method that creates new Availability and calls function to add it into table
+        [HttpPost("createAvailability")]
+        [Authorize(Roles="Patient,Worker")]
+        public async Task<IActionResult> createAvailability([FromBody] AvailabilityDTO availabilityDTO)
+        {
+            try {
+                // retreives Worker and adds it into availabilityDTO
+                var userId = availabilityDTO.UserId;
+                var worker = await _userManager.FindByIdAsync(userId);
+                
+                // creates new Availability using availabilityDTO and worker
+                var availability = new Availability
+                {
+                    From = availabilityDTO.From,
+                    To = availabilityDTO.To,
+                    DayOfWeek = availabilityDTO.DayOfWeek,
+                    Date = availabilityDTO.Date,
+                    UserId = userId,
+                    Worker = worker!
+                };
+                var status = await _availabilityRepo.createAvailability(availability);
+
+                // In case createAvailability() did not succeed
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from createAvailability(): \n" +
+                                     "Could not create Availability with createAvailability() " + 
+                                     "from AvailabilityRepo.");
+                    return StatusCode(500, "Something went wrong when creating Availability");
+                }
+                return Ok(new { Message = "Availability has been created" });
+
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[AvailabilityController] Error from createAvailability(): \n" +
+                                 "Something went wrong when trying to create new Availability " +
+                                $"with AvailabilityDTO {@availabilityDTO}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         // method for checking if Worker's Availability for given Date is continuous for Create Event function
         [HttpPost("checkAvailabilityForCreate")]
         [Authorize(Roles="Patient")]
@@ -411,51 +456,6 @@ namespace HealthCalendar.Controllers
                                 $"Event {@updatedEventDTO} by checking it against old Event's " + 
                                 $"Date {oldDate}, From {oldFrom} and To {oldTo} properties, " + 
                                 $"Error message: {e}");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-
-        // HTTP POST functions
-
-        // method that creates new Availability and calls function to add it into table
-        [HttpPost("createAvailability")]
-        [Authorize(Roles="Patient,Worker")]
-        public async Task<IActionResult> createAvailability([FromBody] AvailabilityDTO availabilityDTO)
-        {
-            try {
-                // retreives Worker and adds it into availabilityDTO
-                var userId = availabilityDTO.UserId;
-                var worker = await _userManager.FindByIdAsync(userId);
-                
-                // creates new Availability using availabilityDTO and worker
-                var availability = new Availability
-                {
-                    From = availabilityDTO.From,
-                    To = availabilityDTO.To,
-                    DayOfWeek = availabilityDTO.DayOfWeek,
-                    Date = availabilityDTO.Date,
-                    UserId = userId,
-                    Worker = worker!
-                };
-                var status = await _availabilityRepo.createAvailability(availability);
-
-                // In case createAvailability() did not succeed
-                if (status == OperationStatus.Error)
-                {
-                    _logger.LogError("[AvailabilityController] Error from createAvailability(): \n" +
-                                     "Could not create Availability with createAvailability() " + 
-                                     "from AvailabilityRepo.");
-                    return StatusCode(500, "Something went wrong when creating Availability");
-                }
-                return Ok(new { Message = "Availability has been created" });
-
-            }
-            catch (Exception e) // In case of unexpected exception
-            {
-                _logger.LogError("[AvailabilityController] Error from createAvailability(): \n" +
-                                 "Something went wrong when trying to create new Availability " +
-                                $"with AvailabilityDTO {@availabilityDTO}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
