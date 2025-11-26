@@ -42,6 +42,9 @@ export default function EventCalendar() {
   const [weekStartISO, setWeekStartISO] = useState(startOfWeekMondayISO(new Date()))
   const [showNew, setShowNew] = useState(false)
   const [editing, setEditing] = useState<Event | null>(null)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [newFormError, setNewFormError] = useState<string | null>(null)
+  const [editFormError, setEditFormError] = useState<string | null>(null)
   const navigate = useNavigate()
 
   const weekRangeText = useMemo(() => {
@@ -110,17 +113,18 @@ export default function EventCalendar() {
       
       // Step 6: Close form and show success
       setShowNew(false)
+      setNewFormError(null)
       showSuccess('Event created successfully')
     } catch (err) {
-      let message = 'Failed to create event'
       if (err instanceof Error) {
         if (err.message.includes('Not Acceptable') || err.message.includes('not acceptable')) {
-          message = 'This time slot is already taken. Please choose a different time.'
+          setNewFormError('This time slot is already taken. Please choose a different time.')
         } else {
-          message = err.message
+          showError(err.message)
         }
+      } else {
+        showError('Failed to create event')
       }
-      showError(message)
     }
   }
 
@@ -179,10 +183,18 @@ export default function EventCalendar() {
       ))
       
       setEditing(null)
+      setEditFormError(null)
       showSuccess('Event updated successfully')
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update event'
-      showError(message)
+      if (err instanceof Error) {
+        if (err.message.includes('Not Acceptable') || err.message.includes('not acceptable')) {
+          setEditFormError('This time slot is already taken. Please choose a different time.')
+        } else {
+          showError(err.message)
+        }
+      } else {
+        showError('Failed to update event')
+      }
     }
   }
 
@@ -234,10 +246,7 @@ export default function EventCalendar() {
           <div className="event-header__right">
             <button
               className="logout-btn"
-              onClick={() => {
-                logout();
-                navigate('/patient/login', { replace: true });
-              }}
+              onClick={() => setShowLogoutConfirm(true)}
             >
               <img src="/images/logout.png" alt="Logout" />
               <span>Log Out</span>
@@ -260,8 +269,13 @@ export default function EventCalendar() {
         <NewEventForm
           availableDays={availableDays}
           availability={availability}
-          onClose={() => setShowNew(false)}
+          onClose={() => {
+            setShowNew(false)
+            setNewFormError(null)
+          }}
           onSave={onSaveNew}
+          error={newFormError}
+          onClearError={() => setNewFormError(null)}
         />
       )}
 
@@ -270,10 +284,44 @@ export default function EventCalendar() {
             event={editing}
             availableDays={availableDays}
             availability={availability}
-            onClose={() => setEditing(null)}
+            onClose={() => {
+              setEditing(null)
+              setEditFormError(null)
+            }}
             onSave={(updatedEvent) => onSaveEdit(updatedEvent, editing)}
             onDelete={onDelete}
+            error={editFormError}
+            onClearError={() => setEditFormError(null)}
           />
+      )}
+
+      {showLogoutConfirm && (
+        <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title" aria-describedby="logout-confirm-desc">
+          <div className="modal confirm-modal">
+            <header className="modal__header">
+              <h2 id="logout-confirm-title">Confirm Logout</h2>
+              <button className="icon-btn" onClick={() => setShowLogoutConfirm(false)} aria-label="Close confirmation">
+                <img src="/images/exit.png" alt="Close" />
+              </button>
+            </header>
+            <div id="logout-confirm-desc" className="confirm-body">
+              Are you sure you want to log out?
+            </div>
+            <div className="confirm-actions">
+              <button type="button" className="btn" onClick={() => setShowLogoutConfirm(false)}>Cancel</button>
+              <button 
+                type="button" 
+                className="btn btn--primary" 
+                onClick={() => {
+                  logout();
+                  window.location.href = '/';
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
