@@ -61,10 +61,10 @@ namespace HealthCalendar.Controllers
         }
 
         // method for retreiving Patient's Events for the week
-        [HttpGet("getPatientsEventsForWeek")]
+        [HttpGet("getWeeksEventsByUserId")]
         [Authorize(Roles="Patient")]
         public async Task<IActionResult> 
-            getPatientsEventsForWeek([FromQuery] string userId, [FromQuery] DateOnly monday)
+            getWeeksEventsByUserId([FromQuery] string userId, [FromQuery] DateOnly monday)
         {
             try {
                 // retreives list of Patient's Events
@@ -74,7 +74,7 @@ namespace HealthCalendar.Controllers
                 // In case getWeeksEventsForPatient() did not succeed
                 if (status == OperationStatus.Error)
                 {
-                    _logger.LogError("[EventController] Error from getPatientsEventsForWeek(): \n" +
+                    _logger.LogError("[EventController] Error from getWeeksEventsByUserId(): \n" +
                                          "Could not retreive Events with getWeeksEventsByUserId() " + 
                                          "from EventRepo.");
                         return StatusCode(500, "Something went wrong when retreiving Events for the week");
@@ -96,7 +96,7 @@ namespace HealthCalendar.Controllers
             }
             catch (Exception e) // In case of unexpected exception
             {   
-                _logger.LogError("[EventController] Error from getPatientsEventsForWeek(): \n" +
+                _logger.LogError("[EventController] Error from getWeeksEventsByUserId(): \n" +
                                  "Something went wrong when trying to retreive week's events where " + 
                                 $"UserId == {userId} and monday is on the date {monday}, " +
                                 $"Error message: {e}");
@@ -104,12 +104,11 @@ namespace HealthCalendar.Controllers
             }
         }
 
-        // method for retreiving Events for the week from Users other than specific Patient
-        [HttpGet("getOthersEventsForWeek")]
+        // method for retreiving several Patients Events for the week
+        [HttpGet("getWeeksEventsByUserIds")]
         [Authorize(Roles="Patient")]
         public async Task<IActionResult> 
-            getOthersEventsForWeek([FromQuery] string[] userIds, [FromQuery] string userId, 
-                                   [FromQuery] DateOnly monday)
+            getWeeksEventsByUserIds([FromQuery] string[] userIds, [FromQuery] DateOnly monday)
         {
             try {
                 // retreives list of Patient's Events
@@ -126,9 +125,7 @@ namespace HealthCalendar.Controllers
                 }
 
                 // makes list of EventDTOs from weeksEvents
-                // Events from Patient with UserId = userId are excluded
                 var weeksEventDTOs = weeksEvents
-                    .Where(e => e.UserId != userId)
                     .Select(e => new EventDTO
                 {
                     EventId = e.EventId,
@@ -137,7 +134,7 @@ namespace HealthCalendar.Controllers
                     Date = e.Date,
                     Title = e.Title,
                     Location = e.Title,
-                    UserId = userId
+                    UserId = e.UserId
                 });
 
                 return Ok(weeksEventDTOs);
@@ -147,10 +144,10 @@ namespace HealthCalendar.Controllers
                 // makes string listing all UserIds
                 var userIdsString = String.Join(", ", userIds);
                 
-                _logger.LogError("[EventController] Error from getOthersEventsForWeek(): \n" +
+                _logger.LogError("[EventController] Error from getWeeksEventsByUserIds(): \n" +
                                  "Something went wrong when trying to retreive week's events where " + 
                                 $"UserId is in {userIdsString} and monday is on the date {monday}, " +
-                                $"excluding Events where UserId = {userId}, Error message: {e}");
+                                $"Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }

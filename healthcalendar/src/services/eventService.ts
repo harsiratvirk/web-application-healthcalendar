@@ -96,10 +96,30 @@ function fromAvailabilityDTO(dto: any): Availability {
 // Public API surface
 export const apiService = {
 	// Get patient's events for a specific week
-	async getPatientsEventsForWeek(userId: string, monday: string): Promise<Event[]> {
+	async getWeeksEventsByUserId(userId: string, monday: string): Promise<Event[]> {
 		try {
 			const response = await fetch(
-				`${API_BASE_URL}/Event/getPatientsEventsForWeek?userId=${encodeURIComponent(userId)}&monday=${monday}`,
+				`${API_BASE_URL}/Event/getWeeksEventsByUserId?userId=${encodeURIComponent(userId)}&monday=${monday}`,
+				{
+					method: 'GET',
+					headers: getHeaders()
+				}
+			);
+			const dtos = await handleResponse<any[]>(response);
+			return dtos.map(fromEventDTO);
+		} catch (err) {
+			throw normalizeError(err);
+		}
+	},
+
+	// Get several patients events for a specific week
+	async getWeeksEventsByUserIds(userIds: string[], monday: string): Promise<Event[]> {
+		try {
+			const queryParams = new URLSearchParams();
+			userIds.filter(id => id != null).forEach(id => queryParams.append('userIds', encodeURIComponent(id)));
+			queryParams.append('monday', String(monday));
+			const response = await fetch(
+				`${API_BASE_URL}/Event/getWeeksEventsByUserIds?${queryParams.toString()}`,
 				{
 					method: 'GET',
 					headers: getHeaders()
@@ -394,8 +414,8 @@ export const apiService = {
 
 	// Legacy mock methods for backward compatibility
 	async getEvents(): Promise<Event[]> {
-		// This is deprecated - use getPatientsEventsForWeek instead
-		console.warn('getEvents() is deprecated. Use getPatientsEventsForWeek() instead.');
+		// This is deprecated - use getWeeksEventsByUserId instead
+		console.warn('getEvents() is deprecated. Use getWeeksEventsByUserId() instead.');
 		return [];
 	},
 
