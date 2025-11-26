@@ -244,7 +244,8 @@ namespace HealthCalendar.Controllers
         // Assigns worker with given Username to Patients
         [HttpPut("assignPatientsToWorker")]
         [Authorize(Roles="Usermanager")]
-        public async Task<IActionResult> assignPatientsToWorker([FromQuery] string[] userIds, [FromQuery] string username)
+        public async Task<IActionResult> 
+        assignPatientsToWorker([FromQuery] string[] userIds, [FromQuery] string username)
         {
             try
             {
@@ -254,11 +255,22 @@ namespace HealthCalendar.Controllers
                     .Where(u => userIds.Contains(u.Id))
                     .ToListAsync();
                 // Adds Worker to Patients Worker related parameters
-                patients.ForEach(u =>
+                foreach (var patient in patients)
                 {
-                    u.WorkerId = worker!.Id;
-                    u.Worker = worker;
-                });
+                    patient.WorkerId = worker!.Id;
+                    patient.Worker = worker;
+                    // Update table with patient
+                    var result = await _userManager.UpdateAsync(patient);
+                    // In case update did not succeed
+                    if (!result.Succeeded)
+                    {
+                        _logger.LogWarning("[UserController] Warning from " + 
+                                           "assignPatientsToWorker(): \n" +
+                                          $"User {@patient} was not updated");
+                        // Error code is not returned since patients need to be updated one at a time
+                        // Returning something would stop the entire operation
+                    }
+                }
 
                 return Ok(new { Message = "Patients have been assigned" });
 
@@ -276,6 +288,38 @@ namespace HealthCalendar.Controllers
             }
         }
 
+
+        // HTTP DELETE functions
+
+        [HttpDelete("deleteUser/{userId}")]
+        [Authorize(Roles="Usermanager")]
+        public async Task<IActionResult> deleteUser(string userId)
+        {
+            try
+            {
+                // retreives User that should be deleted
+                var user = await _userManager.FindByIdAsync(userId);
+                
+                // deletes user from table
+                var result = await _userManager.DeleteAsync(user!);
+                // In case deletion did not succeed
+                if (!result.Succeeded)
+                {
+                    _logger.LogError("[UserController] Error from deleteUser(): \n" +
+                                    $"User {@user} was not deleted");
+                    return StatusCode(500, "Something went wrong");
+                }
+                
+                return Ok(new { Message = "User has been deleted" });
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[UserController] Error from deleteUser(): \n" +
+                                 "Something went wrong when trying to delete User " +
+                                $"with Id = {userId}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
 
     }
 }
