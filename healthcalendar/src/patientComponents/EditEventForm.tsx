@@ -10,9 +10,11 @@ type Props = {
   onClose: () => void
   onSave: (e: Event) => void | Promise<void>
   onDelete: (id: number) => void | Promise<void>
+  error?: string | null
+  onClearError?: () => void
 }
 
-export default function EditEventForm({ event, availableDays, availability, onClose, onSave, onDelete }: Props) {
+export default function EditEventForm({ event, availableDays, availability, onClose, onSave, onDelete, error, onClearError }: Props) {
   const [title, setTitle] = useState(event.title)
   const [location, setLocation] = useState(event.location)
   const [date, setDate] = useState(event.date)
@@ -21,6 +23,7 @@ export default function EditEventForm({ event, availableDays, availability, onCl
   const [titleError, setTitleError] = useState<string | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
   const [dateError, setDateError] = useState<string | null>(null)
+  const [conflictError, setConflictError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -93,6 +96,10 @@ export default function EditEventForm({ event, availableDays, availability, onCl
     if (!title) { setTitleError('Title is required.'); hasError = true }
     if (!location) { setLocationError('Location is required.'); hasError = true }
     if (!date) { setDateError('Please select a date.'); hasError = true }
+    if (!startTime || !endTime) {
+      setDateError('Your worker is not available on this day. Please select a different date.');
+      hasError = true;
+    }
     if (hasError) return
     
     setSaving(true)
@@ -201,6 +208,16 @@ export default function EditEventForm({ event, availableDays, availability, onCl
                 </select>
               </label>
             </div>
+            {(startTimeOptions.length === 0 || endTimeOptions.length === 0) && (
+              <div className="info-message">
+                ⚠️ Your worker is not available on this day. Please select a different date.
+              </div>
+            )}
+            {error && (
+              <div className="info-message info-message--error">
+                ⚠️ {error}
+              </div>
+            )}
             <div className="form__actions form__actions--edit">
               <button type="button" className="btn btn--danger" onClick={() => setShowConfirm(true)} disabled={deleting}>Delete</button>
               <div className="form__actions-spacer" />
