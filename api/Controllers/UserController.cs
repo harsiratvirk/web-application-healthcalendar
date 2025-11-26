@@ -61,7 +61,7 @@ namespace HealthCalendar.Controllers
         
         // Retrieves Users related to Worker with given Id
         [HttpGet("getUsersByWorkerId")]
-        [Authorize(Roles="Worker")]
+        [Authorize(Roles="Worker,Usermanager")]
         public async Task<IActionResult> getUsersByWorkerId([FromQuery] string workerId)
         {
             try
@@ -85,6 +85,35 @@ namespace HealthCalendar.Controllers
                 _logger.LogError("[UserController] Error from getUsersByWorkerId(): \n" +
                                  "Something went wrong when trying to retreive Users " + 
                                 $"where WorkerId = {workerId}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // Retrieves all Workers
+        [HttpGet("getAllWorkers")]
+        [Authorize(Roles="Usermanager")]
+        public async Task<IActionResult> getAllWorkers()
+        {
+            try
+            {
+                // retreives list of Users with "Worker" role
+                // converts list into UserDTOs
+                var userDTOs = await _userManager.Users
+                    .Where(u => u.Role == Roles.Worker)
+                    .Select(u => new UserDTO
+                    {
+                        Id = u.Id,
+                        UserName = u.UserName!,
+                        Name = u.Name,
+                        Role = u.Role
+                    }).ToListAsync();
+                return Ok(userDTOs);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[UserController] Error from getAllWorkers(): \n" +
+                                 "Something went wrong when trying to retreive Users " + 
+                                $"where Role = \"Worker\", Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -147,9 +176,9 @@ namespace HealthCalendar.Controllers
         // HTTP PUT functions
 
         // Assigns worker with given Username to Patients
-        [HttpPut("assignWorkerByUsername")]
+        [HttpPut("assignPatientsToWorker")]
         [Authorize(Roles="Usermanager")]
-        public async Task<IActionResult> assignWorkerByUsername([FromQuery] string[] userIds, [FromQuery] string username)
+        public async Task<IActionResult> assignPatientsToWorker([FromQuery] string[] userIds, [FromQuery] string username)
         {
             try
             {
@@ -165,7 +194,7 @@ namespace HealthCalendar.Controllers
                     u.Worker = worker;
                 });
 
-                return Ok(new { Message = "Worker has been assigned" });
+                return Ok(new { Message = "Patients have been assigned" });
 
             }
             catch (Exception e) // In case of unexpected exception
@@ -173,10 +202,10 @@ namespace HealthCalendar.Controllers
                 // makes string listing all UserIds
                 var userIdsString = String.Join(", ", userIds);
 
-                _logger.LogError("[UserController] Error from assignWorkerByUsername(): \n" +
-                                 "Something went wrong when trying to assign User " + 
-                                $"with Username = {username} to Patients with Ids " + 
-                                $"{userIdsString}, Error message: {e}");
+                _logger.LogError("[UserController] Error from assignPatientsToWorker(): \n" +
+                                 "Something went wrong when trying to assign Users " + 
+                                $"with Ids {userIdsString} to User with UserName = " + 
+                                $"{username}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
