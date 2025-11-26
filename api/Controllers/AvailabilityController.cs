@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using HealthCalendar.DAL;
 using HealthCalendar.DTOs;
 using HealthCalendar.Models;
@@ -15,11 +16,13 @@ namespace HealthCalendar.Controllers
     {
         private readonly IAvailabilityRepo _availabilityRepo;
         private readonly ILogger<AvailabilityController> _logger;
+        private readonly HealthCalendarDbContext _db;
 
-        public AvailabilityController(IAvailabilityRepo availabilityRepo, ILogger<AvailabilityController> logger)
+        public AvailabilityController(IAvailabilityRepo availabilityRepo, ILogger<AvailabilityController> logger, HealthCalendarDbContext db)
         {
             _availabilityRepo = availabilityRepo;
             _logger = logger;
+            _db = db;
         }
 
         // HTTP GET functions
@@ -301,6 +304,7 @@ namespace HealthCalendar.Controllers
                 var updatedDate = updatedEventDTO.Date;
                 var updatedFrom = updatedEventDTO.From;
                 var updatedTo = updatedEventDTO.To;
+                var eventId = updatedEventDTO.EventId;
 
                 // Used to get AvailabilityIds for Schedules that need to be updated
                 var updateFrom = updatedFrom;
@@ -314,7 +318,7 @@ namespace HealthCalendar.Controllers
                     var checkTo = 
                         updatedDate < oldDate || updatedTo < oldFrom ? updatedTo : oldFrom;
                     var (continuousAvailabilityIds, checkStatus) = 
-                        await getAndCheckAvailability(userId, updatedDate, updatedFrom, checkTo);
+                        await getAndCheckAvailability(userId, updatedDate, updatedFrom, checkTo, eventId);
                     // In case something went wrong in getandCheckAvailability()
                     if (checkStatus == OperationStatus.Error)
                     {
@@ -368,7 +372,7 @@ namespace HealthCalendar.Controllers
                     var checkFrom = 
                         updatedDate > oldDate || updatedFrom > oldTo ? updatedFrom : oldTo;
                     var (continuousAvailabilityIds, checkStatus) = 
-                        await getAndCheckAvailability(userId, updatedDate, checkFrom, updatedTo);
+                        await getAndCheckAvailability(userId, updatedDate, checkFrom, updatedTo, eventId);
                     // In case something went wrong in getandCheckAvailability()
                     if (checkStatus == OperationStatus.Error)
                     {
@@ -415,7 +419,7 @@ namespace HealthCalendar.Controllers
                 }
 
                 // in case Schedules need to be updated
-                if (updatedDate == oldDate && updateFrom >= updatedFrom && updateTo <= updatedTo)
+                if (updatedDate == oldDate && updateFrom >= oldFrom && updateTo <= oldTo)
                 {
                     // Retreives AvailabilityIds for schedules that must be Updated
                     var (continuousAvailabilityIds, checkStatus) = 
@@ -632,7 +636,7 @@ namespace HealthCalendar.Controllers
         // method for checking if Worker's Availability is continuous for certain timeslot
         // If it is list of continuous Availability's AvailabilityIds is returned
         private async Task<(int[], OperationStatus)> 
-            getAndCheckAvailability(string userId, DateOnly date, TimeOnly from, TimeOnly to) 
+            getAndCheckAvailability(string userId, DateOnly date, TimeOnly from, TimeOnly to, int? excludeEventId = null) 
         {
             try
             {
@@ -647,6 +651,25 @@ namespace HealthCalendar.Controllers
                                      "from AvailabilityController.");
                     return ([], getStatus);
                 }
+                
+                // Filter out availability slots that are already scheduled for this date
+                // But exclude schedules for the event being updated
+                var scheduleQuery = _db.Schedule.Where(s => s.Date == date);
+                if (excludeEventId.HasValue)
+                {
+                    scheduleQuery = scheduleQuery.Where(s => s.EventId != excludeEventId.Value);
+                }
+                var bookedAvailabilityIds = await scheduleQuery
+                    .Select(s => s.AvailabilityId)
+                    .ToListAsync();
+                
+                // Remove booked slots from both DoW and date-specific availability
+                doWAvailabilityRange = doWAvailabilityRange
+                    .Where(a => !bookedAvailabilityIds.Contains(a.AvailabilityId))
+                    .ToList();
+                dateAvailabilityRange = dateAvailabilityRange
+                    .Where(a => !bookedAvailabilityIds.Contains(a.AvailabilityId))
+                    .ToList();
                     
                 // checks if doWAvailabilityRange and dateAvailabilityRange is continuous
                 var (continuousAvailabilityIds, checkStatus) = 

@@ -117,12 +117,10 @@ export default function NewEventForm({ availableDays, availability, onClose, onS
     if (!location) { setLocationError('Location is required.'); hasError = true }
     if (!date) { setDateError('Please select a date.'); hasError = true }
     if (hasError) return
+    
+    setSaving(true)
     try {
-      setSaving(true)
       await onSave({ title, location, date, startTime, endTime, patientName: 'Alice' })
-    } catch (err) {
-      // Log silently; top banners avoided for inline validation focus
-      console.debug('Create failed (suppressed UI error)', err)
     } finally {
       setSaving(false)
     }

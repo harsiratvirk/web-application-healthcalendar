@@ -100,23 +100,27 @@ export default function EventCalendar() {
       // Step 3: Call createEvent()
       const created = await apiService.createEvent(e, user.nameid)
       
-      // Close form immediately to prevent double-submits
-      setShowNew(false)
-      
       // Step 4: Call createSchedules() with eventId and availabilityIds (if any)
       if (availabilityIds.length > 0) {
         await apiService.createSchedules(created.eventId, e.date, availabilityIds)
       }
       
-      // Step 5: Reload events to show the new one
-      const eventsData = await apiService.getWeeksEventsForPatient(user.nameid, weekStartISO)
-      setEvents(eventsData)
+      // Step 5: Add the new event to state immediately
+      setEvents(prev => [...prev, created])
       
+      // Step 6: Close form and show success
+      setShowNew(false)
       showSuccess('Event created successfully')
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create event'
+      let message = 'Failed to create event'
+      if (err instanceof Error) {
+        if (err.message.includes('Not Acceptable') || err.message.includes('not acceptable')) {
+          message = 'This time slot is already taken. Please choose a different time.'
+        } else {
+          message = err.message
+        }
+      }
       showError(message)
-      throw err
     }
   }
 
@@ -132,12 +136,13 @@ export default function EventCalendar() {
       await apiService.validateEventForUpdate(updatedEvent, user.nameid)
       
       // Step 2: Call checkAvailabilityForUpdate()
+      const workerId = (user as PatientUser).WorkerId
       const availabilityLists = await apiService.checkAvailabilityForUpdate(
         updatedEvent,
         originalEvent.date,
         originalEvent.startTime,
         originalEvent.endTime,
-        user.nameid
+        workerId
       )
       
       // Step 3: Call updateEvent()
@@ -168,16 +173,16 @@ export default function EventCalendar() {
         )
       }
       
-      // Step 7: Reload events
-      const eventsData = await apiService.getWeeksEventsForPatient(user.nameid, weekStartISO)
-      setEvents(eventsData)
+      // Step 7: Update the event in state immediately
+      setEvents(prev => prev.map(evt => 
+        evt.eventId === updatedEvent.eventId ? updatedEvent : evt
+      ))
       
       setEditing(null)
       showSuccess('Event updated successfully')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update event'
       showError(message)
-      throw err
     }
   }
 
@@ -195,9 +200,8 @@ export default function EventCalendar() {
       // Step 2: Call deleteEvent()
       await apiService.deleteEvent(id)
       
-      // Step 3: Reload events
-      const eventsData = await apiService.getWeeksEventsForPatient(user.nameid, weekStartISO)
-      setEvents(eventsData)
+      // Step 3: Remove the event from state immediately
+      setEvents(prev => prev.filter(evt => evt.eventId !== id))
       
       setEditing(null)
       showSuccess('Event deleted successfully')
@@ -265,6 +269,7 @@ export default function EventCalendar() {
           <EditEventForm
             event={editing}
             availableDays={availableDays}
+            availability={availability}
             onClose={() => setEditing(null)}
             onSave={(updatedEvent) => onSaveEdit(updatedEvent, editing)}
             onDelete={onDelete}

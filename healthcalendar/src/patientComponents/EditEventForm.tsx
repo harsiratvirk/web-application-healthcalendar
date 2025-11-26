@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Event } from '../types/event'
+import type { Event, Availability } from '../types/event'
 import '../styles/EventFormsBase.css'
 import '../styles/ConfirmDialog.css'
 
 type Props = {
   event: Event
   availableDays: string[]
+  availability: Availability[]
   onClose: () => void
   onSave: (e: Event) => void | Promise<void>
   onDelete: (id: number) => void | Promise<void>
@@ -23,7 +24,7 @@ const times = (() => {
   return arr
 })()
 
-export default function EditEventForm({ event, availableDays, onClose, onSave, onDelete }: Props) {
+export default function EditEventForm({ event, availableDays, availability, onClose, onSave, onDelete }: Props) {
   const [title, setTitle] = useState(event.title)
   const [location, setLocation] = useState(event.location)
   const [date, setDate] = useState(event.date)
@@ -54,11 +55,10 @@ export default function EditEventForm({ event, availableDays, onClose, onSave, o
     if (!location) { setLocationError('Location is required.'); hasError = true }
     if (!date) { setDateError('Please select a date.'); hasError = true }
     if (hasError) return
+    
+    setSaving(true)
     try {
-      setSaving(true)
       await onSave({ ...event, title, location, date, startTime, endTime })
-    } catch (err) {
-      console.debug('Edit save failed (suppressed UI error)', err)
     } finally {
       setSaving(false)
     }

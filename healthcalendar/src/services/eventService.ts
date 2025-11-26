@@ -197,10 +197,11 @@ export const apiService = {
 					body: JSON.stringify(eventDTO)
 				}
 			);
-			const result = await handleResponse<{ eventId: number }>(response);
+			// Backend returns { EventId: number } with capital E
+			const result = await handleResponse<{ EventId: number }>(response);
 			// Backend returns the created event's ID
 			return {
-				eventId: result.eventId,
+				eventId: result.EventId,
 				...input
 			};
 		} catch (err) {
@@ -212,9 +213,9 @@ export const apiService = {
 	async createSchedules(eventId: number, date: string, availabilityIds: number[]): Promise<void> {
 		try {
 			const queryParams = new URLSearchParams();
-			availabilityIds.forEach(id => queryParams.append('availabilityIds', id.toString()));
-			queryParams.append('eventId', eventId.toString());
-			queryParams.append('date', date);
+			availabilityIds.filter(id => id != null).forEach(id => queryParams.append('availabilityIds', String(id)));
+			queryParams.append('eventId', String(eventId));
+			queryParams.append('date', String(date));
 
 			const response = await fetch(
 				`${API_BASE_URL}/Schedule/createSchedules?${queryParams.toString()}`,
@@ -253,12 +254,14 @@ export const apiService = {
 		oldDate: string,
 		oldFrom: string,
 		oldTo: string,
-		userId: string
+		workerId: string
 	): Promise<{ forCreateSchedules: number[]; forDeleteSchedules: number[]; forUpdateSchedules: number[] }> {
 		try {
-			const eventDTO = toEventDTO(updatedEvent, userId);
+			// Get patientId from the event (for DTO), but use workerId for availability check
+			const patientId = (updatedEvent as any).userId || workerId; // fallback to workerId if userId not on event
+			const eventDTO = toEventDTO(updatedEvent, patientId);
 			const response = await fetch(
-				`${API_BASE_URL}/Availability/checkAvailabilityForUpdate?oldDate=${oldDate}&oldFrom=${oldFrom}:00&oldTo=${oldTo}:00`,
+				`${API_BASE_URL}/Availability/checkAvailabilityForUpdate?oldDate=${oldDate}&oldFrom=${oldFrom}:00&oldTo=${oldTo}:00&userId=${workerId}`,
 				{
 					method: 'POST',
 					headers: getHeaders(),

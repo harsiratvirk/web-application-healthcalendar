@@ -128,9 +128,10 @@ public class AvailabilityRepo : IAvailabilityRepo
         try
         {
             // retreives list of availability for given dayOfWeek between given from and to
+            // Get all 30-minute slots that fall within the requested time range
             var availability = await _db.Availability
                 .Where(a => a.UserId == userId && a.DayOfWeek == dayOfWeek && 
-                       a.Date == null && a.From <= from && a.To >= to)
+                       a.Date == null && a.From >= from && a.From < to)
                 .ToListAsync();
             return (availability, OperationStatus.Ok);
         }
@@ -151,9 +152,10 @@ public class AvailabilityRepo : IAvailabilityRepo
         try
         {
             // retreives list of availability for given date between given from and to
+            // Get all 30-minute slots that fall within the requested time range
             var availability = await _db.Availability
                 .Where(a => a.UserId == userId && a.Date != null &&
-                       a.Date == date && a.From <= from && a.To >= to)
+                       a.Date == date && a.From >= from && a.From < to)
                 .ToListAsync();
             return (availability, OperationStatus.Ok);
         }
