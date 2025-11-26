@@ -33,6 +33,23 @@ function addDaysISO(iso: string, days: number) {
   return toLocalISO(date)
 }
 
+function convertISOtoDay(iso: string) {
+  const dayOfWeekMap: { [key: number]: string } = {
+		0: 'Sunday',
+		1: 'Monday',
+		2: 'Tuesday',
+		3: 'Wednesday',
+		4: 'Thursday',
+		5: 'Friday',
+		6: 'Saturday'
+	};
+  const y = Number(iso.slice(0, 4))
+  const m = Number(iso.slice(5, 7)) - 1
+  const d = Number(iso.slice(8, 10))
+  const dayOfWeek = new Date(y, m, d).getDay()
+  return dayOfWeekMap[dayOfWeek]
+}
+
 export default function EventCalendar() {
   const { showSuccess, showError } = useToast()
   const { logout, user } = useAuth()
@@ -68,13 +85,25 @@ export default function EventCalendar() {
       if (!user?.nameid) return
       
       try {
-        // Step 1: Call getPatientsEventsForWeek() to retrieve patient's events
-        const eventsData = await apiService.getPatientsEventsForWeek(user.nameid, weekStartISO)
-        setEvents(eventsData)
+        // Step 1: Call getWeeksEventsByUserId() to retrieve patient's events
+        const patientsEventsData = await apiService.getWeeksEventsByUserId(user.nameid, weekStartISO)
+        setEvents(patientsEventsData)
         // Step 2: Call getWeeksAvailabilityProper() to retrieve worker's availability
         // Get workerId from patient's JWT token (WorkerId field)
         const workerId = (user as PatientUser).WorkerId
-        const availabilityData = await apiService.getWeeksAvailabilityProper(workerId, weekStartISO)
+        let availabilityData = await apiService.getWeeksAvailabilityProper(workerId, weekStartISO)
+        // Step 3: Call getIdsByWorkerId() to get all ids of patients assigned to worker
+        const userIds = await apiService.getIdsByWorkerId(workerId)
+        const othersUserIds = userIds.filter(id => id !== user.nameid)
+        // Step 4: Call getWeeksEventsByUserIds() retreive other patients events
+        const othersEventsData = await apiService.getWeeksEventsByUserIds(othersUserIds, weekStartISO)
+        // Step 5: Filter out availability already occupied by other patients events
+        othersEventsData.forEach(event => {
+          availabilityData = availabilityData.filter(av => 
+                                  av.startTime.localeCompare(event.startTime) < 0 ||
+                                  av.endTime.localeCompare(event.endTime) > 0 || 
+                                  av.day !== convertISOtoDay(event.date))
+        })
         setAvailability(availabilityData)
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to load calendar data'
