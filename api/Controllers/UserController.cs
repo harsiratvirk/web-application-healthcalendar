@@ -25,7 +25,7 @@ namespace HealthCalendar.Controllers
 
         // Retrieves User with given Id
         [HttpGet("getUser/{userId}")]
-        [Authorize]
+        [Authorize(Roles="Usermanager")]
         public async Task<IActionResult> getUser(string userId)
         {
             try
@@ -114,6 +114,72 @@ namespace HealthCalendar.Controllers
                 _logger.LogError("[UserController] Error from getAllWorkers(): \n" +
                                  "Something went wrong when trying to retreive Users " + 
                                 $"where Role = \"Worker\", Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // Retrieves all Workers not related to any Patient
+        [HttpGet("getUnassignedWorkers")]
+        [Authorize(Roles="Usermanager")]
+        public async Task<IActionResult> getUnassignedWorkers()
+        {
+            try
+            {
+                // retreives list of Users with "Patient" role and a non-null WorkerId
+                // converts list into WorkerIds
+                var workerIds = await _userManager.Users
+                    .Where(u => u.Role == Roles.Patient && u.WorkerId != null)
+                    .Select(u => u.WorkerId)
+                    .ToListAsync();
+                
+                // retreives list of Users with "Worker" role and no assigned Users with "Patient" role
+                // converts list into UserDTOs
+                var userDTOs = await _userManager.Users
+                    .Where(u => u.Role == Roles.Worker && !workerIds.Contains(u.WorkerId))
+                    .Select(u => new UserDTO
+                    {
+                        Id = u.Id,
+                        UserName = u.UserName!,
+                        Name = u.Name,
+                        Role = u.Role
+                    }).ToListAsync();
+                return Ok(userDTOs);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[UserController] Error from getUnassignedWorkers(): \n" +
+                                 "Something went wrong when trying to retreive Users " + 
+                                 "where Role = \"Worker\" and Id is not the WorkerId " + 
+                                $"of any User, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // Retrieves all Patients
+        [HttpGet("getAllPatients")]
+        [Authorize(Roles="Usermanager")]
+        public async Task<IActionResult> getAllPatients()
+        {
+            try
+            {
+                // retreives list of Users with "Patient" role
+                // converts list into UserDTOs
+                var userDTOs = await _userManager.Users
+                    .Where(u => u.Role == Roles.Patient)
+                    .Select(u => new UserDTO
+                    {
+                        Id = u.Id,
+                        UserName = u.UserName!,
+                        Name = u.Name,
+                        Role = u.Role
+                    }).ToListAsync();
+                return Ok(userDTOs);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[UserController] Error from getAllPatients(): \n" +
+                                 "Something went wrong when trying to retreive Users " + 
+                                $"where Role = \"Patient\", Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
