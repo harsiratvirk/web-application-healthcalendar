@@ -653,8 +653,15 @@ namespace HealthCalendar.Controllers
                 }
                 
                 // Filter out availability slots that are already scheduled for this date
-                // But exclude schedules for the event being updated
-                var scheduleQuery = _db.Schedule.Where(s => s.Date == date);
+                // But only for THIS worker's availability slots, and exclude schedules for the event being updated
+                var workerAvailabilityIds = doWAvailabilityRange
+                    .Select(a => a.AvailabilityId)
+                    .Concat(dateAvailabilityRange.Select(a => a.AvailabilityId))
+                    .Distinct()
+                    .ToList();
+                    
+                var scheduleQuery = _db.Schedule
+                    .Where(s => s.Date == date && workerAvailabilityIds.Contains(s.AvailabilityId));
                 if (excludeEventId.HasValue)
                 {
                     scheduleQuery = scheduleQuery.Where(s => s.EventId != excludeEventId.Value);

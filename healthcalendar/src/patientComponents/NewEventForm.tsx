@@ -7,9 +7,11 @@ type Props = {
   availability: Availability[]
   onClose: () => void
   onSave: (e: Omit<Event, 'eventId'>) => void | Promise<void>
+  error?: string | null
+  onClearError?: () => void
 }
 
-export default function NewEventForm({ availableDays, availability, onClose, onSave }: Props) {
+export default function NewEventForm({ availableDays, availability, onClose, onSave, error, onClearError }: Props) {
   const [title, setTitle] = useState('')
   const [location, setLocation] = useState('')
   // Derive today's local ISO (YYYY-MM-DD) to compare with provided ISO dates safely
@@ -29,6 +31,7 @@ export default function NewEventForm({ availableDays, availability, onClose, onS
   const [titleError, setTitleError] = useState<string | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
   const [dateError, setDateError] = useState<string | null>(null)
+  const [conflictError, setConflictError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   // Get available start times for the selected date
@@ -116,6 +119,10 @@ export default function NewEventForm({ availableDays, availability, onClose, onS
     if (!title) { setTitleError('Title is required.'); hasError = true }
     if (!location) { setLocationError('Location is required.'); hasError = true }
     if (!date) { setDateError('Please select a date.'); hasError = true }
+    if (!startTime || !endTime) {
+      setDateError('Your worker is not available on this day. Please select a different date.');
+      hasError = true;
+    }
     if (hasError) return
     
     setSaving(true)
@@ -186,7 +193,7 @@ export default function NewEventForm({ availableDays, availability, onClose, onS
               Start Time
               <select value={startTime} onChange={e => setStartTime(e.target.value)} disabled={startTimeOptions.length === 0}>
                 {startTimeOptions.length === 0 ? (
-                  <option value="">No times available</option>
+                  <option value="">-</option>
                 ) : (
                   startTimeOptions.map(t => (<option key={t} value={t}>{t}</option>))
                 )}
@@ -196,13 +203,23 @@ export default function NewEventForm({ availableDays, availability, onClose, onS
               End Time
               <select value={endTime} onChange={e => setEndTime(e.target.value)} disabled={endTimeOptions.length === 0}>
                 {endTimeOptions.length === 0 ? (
-                  <option value="">No times available</option>
+                  <option value="">-</option>
                 ) : (
                   endTimeOptions.map(t => (<option key={t} value={t}>{t}</option>))
                 )}
               </select>
             </label>
           </div>
+          {(startTimeOptions.length === 0 || endTimeOptions.length === 0) && (
+            <div className="info-message">
+              ⚠️ Your worker is not available on this day. Please select a different date.
+            </div>
+          )}
+          {error && (
+            <div className="info-message info-message--error">
+              ⚠️ {error}
+            </div>
+          )}
           <div className="form__actions">
             <button type="button" className="btn" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn--primary" disabled={saving || validDays.length === 0 || startTimeOptions.length === 0 || endTimeOptions.length === 0}>Save</button>
