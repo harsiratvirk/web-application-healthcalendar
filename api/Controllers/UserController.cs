@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using HealthCalendar.DTOs;
 using HealthCalendar.Models;
 using Microsoft.EntityFrameworkCore;
+using HealthCalendar.Shared;
 
 namespace HealthCalendar.Controllers
 {
@@ -84,6 +85,36 @@ namespace HealthCalendar.Controllers
                 _logger.LogError("[UserController] Error from getUsersByWorkerId(): \n" +
                                  "Something went wrong when trying to retreive Users " + 
                                 $"where WorkerId = {workerId}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // Retrieves all Patients not related to a Worker
+        [HttpGet("getUnassignedPatients")]
+        [Authorize(Roles="Usermanager")]
+        public async Task<IActionResult> getUnassignedPatients()
+        {
+            try
+            {
+                // retreives list of Users with "Patient" role and no WorkerId
+                // converts list into UserDTOs
+                var userDTOs = await _userManager.Users
+                    .Where(u => u.Role == Roles.Patient && u.WorkerId == null)
+                    .Select(u => new UserDTO
+                    {
+                        Id = u.Id,
+                        UserName = u.UserName!,
+                        Name = u.Name,
+                        Role = u.Role
+                    }).ToListAsync();
+                return Ok(userDTOs);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[UserController] Error from getUnassignedPatients(): \n" +
+                                 "Something went wrong when trying to retreive Users " + 
+                                 "where Role = \"Patient\" and WorkerId = null, " + 
+                                $"Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
