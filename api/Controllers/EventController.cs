@@ -205,47 +205,6 @@ namespace HealthCalendar.Controllers
             }
         }
 
-
-        // HTTP PUT functions
-        [HttpPost("updateEvent")]
-        [Authorize(Roles="Patient")]
-        public async Task<IActionResult> updateEvent([FromBody] EventDTO eventDTO)
-        {
-            try {
-                // updates new Event using eventDTO and patient
-                var eventt = new Event
-                {
-                    EventId = eventDTO.EventId,
-                    From = eventDTO.From,
-                    To = eventDTO.To,
-                    Date = eventDTO.Date,
-                    Title = eventDTO.Title,
-                    Location = eventDTO.Location,
-                    UserId = eventDTO.UserId
-                };
-                var status = await _eventRepo.updateEvent(eventt);
-
-                // In case updateEvent() did not succeed
-                if (status == OperationStatus.Error)
-                {
-                    _logger.LogError("[EventController] Error from updatedEvent(): \n" +
-                                     "Could not update Event with updateEvent() " + 
-                                     "from EventRepo.");
-                    return StatusCode(500, "Something went wrong when updating Event");
-                }
-                return Ok(new { Message = "Event has been updated" });
-
-            }
-            catch (Exception e) // In case of unexpected exception
-            {
-                _logger.LogError("[EventController] Error from updateEvent(): \n" +
-                                 "Something went wrong when trying to update Event " +
-                                $"with eventDTO {@eventDTO}, Error message: {e}");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-
         // method that validates Event for a Create Event method
         [HttpPost("validateEventForCreate")]
         [Authorize(Roles="Patient")]
@@ -334,6 +293,47 @@ namespace HealthCalendar.Controllers
                 _logger.LogError("[EventController] Error from validateEventForUpdate(): \n" +
                                  "Something went wrong when trying to validate eventDTO " + 
                                 $"{@eventDTO}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+
+        // HTTP PUT functions
+
+        [HttpPut("updateEvent")]
+        [Authorize(Roles="Patient")]
+        public async Task<IActionResult> updateEvent([FromBody] EventDTO eventDTO)
+        {
+            try {
+                // updates new Event using eventDTO and patient
+                var eventt = new Event
+                {
+                    EventId = eventDTO.EventId,
+                    From = eventDTO.From,
+                    To = eventDTO.To,
+                    Date = eventDTO.Date,
+                    Title = eventDTO.Title,
+                    Location = eventDTO.Location,
+                    UserId = eventDTO.UserId
+                };
+                var status = await _eventRepo.updateEvent(eventt);
+
+                // In case updateEvent() did not succeed
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[EventController] Error from updatedEvent(): \n" +
+                                     "Could not update Event with updateEvent() " + 
+                                     "from EventRepo.");
+                    return StatusCode(500, "Something went wrong when updating Event");
+                }
+                return Ok(new { Message = "Event has been updated" });
+
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[EventController] Error from updateEvent(): \n" +
+                                 "Something went wrong when trying to update Event " +
+                                $"with eventDTO {@eventDTO}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
