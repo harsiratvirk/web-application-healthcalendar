@@ -146,12 +146,32 @@ export const apiService = {
 		}
 	},
 
+	// Get Users Ids by their WorkerId
+	async getIdsByWorkerId(workerId: string): Promise<string[]> {
+		try {
+			const response = await fetch(
+				`${API_BASE_URL}/User/getIdsByWorkerId?workerId=${encodeURIComponent(workerId)}`,
+				{
+					method: 'GET',
+					headers: getHeaders()
+				}
+			)
+			const userIds = await handleResponse<string[]>(response);
+			return userIds;
+		} catch (err) {
+			throw normalizeError(err);
+		}
+	},
+
+
 	// Validate event for create operation
-	async validateEventForCreate(event: NewEventInput, userId: string): Promise<void> {
+	async validateEventForCreate(event: NewEventInput, userId: string, userIds: string[]): Promise<void> {
 		try {
 			const eventDTO = toEventDTO(event, userId);
+			const queryParams = new URLSearchParams();
+			userIds.filter(id => id != null).forEach(id => queryParams.append('userIds', encodeURIComponent(id)));
 			const response = await fetch(
-				`${API_BASE_URL}/Event/validateEventForCreate`,
+				`${API_BASE_URL}/Event/validateEventForCreate?${queryParams.toString()}`,
 				{
 					method: 'POST',
 					headers: getHeaders(),
@@ -231,11 +251,13 @@ export const apiService = {
 	},
 
 	// Validate event for update operation
-	async validateEventForUpdate(event: Event, userId: string): Promise<void> {
+	async validateEventForUpdate(event: Event, userId: string, userIds: string[]): Promise<void> {
 		try {
 			const eventDTO = toEventDTO(event, userId);
+			const queryParams = new URLSearchParams();
+			userIds.filter(id => id != null).forEach(id => queryParams.append('userIds', encodeURIComponent(id)));
 			const response = await fetch(
-				`${API_BASE_URL}/Event/validateEventForUpdate`,
+				`${API_BASE_URL}/Event/validateEventForUpdate?${queryParams.toString()}`,
 				{
 					method: 'POST',
 					headers: getHeaders(),

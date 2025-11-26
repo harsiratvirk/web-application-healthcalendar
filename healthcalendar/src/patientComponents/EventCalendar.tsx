@@ -92,26 +92,29 @@ export default function EventCalendar() {
     }
 
     try {
-      // Step 1: Call validateEventForCreate()
-      await apiService.validateEventForCreate(e, user.nameid)
-      
-      // Step 2: Check if worker has availability for the requested time
-      // Events can only be created when worker is available
+      // Step 1: Call getIdsByWorkerId()
       const workerId = (user as PatientUser).WorkerId
+      const userIds = await apiService.getIdsByWorkerId(workerId)
+
+      // Step 2: Call validateEventForCreate()
+      await apiService.validateEventForCreate(e, user.nameid, userIds)
+      
+      // Step 3: Check if worker has availability for the requested time
+      // Events can only be created when worker is available
       const availabilityIds = await apiService.checkAvailabilityForCreate(e, workerId)
       
-      // Step 3: Call createEvent()
+      // Step 4: Call createEvent()
       const created = await apiService.createEvent(e, user.nameid)
       
-      // Step 4: Call createSchedules() with eventId and availabilityIds (if any)
+      // Step 5: Call createSchedules() with eventId and availabilityIds (if any)
       if (availabilityIds.length > 0) {
         await apiService.createSchedules(created.eventId, e.date, availabilityIds)
       }
       
-      // Step 5: Add the new event to state immediately
+      // Step 6: Add the new event to state immediately
       setEvents(prev => [...prev, created])
       
-      // Step 6: Close form and show success
+      // Step 7: Close form and show success
       setShowNew(false)
       setNewFormError(null)
       showSuccess('Event created successfully')
@@ -136,11 +139,14 @@ export default function EventCalendar() {
     }
 
     try {
-      // Step 1: Call validateEventForUpdate()
-      await apiService.validateEventForUpdate(updatedEvent, user.nameid)
-      
-      // Step 2: Call checkAvailabilityForUpdate()
+      // Step 1: Call getIdsByWorkerId()
       const workerId = (user as PatientUser).WorkerId
+      const userIds = await apiService.getIdsByWorkerId(workerId)
+      
+      // Step 2: Call validateEventForUpdate()
+      await apiService.validateEventForUpdate(updatedEvent, user.nameid, userIds)
+      
+      // Step 3: Call checkAvailabilityForUpdate()
       const availabilityLists = await apiService.checkAvailabilityForUpdate(
         updatedEvent,
         originalEvent.date,
@@ -149,10 +155,10 @@ export default function EventCalendar() {
         workerId
       )
       
-      // Step 3: Call updateEvent()
+      // Step 4: Call updateEvent()
       await apiService.updateEvent(updatedEvent, user.nameid)
       
-      // Step 4: Call createSchedules() for new schedules
+      // Step 5: Call createSchedules() for new schedules
       if (availabilityLists.forCreateSchedules.length > 0) {
         await apiService.createSchedules(
           updatedEvent.eventId,
@@ -161,7 +167,7 @@ export default function EventCalendar() {
         )
       }
       
-      // Step 5: Call deleteSchedulesByAvailabilityIds() for removed schedules
+      // Step 6: Call deleteSchedulesByAvailabilityIds() for removed schedules
       if (availabilityLists.forDeleteSchedules.length > 0) {
         await apiService.deleteSchedulesByAvailabilityIds(
           updatedEvent.eventId,
@@ -169,7 +175,7 @@ export default function EventCalendar() {
         )
       }
       
-      // Step 6: Call updateScheduledEvent() for updated schedules
+      // Step 7: Call updateScheduledEvent() for updated schedules
       if (availabilityLists.forUpdateSchedules.length > 0) {
         await apiService.updateScheduledEvent(
           updatedEvent.eventId,
@@ -177,7 +183,7 @@ export default function EventCalendar() {
         )
       }
       
-      // Step 7: Update the event in state immediately
+      // Step 8: Update the event in state immediately
       setEvents(prev => prev.map(evt => 
         evt.eventId === updatedEvent.eventId ? updatedEvent : evt
       ))

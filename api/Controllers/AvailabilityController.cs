@@ -652,6 +652,7 @@ namespace HealthCalendar.Controllers
                     return ([], getStatus);
                 }
                 
+                /*
                 // Filter out availability slots that are already scheduled for this date
                 // But only for THIS worker's availability slots, and exclude schedules for the event being updated
                 var workerAvailabilityIds = doWAvailabilityRange
@@ -677,6 +678,7 @@ namespace HealthCalendar.Controllers
                 dateAvailabilityRange = dateAvailabilityRange
                     .Where(a => !bookedAvailabilityIds.Contains(a.AvailabilityId))
                     .ToList();
+                */
                     
                 // checks if doWAvailabilityRange and dateAvailabilityRange is continuous
                 var (continuousAvailabilityIds, checkStatus) = 
@@ -763,7 +765,7 @@ namespace HealthCalendar.Controllers
                         // Check if the time slots overlap
                         if (dateAvail.From == doWAvail.From && dateAvail.To == doWAvail.To)
                         {
-                            _logger.LogInformation($"[AvailabilityController] checkAvailability: Conflict - " +
+                            _logger.LogWarning($"[AvailabilityController] checkAvailability: Conflict - " +
                                 $"date-specific and DoW availability both exist for {dateAvail.From}-{dateAvail.To}");
                             return ([], OperationStatus.NotAcceptable);
                         }
@@ -794,7 +796,7 @@ namespace HealthCalendar.Controllers
                 {
                     if (!availabilityMap.ContainsKey(currentTime))
                     {
-                        _logger.LogInformation($"[AvailabilityController] checkAvailability: Missing slot at {currentTime}");
+                        _logger.LogWarning($"[AvailabilityController] checkAvailability: Missing slot at {currentTime}");
                         return ([], OperationStatus.NotAcceptable);
                     }
                     
