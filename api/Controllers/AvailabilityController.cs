@@ -16,13 +16,11 @@ namespace HealthCalendar.Controllers
     {
         private readonly IAvailabilityRepo _availabilityRepo;
         private readonly ILogger<AvailabilityController> _logger;
-        private readonly HealthCalendarDbContext _db;
 
-        public AvailabilityController(IAvailabilityRepo availabilityRepo, ILogger<AvailabilityController> logger, HealthCalendarDbContext db)
+        public AvailabilityController(IAvailabilityRepo availabilityRepo, ILogger<AvailabilityController> logger)
         {
             _availabilityRepo = availabilityRepo;
             _logger = logger;
-            _db = db;
         }
 
         // HTTP GET functions
@@ -295,11 +293,11 @@ namespace HealthCalendar.Controllers
             try
             {
                 // list of AvailabilityIds that new Schedules need to be created for
-                int[] forCreateSchedules = {};
+                var forCreateSchedules = new List<int>();
                 // list of AvailabilityIds that existing Schedules need to be deleted for
-                int[] forDeleteSchedules = {};
+                var forDeleteSchedules = new List<int>();
                 // list of AvailabilityIds that existing Schedules need to be updated for
-                int[] forUpdateSchedules = {};
+                var forUpdateSchedules = new List<int>();
 
                 var updatedDate = updatedEventDTO.Date;
                 var updatedFrom = updatedEventDTO.From;
@@ -333,7 +331,7 @@ namespace HealthCalendar.Controllers
 
                     foreach (var availabilityId in continuousAvailabilityIds)
                     {
-                        forCreateSchedules.Append(availabilityId);
+                        forCreateSchedules.Add(availabilityId);
                     }
                     // Update of Schedules need to start where creation of these Schedules end
                     updateFrom = checkTo;
@@ -358,7 +356,7 @@ namespace HealthCalendar.Controllers
 
                     foreach (var availabilityId in continuousAvailabilityIds)
                     {
-                        forDeleteSchedules.Append(availabilityId);
+                        forDeleteSchedules.Add(availabilityId);
                     }
                     // Update of Schedules need to start where deletion of these Schedules end
                     updateFrom = getTo;
@@ -387,7 +385,7 @@ namespace HealthCalendar.Controllers
 
                     foreach (var availabilityId in continuousAvailabilityIds)
                     {
-                        forCreateSchedules.Append(availabilityId);
+                        forCreateSchedules.Add(availabilityId);
                     }
                     // Update of Schedules need to end where creation of these Schedules start
                     updateTo = checkFrom;
@@ -412,7 +410,7 @@ namespace HealthCalendar.Controllers
 
                     foreach (var availabilityId in continuousAvailabilityIds)
                     {
-                        forDeleteSchedules.Append(availabilityId);
+                        forDeleteSchedules.Add(availabilityId);
                     }
                     // Update of Schedules need to end where deletion of these Schedules start
                     updateTo = getFrom;
@@ -435,19 +433,19 @@ namespace HealthCalendar.Controllers
                     // In case Availability was not continuous, status code for Not Acceptable is returned
                     if (checkStatus == OperationStatus.NotAcceptable) 
                         return StatusCode(406, "Availability was not continuous");
-
+                    
                     foreach (var availabilityId in continuousAvailabilityIds)
                     {
-                        forUpdateSchedules.Append(availabilityId);
+                        forUpdateSchedules.Add(availabilityId);
                     }
                 }
-                
+
                 // Adds all lists of AvailabilityIds into container DTO
                 var availabilityIdLists = new EventUpdateListsDTO
                 {
-                    ForCreateSchedules = forCreateSchedules,
-                    ForDeleteSchedules = forDeleteSchedules,
-                    ForUpdateSchedules = forUpdateSchedules
+                    ForCreateSchedules = forCreateSchedules.ToArray(),
+                    ForDeleteSchedules = forDeleteSchedules.ToArray(),
+                    ForUpdateSchedules = forUpdateSchedules.ToArray()
                 };
                 return Ok(availabilityIdLists);
             }
@@ -651,34 +649,6 @@ namespace HealthCalendar.Controllers
                                      "from AvailabilityController.");
                     return ([], getStatus);
                 }
-                
-                /*
-                // Filter out availability slots that are already scheduled for this date
-                // But only for THIS worker's availability slots, and exclude schedules for the event being updated
-                var workerAvailabilityIds = doWAvailabilityRange
-                    .Select(a => a.AvailabilityId)
-                    .Concat(dateAvailabilityRange.Select(a => a.AvailabilityId))
-                    .Distinct()
-                    .ToList();
-                    
-                var scheduleQuery = _db.Schedule
-                    .Where(s => s.Date == date && workerAvailabilityIds.Contains(s.AvailabilityId));
-                if (excludeEventId.HasValue)
-                {
-                    scheduleQuery = scheduleQuery.Where(s => s.EventId != excludeEventId.Value);
-                }
-                var bookedAvailabilityIds = await scheduleQuery
-                    .Select(s => s.AvailabilityId)
-                    .ToListAsync();
-                
-                // Remove booked slots from both DoW and date-specific availability
-                doWAvailabilityRange = doWAvailabilityRange
-                    .Where(a => !bookedAvailabilityIds.Contains(a.AvailabilityId))
-                    .ToList();
-                dateAvailabilityRange = dateAvailabilityRange
-                    .Where(a => !bookedAvailabilityIds.Contains(a.AvailabilityId))
-                    .ToList();
-                */
                     
                 // checks if doWAvailabilityRange and dateAvailabilityRange is continuous
                 var (continuousAvailabilityIds, checkStatus) = 

@@ -157,7 +157,6 @@ export default function EventCalendar() {
       
       // Step 4: Call updateEvent()
       await apiService.updateEvent(updatedEvent, user.nameid)
-      
       // Step 5: Call createSchedules() for new schedules
       if (availabilityLists.forCreateSchedules.length > 0) {
         await apiService.createSchedules(

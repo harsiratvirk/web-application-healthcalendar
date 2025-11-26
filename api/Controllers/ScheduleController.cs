@@ -284,7 +284,7 @@ namespace HealthCalendar.Controllers
 
         // method that updates Schedules by replacing old Event with updated Event
         [HttpPut("updateScheduledEvent")]
-        [Authorize(Roles="Worker")]
+        [Authorize(Roles="Patient")]
         public async Task<IActionResult> 
             updateScheduledEvent([FromQuery] int eventId, [FromQuery] int[] availabilityIds)
         {
