@@ -155,7 +155,7 @@ namespace HealthCalendar.Controllers
 
 
         // method for retreiving Events of Worker's Patients for the week
-        [HttpPost("getWeeksEventsForWorker")]
+        [HttpGet("getWeeksEventsForWorker")]
         [Authorize(Roles="Worker")]
         public async Task<IActionResult> getWeeksEventsForWorker([FromBody] List<UserDTO> patients, 
                                                                  [FromQuery] DateOnly monday)
@@ -209,6 +209,65 @@ namespace HealthCalendar.Controllers
                                  "Something went wrong when trying to retreive week's events for " + 
                                 $"Patients {patientsString} where monday is on the date {monday}, " +
                                 $"Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // method for retreiving all of a Patient's EventIds
+        [HttpGet("getEventIdsByUserId")]
+        [Authorize(Roles="userManager")]
+        public async Task<IActionResult> getEventIdsByUserId([FromQuery] string userId)
+        {
+            try
+            {
+                var (events, status) = await _eventRepo.getEventsByUserId(userId);
+                // In case getEventsByUserId() did not succeed
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[EventController] Error from getEventIdsByUserId(): \n" +
+                                     "Could not retreive Events with getEventsByUserId() from EventRepo.");
+                        return StatusCode(500, "Something went wrong when retreiving Events");
+                }
+
+                var eventIds = events.Select(e => e.EventId);
+                return Ok(eventIds);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {   
+                _logger.LogError("[EventController] Error from getEventIdsByUserId(): \n" +
+                                 "Something went wrong when trying to retreive EventIds " + 
+                                $"for Events where UserId == {userId}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // method for retreiving all of several Patients EventIds
+        [HttpGet("getEventIdsByUserIds")]
+        [Authorize(Roles="userManager")]
+        public async Task<IActionResult> getEventIdsByUserIds([FromQuery] string[] userIds)
+        {
+            try
+            {
+                var (events, status) = await _eventRepo.getEventsByUserIds(userIds);
+                // In case getEventsByUserIds() did not succeed
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[EventController] Error from getEventIdsByUserIds(): \n" +
+                                     "Could not retreive Events with getEventsByUserIds() from EventRepo.");
+                        return StatusCode(500, "Something went wrong when retreiving Events");
+                }
+
+                var eventIds = events.Select(e => e.EventId);
+                return Ok(eventIds);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {   
+                // makes string listing all UserIds
+                var userIdsString = String.Join(", ", userIds);
+
+                _logger.LogError("[EventController] Error from getEventIdsByUserId(): \n" +
+                                 "Something went wrong when trying to retreive EventIds " + 
+                                $"for Events where UserId is in {userIdsString}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -436,7 +495,7 @@ namespace HealthCalendar.Controllers
 
         // method that deletes range of Events from table with list of EventIds
         [HttpDelete("deleteEventsByIds")]
-        [Authorize(Roles="Worker")]
+        [Authorize(Roles="Worker,Usermanager")]
         public async Task<IActionResult> deleteEventsByIds([FromQuery] int[] eventIds)
         {
             try

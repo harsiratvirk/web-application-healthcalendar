@@ -26,11 +26,11 @@ const LoginPage: React.FC = () => {
 				setLoading(true)
 				setFormError(null)
 				const decoded = await loginPatient({ email, password })
-				// After login, route based on role (Patient -> patient/events; Worker/Admin -> worker calendar in case user misused form)
+				// After login, route based on role (Patient -> patient/events; Worker/Usermanager -> worker calendar in case user misused form)
 				const role = decoded?.role
 				if (role === 'Patient') {
 					navigate('/patient/EventCalendar', { replace: true })
-				} else if (role === 'Admin') {
+				} else if (role === 'Usermanager') {
 					navigate('/worker/WorkerCalendar', { replace: true })
 				} else if (role === 'Worker') {
 					navigate('/worker/WorkerCalendar', { replace: true })

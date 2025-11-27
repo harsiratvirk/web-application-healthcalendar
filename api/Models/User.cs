@@ -13,7 +13,7 @@ namespace HealthCalendar.Models
             PasswordHash
         */
         public string Name { get; set; } = string.Empty;
-        // Role can be "Patient", "Worker" or "Admin"
+        // Role can be "Patient", "Worker" or "Usermanager"
         public string Role { get; set; } = string.Empty;
         
         // Foreign Key (User.Id)

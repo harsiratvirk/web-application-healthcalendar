@@ -17,9 +17,11 @@ namespace HealthCalendar.DTOs
         public DateOnly Date { get; set; }
 
         [Required]
+        [StringLength(30,MinimumLength = 1)]
         public string Title { get; set; } = string.Empty;
 
         [Required]
+        [StringLength(30,MinimumLength = 1)]
         public string Location { get; set; } = string.Empty;
 
         // Foreign Key (User.Id)

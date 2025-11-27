@@ -15,7 +15,7 @@ namespace HealthCalendar.DTOs
         [Required]
         public string Name { get; set; } = string.Empty;
         
-        // Role can be "Patient", "Worker" or "Admin"
+        // Role can be "Patient", "Worker" or "Usermanager"
         [Required]
         public string Role { get; set; } = string.Empty;
         

@@ -27,7 +27,7 @@ const WorkerLoginPage: React.FC = () => {
       setFormError(null)
       const decoded = await loginWorker({ email, password })
       const role = decoded?.role
-  if (role === 'Admin') navigate('/worker/WorkerCalendar', { replace: true })
+  if (role === 'Usermanager') navigate('/worker/WorkerCalendar', { replace: true })
   else if (role === 'Worker') navigate('/worker/WorkerCalendar', { replace: true })
       else if (role === 'Patient') navigate('/patient/EventCalendar', { replace: true })
       else navigate('/worker/login', { replace: true })

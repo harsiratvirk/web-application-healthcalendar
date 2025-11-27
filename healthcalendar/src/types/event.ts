@@ -21,7 +21,7 @@ export interface Availability {
   endTime: ISOTime;
 }
 
-export type UserRole = 'patient' | 'worker' | 'admin';
+export type UserRole = 'patient' | 'worker' | 'usermanager';
 
 // Basic user type kept minimal for MVP forms and role-based rendering.
 export interface User {

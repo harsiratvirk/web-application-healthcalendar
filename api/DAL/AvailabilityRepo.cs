@@ -58,6 +58,24 @@ public class AvailabilityRepo : IAvailabilityRepo
         }
     }
 
+    // method for retreiving all of a Worker's Availability
+    public async Task<(List<Availability>, OperationStatus)> getAvailabilityByUserId(string userId)
+    {
+        try
+        {
+            var availability = await _db.Availability
+                .Where(a => a.UserId == userId)
+                .ToListAsync();
+            return (availability, OperationStatus.Ok);
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            _logger.LogError("[AvailabilityRepo] Error from getAvailabilityById(): \n" +
+                             "Something went wrong when retreiving Availability where " +
+                            $"UserId = {userId}, Error message: {e}");
+            return ([], OperationStatus.Error);
+        }
+    }
 
     // method for retreiving Availability by DayOfWeek and From properties
     public async Task<(List<Availability>, OperationStatus)> 

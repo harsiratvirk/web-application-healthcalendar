@@ -15,6 +15,7 @@ namespace HealthCalendar.DTOs
 
         // Specifies Day of Week 
         [Required]
+        [Range(0,6)]
         public DayOfWeek DayOfWeek { get; set; }
         
         // Specifies sepcific date, overrides overlapping Availability where Date is null

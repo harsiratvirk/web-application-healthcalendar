@@ -71,6 +71,46 @@ namespace HealthCalendar.Controllers
             }
         }
 
+        // method for registering User with Worker Role
+        [Authorize(Roles="Usermanager")]
+        [HttpPost("registerWorker")]
+        public async Task<IActionResult> registerWorker([FromBody] RegisterDTO registerDTO)
+        {
+            try
+            {
+                // Create User with Role set to Patient
+                var worker = new User
+                {
+                    Name = registerDTO.Name,
+                    UserName = registerDTO.Email,
+                    Role = Roles.Worker
+                };
+
+                // Attempts to create new user, automatically hashes passoword
+                var result = await _userManager.CreateAsync(worker, registerDTO.Password);
+
+                // For when registration succeeds
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("[AuthController] Information from registerWorker(): \n " +
+                                          $"Registration succeeded for Worker: {worker.Name}");
+                    return Ok(new { Message = "Worker has been registered" });
+                }
+
+                // For when registration doesn't succeed
+                _logger.LogWarning("[AuthController] Warning from registerWorker(): \n" +
+                                  $"Registration failed for Worker: {worker.Name}");
+                return BadRequest(result.Errors);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[AuthController] Error from RegisterWorker(): \n" +
+                                 "Something went wrong when registering Worker, " +
+                                $"Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         // method for logging in User
         [HttpPost("login")]
         public async Task<IActionResult> login([FromBody] LoginDTO loginDTO)

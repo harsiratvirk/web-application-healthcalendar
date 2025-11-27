@@ -19,16 +19,16 @@ export default function ViewEvent({ event, onClose }: Props) {
   }
 
   return (
-    <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="view-event-title">
-      <div className="modal">
-        <header className="modal__header">
+    <div className="worker-overlay" role="dialog" aria-modal="true" aria-labelledby="view-event-title">
+      <div className="worker-modal">
+        <header className="worker-modal__header">
           <h2 id="view-event-title">View Event</h2>
           <button className="icon-btn" onClick={onClose} aria-label="Close">
             <img src="/images/exit.png" alt="Close" />
           </button>
         </header>
 
-        <div className="form form--view-event">
+        <div className="view-event__content">
           <div className="view-field">
             <label>Patient:</label>
             <p>{event.patientName}</p>
@@ -45,7 +45,7 @@ export default function ViewEvent({ event, onClose }: Props) {
             <label>Date:</label>
             <p>{formatDate(event.date)}</p>
           </div>
-          <div className="form__row">
+          <div className="view-event__row">
             <div className="view-field">
               <label>Start Time</label>
               <p>{event.startTime}</p>
