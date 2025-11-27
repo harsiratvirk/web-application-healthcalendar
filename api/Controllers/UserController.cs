@@ -216,7 +216,7 @@ namespace HealthCalendar.Controllers
 
         // Retrieves Ids of Users related to Worker with given Id
         [HttpGet("getIdsByWorkerId")]
-        [Authorize(Roles="Patient")]
+        [Authorize(Roles="Patient,UserManager")]
         public async Task<IActionResult> getIdsByWorkerId([FromQuery] string workerId)
         {
             try

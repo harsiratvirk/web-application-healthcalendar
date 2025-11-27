@@ -213,6 +213,34 @@ namespace HealthCalendar.Controllers
             }
         }
 
+        // method for retreiving all of a Patient's EventIds
+        [HttpPost("getEventIdsByUserId")]
+        [Authorize(Roles="userManager")]
+        public async Task<IActionResult> getEventIdsByUserId([FromQuery] string userId)
+        {
+            try
+            {
+                var (events, status) = await _eventRepo.getEventsByUserId(userId);
+                // In case getEventsByUserId() did not succeed
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[EventController] Error from getEventIdsByUserId(): \n" +
+                                     "Could not retreive Events with getEventsByUserId() from EventRepo.");
+                        return StatusCode(500, "Something went wrong when retreiving Events");
+                }
+
+                var eventIds = events.Select(e => e.EventId);
+                return Ok(eventIds);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {   
+                _logger.LogError("[EventController] Error from getEventIdsByUserId(): \n" +
+                                 "Something went wrong when trying to retreive EventIds " + 
+                                $"for Events where UserId == {userId}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
 
         // HTTP POST functions
 
@@ -436,7 +464,7 @@ namespace HealthCalendar.Controllers
 
         // method that deletes range of Events from table with list of EventIds
         [HttpDelete("deleteEventsByIds")]
-        [Authorize(Roles="Worker")]
+        [Authorize(Roles="Worker,Usermanager")]
         public async Task<IActionResult> deleteEventsByIds([FromQuery] int[] eventIds)
         {
             try

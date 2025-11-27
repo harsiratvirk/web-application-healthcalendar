@@ -392,7 +392,7 @@ namespace HealthCalendar.Controllers
 
         // method that deletes Schedules where their EventId is in givent list of EventIds from table
         [HttpDelete("deleteSchedulesByEventIds")]
-        [Authorize(Roles="Worker")]
+        [Authorize(Roles="Worker,Usermanager")]
         public async Task<IActionResult> deleteSchedulesByEventIds([FromQuery] int[] eventIds)
         {
             try
