@@ -78,6 +78,29 @@ public class EventRepo : IEventRepo
         }
     }
 
+    // method that retreives all of a Patient's Events
+    public async Task<(List<Event>, OperationStatus)> getEventsByUserIds(string[] userIds)
+    {
+        try
+        {
+            var events = await _db.Events
+                .Where(e => userIds.Contains(e.UserId))
+                .ToListAsync();
+            return (events, OperationStatus.Ok);
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            // makes string listing all UserIds
+            var userIdsString = String.Join(", ", userIds);
+            
+            _logger.LogError("[EventRepo] Error from getEventsByUserIds(): \n" +
+                             "Something went wrong when retreiving range of Events " +
+                            $"where UserId is in {userIdsString}, " + 
+                            $"Error message: {e}");
+            return ([], OperationStatus.Error);
+        }
+    }
+
     // method for retreiving all Events assigned for specific date
     public async Task<(List<Event>, OperationStatus)> getDatesEvents(string[] userIds, DateOnly date)
     {
