@@ -548,6 +548,47 @@ namespace HealthCalendar.Controllers
             }
         }
 
+        // method that deletes all of a Worker's Availability from table
+        [HttpDelete("deleteAvailabilityByUserId")]
+        [Authorize(Roles="Usermanager")]
+        public async Task<IActionResult> deleteAvailabilityByUserId([FromQuery] string userId)
+        {
+            try
+            {
+                // retreives range of Availability that should be deleted
+                var (availabilityRange, getStatus) = 
+                    await _availabilityRepo.getAvailabilityByUserId(userId);
+                // In case getAvailabilityByIds() did not succeed
+                if (getStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from deleteAvailabilityByUserId(): \n" +
+                                     "Could not retreive Availability with getAvailabilityByUserId() " + 
+                                     "from AvailabilityRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Availability");
+                }
+
+                // deletes availabilityRange from table
+                var deleteStatus = await _availabilityRepo.deleteAvailabilityRange(availabilityRange);
+                // In case deleteAvailabilityRange() did not succeed
+                if (deleteStatus == OperationStatus.Error)
+                {
+                    _logger.LogError("[AvailabilityController] Error from deleteAvailabilityByUserId(): \n" +
+                                     "Could not delete Availability with deleteAvailabilityRange() " + 
+                                     "from AvailabilityRepo.");
+                    return StatusCode(500, "Something went wrong when deleting Availability");
+                }
+                
+                return Ok(new { Message = "Availability has been deleted" });
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[AvailabilityController] Error from deleteAvailabilityByUserId(): \n" +
+                                 "Something went wrong when trying to delete range of Availability " +
+                                $"where UserId == {userId}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         // method that deletes range of Availability from table with given DayOfWeek and From properties
         [HttpDelete("deleteAvailabilityByDoW")]
         [Authorize(Roles="Worker")]
