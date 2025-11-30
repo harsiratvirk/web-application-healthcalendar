@@ -18,6 +18,8 @@ const UserManagePage: React.FC = () => {
   const [selectedPatientIds, setSelectedPatientIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [workerToDelete, setWorkerToDelete] = useState<UserDTO | null>(null)
 
   // Load all workers on mount
   useEffect(() => {
@@ -118,6 +120,39 @@ const UserManagePage: React.FC = () => {
     }
   }
 
+  const handleDeleteWorkerClick = (worker: UserDTO) => {
+    setWorkerToDelete(worker)
+    setShowDeleteConfirm(true)
+  }
+
+  const handleDeleteWorkerConfirm = async () => {
+    if (!workerToDelete) return
+
+    try {
+      setLoading(true)
+      setShowDeleteConfirm(false)
+      
+      await userService.deleteUser(workerToDelete.Id)
+      showSuccess(`Healthcare worker ${workerToDelete.Name} has been removed`)
+      
+      // Clear selection if the deleted worker was selected
+      if (selectedWorker?.Id === workerToDelete.Id) {
+        setSelectedWorker(null)
+        setAssignedPatients([])
+      }
+      
+      // Refresh lists
+      await loadWorkers()
+      await loadUnassignedPatients()
+      
+      setWorkerToDelete(null)
+    } catch (err: any) {
+      showError(err?.message || 'Failed to delete healthcare worker')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="manage-page">
       <div className="admin-logout-header">
@@ -137,7 +172,7 @@ const UserManagePage: React.FC = () => {
               className="btn btn--secondary" 
               onClick={() => navigate('/admin/register-worker')}
             >
-              + Register New Worker
+              + Add New Worker
             </button>
           </div>
         </header>
@@ -147,25 +182,36 @@ const UserManagePage: React.FC = () => {
           <section className="manage-section manage-section--left">
             <div className="manage-card">
               <h2 className="manage-card-title">Select Healthcare Worker</h2>
-              <select 
-                value={selectedWorker?.Id || ''} 
-                onChange={handleWorkerChange}
-                className="manage-select"
-              >
-                <option value="">-- Select a worker --</option>
-                {workers.map(worker => (
-                  <option key={worker.Id} value={worker.Id}>
-                    {worker.Name} ({worker.UserName})
-                  </option>
-                ))}
-              </select>
+              <div className="manage-worker-selector">
+                <select 
+                  value={selectedWorker?.Id || ''} 
+                  onChange={handleWorkerChange}
+                  className="manage-select"
+                >
+                  <option value="">-- Select a worker --</option>
+                  {workers.map(worker => (
+                    <option key={worker.Id} value={worker.Id}>
+                      {worker.Name} ({worker.UserName})
+                    </option>
+                  ))}
+                </select>
+                {selectedWorker && (
+                  <button
+                    className="btn btn--danger btn--small"
+                    onClick={() => handleDeleteWorkerClick(selectedWorker)}
+                    disabled={loading}
+                    title="Remove this healthcare worker"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
             </div>
 
             {selectedWorker && (
               <div className="manage-card">
                 <h2 className="manage-card-title">Assign Patients</h2>
                 <label>
-                  Unassigned Patients
                   <div className="manage-checkbox-list">
                     {unassignedPatients.length === 0 ? (
                       <p className="manage-empty">No unassigned patients available</p>
@@ -188,7 +234,7 @@ const UserManagePage: React.FC = () => {
                   onClick={handleAssignPatients}
                   disabled={loading || selectedPatientIds.length === 0}
                 >
-                  Assign Selected Patients
+                  Assign Patients
                 </button>
               </div>
             )}
@@ -253,6 +299,41 @@ const UserManagePage: React.FC = () => {
                 }}
               >
                 Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteConfirm && workerToDelete && (
+        <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title" aria-describedby="delete-confirm-desc">
+          <div className="modal confirm-modal">
+            <header className="modal__header">
+              <h2 id="delete-confirm-title">Confirm Delete</h2>
+              <button className="icon-btn" onClick={() => {
+                setShowDeleteConfirm(false)
+                setWorkerToDelete(null)
+              }} aria-label="Close confirmation">
+                <img src="/images/exit.png" alt="Close" />
+              </button>
+            </header>
+            <div id="delete-confirm-desc" className="confirm-body">
+              Are you sure you want to delete this healthcare worker?
+              <br /><br />
+              <strong>{workerToDelete.Name}</strong> ({workerToDelete.UserName})
+            </div>
+            <div className="confirm-actions">
+              <button type="button" className="btn" onClick={() => {
+                setShowDeleteConfirm(false)
+                setWorkerToDelete(null)
+              }}>Cancel</button>
+              <button 
+                type="button" 
+                className="btn btn--danger" 
+                onClick={handleDeleteWorkerConfirm}
+                disabled={loading}
+              >
+                Delete
               </button>
             </div>
           </div>

@@ -124,4 +124,13 @@ export const userService = {
     });
     return handleResponse(response);
   },
+
+  // Delete a user (worker or patient)
+  async deleteUser(userId: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/User/deleteUser/${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
 };
