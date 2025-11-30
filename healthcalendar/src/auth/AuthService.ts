@@ -1,11 +1,13 @@
-
 import type { LoginDto, RegisterPatientDto } from '../types/auth';
 import type { JwtUser } from '../types/user';
 import { jwtDecode } from 'jwt-decode';
 
-// use VITE_API_URL if set, else default to localhost:5080
+// Authentication service for handling login, registration, and JWT token operations
+
+// API base URL from environment variable, fallback to localhost
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:5080';
 
+// Authenticate user and retrieve JWT token
 export const login = async (credentials: LoginDto): Promise<{ token: string }> => {
     const response = await fetch(`${API_URL}/api/Auth/login`, {
         method: 'POST',
@@ -24,8 +26,9 @@ export const login = async (credentials: LoginDto): Promise<{ token: string }> =
     return { token };
 };
 
-// Separate endpoints; forms enforce roles via AuthContext.
+// Patient registration endpoint (role enforcement handled by AuthContext)
 
+// Register a new patient account
 export const registerPatient = async (userData: RegisterPatientDto): Promise<any> => {
     const response = await fetch(`${API_URL}/api/Auth/registerPatient`, {
         method: 'POST',
@@ -34,6 +37,7 @@ export const registerPatient = async (userData: RegisterPatientDto): Promise<any
     });
     if (!response.ok) {
         try {
+            // Parse backend validation errors if available
             const errorData = await response.json();
             if (Array.isArray(errorData)) {
                 const messages = errorData.map((e: any) => e?.description || e?.Description || String(e)).join(', ');
@@ -45,13 +49,16 @@ export const registerPatient = async (userData: RegisterPatientDto): Promise<any
     return response.json();
 };
 
-// Note: Logout is handled in AuthContext by clearing localStorage (hc_token)
+// Logout function to notify backend and clear session
+// Note: Primary logout handling (clearing localStorage) is done in AuthContext
 export const logout = async () => {
+    // Retrieve token to include in request
     const token = localStorage.getItem('hc_token')
     const headers: HeadersInit = {
         'Content-Type': 'application/json', 
         'Accept': 'application/json'
     }
+    // Include authorization header if token exists
     if (token) headers['Authorization'] = `Bearer ${token}`
 
     const response = await fetch(`${API_URL}/api/Auth/logout`, {
@@ -59,6 +66,7 @@ export const logout = async () => {
         headers: headers
     });
     if (!response.ok) {
+        // Parse and throw backend error messages
         const errorData = await response.json();
             if (Array.isArray(errorData)) {
                 const messages = errorData.map((e: any) => e?.description || e?.Description || String(e)).join(', ');
@@ -67,16 +75,20 @@ export const logout = async () => {
     }
 }
 
-// Decode helper separated so context can reuse without re-implementing logic.
+// Decode and normalize JWT token claims to frontend user object
+// Separated as a helper so AuthContext can reuse without re-implementing logic
 export function decodeUser(token: string): JwtUser {
     try {
         const raw: any = jwtDecode(token);
-        // Normalize common ASP.NET Core claim types to our frontend shape
+        
+        // Normalize ASP.NET Core claim types to simplified frontend format
         const role = raw.role ?? raw["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
         const nameid = raw.nameid ?? raw["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
         const name = raw.name; // JwtRegisteredClaimNames.Name -> "name"
         const jti = raw.jti;
         const iat = typeof raw.iat === 'string' ? parseInt(raw.iat, 10) : raw.iat;
+        
+        // Build normalized user object with property names
         const normalized: any = {
             sub: raw.sub,
             name,
@@ -86,8 +98,10 @@ export function decodeUser(token: string): JwtUser {
             iat,
             exp: raw.exp,
         };
-        // Include WorkerId if present (Patient tokens)
+        
+        // Include WorkerId if present (only on Patient tokens for assigned worker reference)
         if (typeof raw.WorkerId !== 'undefined') normalized.WorkerId = String(raw.WorkerId);
+        
         return normalized as JwtUser;
     } catch (e) {
         throw new Error('Failed to decode token');

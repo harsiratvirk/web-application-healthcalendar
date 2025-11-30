@@ -1,4 +1,3 @@
-// Admin page for managing healthcare workers and patient assignments
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { userService, type UserDTO } from '../services/userService'
@@ -6,6 +5,8 @@ import { useToast } from '../shared/toastContext'
 import { useAuth } from '../auth/AuthContext'
 import '../styles/UserManagement.css'
 import '../styles/EventCalendarPage.css'
+
+// Admin page for managing healthcare workers and patient assignments
 
 const UserManagePage: React.FC = () => {
   const navigate = useNavigate()

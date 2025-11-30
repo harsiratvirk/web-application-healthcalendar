@@ -1,4 +1,3 @@
-// Admin page for registering new healthcare workers
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { userService } from '../services/userService'
@@ -8,12 +7,13 @@ import '../styles/PatientRegistrationPage.css'
 import '../styles/UserManagement.css'
 import '../styles/EventCalendarPage.css'
 
+// Admin page for registering new healthcare workers
+
 const WorkerRegistrationPage: React.FC = () => {
   const navigate = useNavigate()
   const { showSuccess, showError } = useToast()
   const { logout } = useAuth()
   
-  // Form field state
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
