@@ -1,3 +1,4 @@
+// Admin page for managing healthcare workers and patient assignments
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { userService, type UserDTO } from '../services/userService'

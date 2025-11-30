@@ -1,3 +1,4 @@
+// Admin page for registering new healthcare workers
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { userService } from '../services/userService'
