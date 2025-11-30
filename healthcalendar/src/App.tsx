@@ -3,7 +3,7 @@
 //import viteLogo from '/vite.svg'
 import HomePage from './home/HomePage'
 import EventCalendarPage from './patientComponents/EventCalendarPage'
-import WorkerCalendar from './workerComponents/WorkerCalendar'
+import WorkerCalendarPage from './workerComponents/WorkerCalendarPage'
 import PatientLoginPage from './auth/PatientLoginPage'
 import PatientRegistrationPage from './auth/PatientRegistrationPage'
 import WorkerLoginPage from './auth/WorkerLoginPage'
@@ -52,7 +52,7 @@ const App: React.FC = () => {
             path='/worker/WorkerCalendar'
             element={
               <ProtectedRoute allowedRoles={['Worker', 'Usermanager']} redirectPrefix='/worker'>
-                <WorkerCalendar />
+                <WorkerCalendarPage />
               </ProtectedRoute>
             }
           />
@@ -61,7 +61,7 @@ const App: React.FC = () => {
             path='/worker'
             element={
               <ProtectedRoute allowedRoles={['Worker', 'Usermanager']} redirectPrefix='/worker'>
-                <WorkerCalendar />
+                <WorkerCalendarPage />
               </ProtectedRoute>
             }
           />
@@ -70,7 +70,7 @@ const App: React.FC = () => {
             path='/usermanager/Dashboard'
             element={
               <ProtectedRoute allowedRoles={['Usermanager']} redirectPrefix='/worker'>
-                <WorkerCalendar />
+                <WorkerCalendarPage />
               </ProtectedRoute>
             }
           />

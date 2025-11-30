@@ -1,21 +1,25 @@
+// Admin page for managing healthcare workers and patient assignments
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { userService, type UserDTO } from '../services/userService'
 import { useToast } from '../shared/toastContext'
 import { useAuth } from '../auth/AuthContext'
-import '../styles/ManageHealthcareWorkers.css'
-import '../styles/EventCalendar.css'
+import '../styles/UserManagement.css'
+import '../styles/EventCalendarPage.css'
 
 const UserManagePage: React.FC = () => {
   const navigate = useNavigate()
   const { showSuccess, showError } = useToast()
   const { user, logout } = useAuth()
   
+  // State for managing workers and patients
   const [workers, setWorkers] = useState<UserDTO[]>([])
   const [selectedWorker, setSelectedWorker] = useState<UserDTO | null>(null)
   const [assignedPatients, setAssignedPatients] = useState<UserDTO[]>([])
   const [unassignedPatients, setUnassignedPatients] = useState<UserDTO[]>([])
   const [selectedPatientIds, setSelectedPatientIds] = useState<string[]>([])
+  
+  // UI state for loading and modals
   const [loading, setLoading] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -36,6 +40,7 @@ const UserManagePage: React.FC = () => {
     }
   }, [selectedWorker])
 
+  // Fetch all healthcare workers from the backend
   const loadWorkers = async () => {
     try {
       const data = await userService.getAllWorkers()
@@ -45,6 +50,7 @@ const UserManagePage: React.FC = () => {
     }
   }
 
+  // Fetch all patients not currently assigned to any worker
   const loadUnassignedPatients = async () => {
     try {
       const data = await userService.getUnassignedPatients()
@@ -54,6 +60,7 @@ const UserManagePage: React.FC = () => {
     }
   }
 
+  // Fetch all patients assigned to a specific worker
   const loadAssignedPatients = async (workerId: string) => {
     try {
       const data = await userService.getUsersByWorkerId(workerId)
@@ -63,13 +70,15 @@ const UserManagePage: React.FC = () => {
     }
   }
 
+  // Handle selection of a worker from the dropdown
   const handleWorkerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const workerId = e.target.value
     const worker = workers.find(w => w.Id === workerId)
     setSelectedWorker(worker || null)
-    setSelectedPatientIds([])
+    setSelectedPatientIds([]) // Clear patient selections when changing worker
   }
 
+  // Toggle patient checkbox selection for assignment
   const handlePatientToggle = (patientId: string) => {
     setSelectedPatientIds(prev => {
       if (prev.includes(patientId)) {
@@ -80,6 +89,7 @@ const UserManagePage: React.FC = () => {
     })
   }
 
+  // Assign selected patients to the currently selected worker
   const handleAssignPatients = async () => {
     if (!selectedWorker || selectedPatientIds.length === 0) {
       showError('Please select a worker and at least one patient')
@@ -91,7 +101,7 @@ const UserManagePage: React.FC = () => {
       await userService.assignPatientsToWorker(selectedPatientIds, selectedWorker.UserName)
       showSuccess(`Assigned ${selectedPatientIds.length} patient(s) to ${selectedWorker.Name}`)
       
-      // Refresh lists
+      // Refresh lists to reflect the changes
       await loadAssignedPatients(selectedWorker.Id)
       await loadUnassignedPatients()
       setSelectedPatientIds([])
@@ -102,13 +112,14 @@ const UserManagePage: React.FC = () => {
     }
   }
 
+  // Remove a patient's assignment from their current worker
   const handleUnassignPatient = async (patientId: string) => {
     try {
       setLoading(true)
       await userService.unassignPatientFromWorker(patientId)
       showSuccess('Patient unassigned successfully')
       
-      // Refresh lists
+      // Refresh lists to show updated assignments
       if (selectedWorker) {
         await loadAssignedPatients(selectedWorker.Id)
       }
@@ -120,11 +131,13 @@ const UserManagePage: React.FC = () => {
     }
   }
 
+  // Open confirmation modal for deleting a worker
   const handleDeleteWorkerClick = (worker: UserDTO) => {
     setWorkerToDelete(worker)
     setShowDeleteConfirm(true)
   }
 
+  // Execute worker deletion after confirmation
   const handleDeleteWorkerConfirm = async () => {
     if (!workerToDelete) return
 
@@ -135,13 +148,13 @@ const UserManagePage: React.FC = () => {
       await userService.deleteUser(workerToDelete.Id)
       showSuccess(`Worker ${workerToDelete.Name} has been removed`)
       
-      // Clear selection if the deleted worker was selected
+      // Clear selection if the deleted worker was currently selected
       if (selectedWorker?.Id === workerToDelete.Id) {
         setSelectedWorker(null)
         setAssignedPatients([])
       }
       
-      // Refresh lists
+      // Refresh lists to show updated data
       await loadWorkers()
       await loadUnassignedPatients()
       
@@ -155,6 +168,7 @@ const UserManagePage: React.FC = () => {
 
   return (
     <div className="manage-page">
+      {/* Logout button in header */}
       <div className="admin-logout-header">
         <button
           className="logout-btn"
@@ -164,7 +178,9 @@ const UserManagePage: React.FC = () => {
           <span>Log Out</span>
         </button>
       </div>
+      
       <main className="manage-main manage-main--no-top-padding">
+        {/* Page header with title and action buttons */}
         <header className="manage-header">
           <h1 className="manage-title">Manage Healthcare Workers & Patients</h1>
           <div className="manage-actions">
@@ -177,9 +193,11 @@ const UserManagePage: React.FC = () => {
           </div>
         </header>
 
+        {/* Two-column layout: worker selection & assignment on left, assigned patients on right */}
         <div className="manage-content">
           {/* Left Side: Worker Selector and Patient Assignment */}
           <section className="manage-section manage-section--left">
+            {/* Worker selection dropdown with delete button */}
             <div className="manage-card">
               <h2 className="manage-card-title">Select Healthcare Worker</h2>
               <div className="manage-worker-selector">
@@ -195,6 +213,7 @@ const UserManagePage: React.FC = () => {
                     </option>
                   ))}
                 </select>
+                {/* Delete button appears only when a worker is selected */}
                 {selectedWorker && (
                   <button
                     className="btn btn--danger btn--small"
@@ -208,10 +227,12 @@ const UserManagePage: React.FC = () => {
               </div>
             </div>
 
+            {/* Patient assignment section (only visible when worker is selected) */}
             {selectedWorker && (
               <div className="manage-card">
                 <h2 className="manage-card-title">Assign Patients</h2>
                 <label>
+                  {/* List of unassigned patients with checkboxes */}
                   <div className="manage-checkbox-list">
                     {unassignedPatients.length === 0 ? (
                       <p className="manage-empty">No unassigned patients available</p>
@@ -229,6 +250,7 @@ const UserManagePage: React.FC = () => {
                     )}
                   </div>
                 </label>
+                {/* Assign button (disabled when no patients selected) */}
                 <button 
                   className="btn btn--primary" 
                   onClick={handleAssignPatients}
@@ -248,6 +270,7 @@ const UserManagePage: React.FC = () => {
                   ? `Patients Assigned to ${selectedWorker.Name}` 
                   : 'Select a worker to view assigned patients'}
               </h2>
+              {/* Display assigned patients with unassign buttons */}
               {selectedWorker && (
                 <div className="manage-patient-list">
                   {assignedPatients.length === 0 ? (
@@ -276,6 +299,7 @@ const UserManagePage: React.FC = () => {
         </div>
       </main>
 
+      {/* Logout confirmation modal */}
       {showLogoutConfirm && (
         <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title" aria-describedby="logout-confirm-desc">
           <div className="modal confirm-modal">
@@ -305,6 +329,7 @@ const UserManagePage: React.FC = () => {
         </div>
       )}
 
+      {/* Worker deletion confirmation modal */}
       {showDeleteConfirm && workerToDelete && (
         <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title" aria-describedby="delete-confirm-desc">
           <div className="modal confirm-modal">

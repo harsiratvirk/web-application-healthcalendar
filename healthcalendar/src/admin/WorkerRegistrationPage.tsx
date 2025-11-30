@@ -1,31 +1,42 @@
+// Admin page for registering new healthcare workers
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { userService } from '../services/userService'
 import { useToast } from '../shared/toastContext'
 import { useAuth } from '../auth/AuthContext'
 import '../styles/PatientRegistrationPage.css'
-import '../styles/ManageHealthcareWorkers.css'
-import '../styles/EventCalendar.css'
+import '../styles/UserManagement.css'
+import '../styles/EventCalendarPage.css'
 
 const WorkerRegistrationPage: React.FC = () => {
   const navigate = useNavigate()
   const { showSuccess, showError } = useToast()
   const { logout } = useAuth()
+  
+  // Form field state
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  
+  // Validation error state for each field
   const [nameError, setNameError] = useState<string | null>(null)
   const [emailError, setEmailError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
+  
+  // UI state
   const [loading, setLoading] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
+  // Handle form submission and worker registration
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
     setNameError(null)
     setEmailError(null)
     setPasswordError(null)
     let hasError = false
+    
+    // Client-side validation
     if (!name) { setNameError('Name is required.'); hasError = true }
     if (!email) { setEmailError('Email is required.'); hasError = true }
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { 
@@ -38,7 +49,7 @@ const WorkerRegistrationPage: React.FC = () => {
       hasError = true 
     }
     
-    // Check backend for duplicate email if email is structurally valid
+    // Attempt registration if email format is valid (backend will check for duplicates)
     const emailIsValid = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
     if (emailIsValid) {
       try {
@@ -77,6 +88,7 @@ const WorkerRegistrationPage: React.FC = () => {
         <section className="admin-form-content">
           <h1 className="auth-title">Register Healthcare Worker</h1>
           <form className="auth-form" onSubmit={onSubmit} noValidate>
+            {/* Name input field */}
             <label>
               Name
               <input
@@ -86,6 +98,7 @@ const WorkerRegistrationPage: React.FC = () => {
                 onChange={e => {
                   const v = e.target.value
                   setName(v)
+                  // Clear error when user starts typing a valid value
                   if (nameError && v.trim()) setNameError(null)
                 }}
                 className="auth-input"
@@ -94,6 +107,8 @@ const WorkerRegistrationPage: React.FC = () => {
               />
               {nameError && <small className="field-error">{nameError}</small>}
             </label>
+            
+            {/* Email input field with format validation */}
             <label>
               Email
               <input
@@ -104,6 +119,7 @@ const WorkerRegistrationPage: React.FC = () => {
                   const v = e.target.value
                   setEmail(v)
                   const patternOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+                  // Clear error when user enters a valid email format
                   if (emailError) {
                     if (v.trim() && patternOk) setEmailError(null)
                   }
@@ -114,6 +130,8 @@ const WorkerRegistrationPage: React.FC = () => {
               />
               {emailError && <small className="field-error">{emailError}</small>}
             </label>
+            
+            {/* Password input field with minimum length requirement */}
             <label>
               Password
               <input
@@ -123,6 +141,7 @@ const WorkerRegistrationPage: React.FC = () => {
                 onChange={e => {
                   const v = e.target.value
                   setPassword(v)
+                  // Clear error when password meets minimum length
                   if (passwordError) {
                     if (v.length >= 6) setPasswordError(null)
                   }
@@ -150,6 +169,7 @@ const WorkerRegistrationPage: React.FC = () => {
         </section>
       </main>
 
+      {/* Logout confirmation modal */}
       {showLogoutConfirm && (
         <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title" aria-describedby="logout-confirm-desc">
           <div className="modal confirm-modal">
