@@ -215,7 +215,7 @@ namespace HealthCalendar.Controllers
 
         // method for retreiving all of a Patient's EventIds
         [HttpGet("getEventIdsByUserId")]
-        [Authorize(Roles="userManager")]
+        [Authorize(Roles="Admin")]
         public async Task<IActionResult> getEventIdsByUserId([FromQuery] string userId)
         {
             try
@@ -243,7 +243,7 @@ namespace HealthCalendar.Controllers
 
         // method for retreiving all of several Patients EventIds
         [HttpGet("getEventIdsByUserIds")]
-        [Authorize(Roles="userManager")]
+        [Authorize(Roles="Admin")]
         public async Task<IActionResult> getEventIdsByUserIds([FromQuery] string[] userIds)
         {
             try
@@ -495,7 +495,7 @@ namespace HealthCalendar.Controllers
 
         // method that deletes range of Events from table with list of EventIds
         [HttpDelete("deleteEventsByIds")]
-        [Authorize(Roles="Worker,Usermanager")]
+        [Authorize(Roles="Worker,Admin")]
         public async Task<IActionResult> deleteEventsByIds([FromQuery] int[] eventIds)
         {
             try

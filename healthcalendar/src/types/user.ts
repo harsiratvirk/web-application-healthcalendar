@@ -1,4 +1,4 @@
-export type Role = 'Patient' | 'Worker' | 'Usermanager';
+export type Role = 'Patient' | 'Worker' | 'Admin';
 
 // Common fields for all user types
 export interface BaseUser {
@@ -16,10 +16,11 @@ export interface PatientUser extends BaseUser {
   WorkerId: string;
 }
 
-// Worker and UserManager tokens do not include WorkerId.
-
+/**
+ * Worker and Admin tokens do not include WorkerId.
+ */
 export interface WorkerUser extends BaseUser {
-  role: 'Worker' | 'Usermanager';
+  role: 'Worker' | 'Admin';
 }
 
 // Union type that covers all JWT users

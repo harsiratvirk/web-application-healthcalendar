@@ -28,7 +28,7 @@ namespace HealthCalendar.Controllers
 
         // Retrieves User with given Id
         [HttpGet("getUser/{userId}")]
-        [Authorize(Roles="Usermanager")]
+        [Authorize(Roles="Admin")]
         public async Task<IActionResult> getUser(string userId)
         {
             try
@@ -64,7 +64,7 @@ namespace HealthCalendar.Controllers
         
         // Retrieves Users related to Worker with given Id
         [HttpGet("getUsersByWorkerId")]
-        [Authorize(Roles="Worker,Usermanager")]
+        [Authorize(Roles="Worker,Admin")]
         public async Task<IActionResult> getUsersByWorkerId([FromQuery] string workerId)
         {
             try
@@ -94,7 +94,7 @@ namespace HealthCalendar.Controllers
 
         // Retrieves all Workers
         [HttpGet("getAllWorkers")]
-        [Authorize(Roles="Usermanager")]
+        [Authorize(Roles="Admin")]
         public async Task<IActionResult> getAllWorkers()
         {
             try
@@ -123,7 +123,7 @@ namespace HealthCalendar.Controllers
 
         // Retrieves all Workers not related to any Patient
         [HttpGet("getUnassignedWorkers")]
-        [Authorize(Roles="Usermanager")]
+        [Authorize(Roles="Admin")]
         public async Task<IActionResult> getUnassignedWorkers()
         {
             try
@@ -160,7 +160,7 @@ namespace HealthCalendar.Controllers
 
         // Retrieves all Patients
         [HttpGet("getAllPatients")]
-        [Authorize(Roles="Usermanager")]
+        [Authorize(Roles="Admin")]
         public async Task<IActionResult> getAllPatients()
         {
             try
@@ -189,7 +189,7 @@ namespace HealthCalendar.Controllers
 
         // Retrieves all Patients not related to a Worker
         [HttpGet("getUnassignedPatients")]
-        [Authorize(Roles="Usermanager")]
+        [Authorize(Roles="Admin")]
         public async Task<IActionResult> getUnassignedPatients()
         {
             try
@@ -219,7 +219,7 @@ namespace HealthCalendar.Controllers
 
         // Retrieves Ids of Users related to Worker with given Id
         [HttpGet("getIdsByWorkerId")]
-        [Authorize(Roles="Patient,UserManager")]
+        [Authorize(Roles="Patient,Admin")]
         public async Task<IActionResult> getIdsByWorkerId([FromQuery] string workerId)
         {
             try
@@ -246,7 +246,7 @@ namespace HealthCalendar.Controllers
 
         // Assigns Patient to Worker
         [HttpPut("assignPatientToWorker")]
-        [Authorize(Roles="Usermanager")]
+        [Authorize(Roles="Admin")]
         public async Task<IActionResult> 
             assignPatientsToWorker([FromQuery] string patientId, [FromQuery] string workerId)
         {
@@ -282,7 +282,7 @@ namespace HealthCalendar.Controllers
 
         // Unassigns Patient from their Worker
         [HttpPut("unassignPatientFromWorker/{userId}")]
-        [Authorize(Roles="Usermanager")]
+        [Authorize(Roles="Admin")]
         public async Task<IActionResult> 
             unassignPatientFromWorker(string userId)
         {
@@ -315,7 +315,7 @@ namespace HealthCalendar.Controllers
 
         // Assigns Patients to Worker with given Username
         [HttpPut("assignPatientsToWorker")]
-        [Authorize(Roles="Usermanager")]
+        [Authorize(Roles="Admin")]
         public async Task<IActionResult> 
         assignPatientsToWorker([FromQuery] string[] userIds, [FromQuery] string username)
         {
@@ -364,7 +364,7 @@ namespace HealthCalendar.Controllers
         // HTTP DELETE functions
 
         [HttpDelete("deleteUser/{userId}")]
-        [Authorize(Roles="Usermanager")]
+        [Authorize(Roles="Admin")]
         public async Task<IActionResult> deleteUser(string userId)
         {
             try

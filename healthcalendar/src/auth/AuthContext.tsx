@@ -77,14 +77,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return decodedUser;
     };
 
-    // Worker/Usermanager login handler - validates role before committing authentication
+    // Worker/Admin-only login from worker form
     const loginWorker = async (credentials: LoginDto): Promise<JwtUser> => {
         const { token, decodedUser } = await loginRaw(credentials);
-        // Enforce role-based access: only workers and usermanagers can use worker login
-        if (decodedUser.role !== 'Worker' && decodedUser.role !== 'Usermanager') {
+        if (decodedUser.role !== 'Worker' && decodedUser.role !== 'Admin') {
+            // Do not commit token for wrong role
             throw new Error('Please use the patient login for this account.');
         }
-        // Store token and update state on successful worker/usermanager login
+        // Store token and update state on successful worker/Admin login
         localStorage.setItem('hc_token', token);
         setUser(decodedUser);
         setToken(token);

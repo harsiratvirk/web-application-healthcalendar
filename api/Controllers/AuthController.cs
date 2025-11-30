@@ -72,7 +72,7 @@ namespace HealthCalendar.Controllers
         }
 
         // method for registering User with Worker Role
-        [Authorize(Roles="Usermanager")]
+        [Authorize(Roles="Admin")]
         [HttpPost("registerWorker")]
         public async Task<IActionResult> registerWorker([FromBody] RegisterDTO registerDTO)
         {

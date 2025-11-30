@@ -550,7 +550,7 @@ namespace HealthCalendar.Controllers
 
         // method that deletes all of a Worker's Availability from table
         [HttpDelete("deleteAvailabilityByUserId")]
-        [Authorize(Roles="Usermanager")]
+        [Authorize(Roles="Admin")]
         public async Task<IActionResult> deleteAvailabilityByUserId([FromQuery] string userId)
         {
             try

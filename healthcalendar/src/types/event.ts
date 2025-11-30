@@ -21,7 +21,7 @@ export interface Availability {
   endTime: ISOTime;
 }
 
-export type UserRole = 'patient' | 'worker' | 'usermanager';
+export type UserRole = 'patient' | 'worker' | 'admin';
 
 export interface User {
   id: number;

@@ -33,29 +33,26 @@ const PatientLoginPage: React.FC = () => {
 		if (!email) { setEmailError('Email is required.'); hasError = true }
 		if (!password) { setPasswordError('Password is required.'); hasError = true }
 		if (hasError) return
-		
-		try {
-			setLoading(true)
-			setFormError(null)
-			
-			// Authenticate using patient login (role validation happens in AuthContext)
-			const decoded = await loginPatient({ email, password })
-			
-			// Route user based on their role (handles case where wrong login form is used)
-			const role = decoded?.role
-			if (role === 'Patient') {
-				navigate('/patient/EventCalendar', { replace: true })
-			} else if (role === 'Usermanager') {
-				navigate('/worker/WorkerCalendar', { replace: true })
-			} else if (role === 'Worker') {
-				navigate('/worker/WorkerCalendar', { replace: true })
-			} else {
-				navigate('/patient/login', { replace: true })
-			}
-		} catch (err: any) {
-			console.debug('Login failed', err)
-			setFormError(err?.message || 'Invalid email or password.')
-		} finally {
+			try {
+				setLoading(true)
+				setFormError(null)
+				const decoded = await loginPatient({ email, password })
+				// After login, route based on role (Patient -> patient/events; Worker/Admin -> worker calendar in case user misused form)
+				const role = decoded?.role
+				if (role === 'Patient') {
+					navigate('/patient/EventCalendar', { replace: true })
+				} else if (role === 'Admin') {
+					navigate('/worker/WorkerCalendar', { replace: true })
+				} else if (role === 'Worker') {
+					navigate('/worker/WorkerCalendar', { replace: true })
+				} else {
+					// Fallback if role missing
+					navigate('/patient/login', { replace: true })
+				}
+			} catch (err: any) {
+				console.debug('Login failed', err)
+				setFormError(err?.message || 'Invalid email or password.')
+			} finally {
 			setLoading(false)
 		}
 	}

@@ -1,5 +1,4 @@
-// API service layer for User Management (Admin/Usermanager operations)
-// Provides CRUD operations for managing workers and patients
+// API service layer for User Management (Admin operations)
 
 // Represents a user (Patient, Worker, or Usermanager) in the system
 export interface UserDTO {

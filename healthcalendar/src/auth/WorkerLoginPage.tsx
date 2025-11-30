@@ -47,7 +47,7 @@ const WorkerLoginPage: React.FC = () => {
       
       // Route user based on their role (handles Worker, Usermanager, or wrong login form)
       const role = decoded?.role
-  if (role === 'Usermanager') navigate('/admin/manage', { replace: true })
+  if (role === 'Admin') navigate('/admin/manage', { replace: true })
   else if (role === 'Worker') navigate('/worker/WorkerCalendar', { replace: true })
       else if (role === 'Patient') navigate('/patient/EventCalendar', { replace: true })
       else navigate('/worker/login', { replace: true })

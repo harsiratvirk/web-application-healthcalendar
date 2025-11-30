@@ -28,14 +28,14 @@ public static class DbInit
         // Only seeds if User table is empty
         if (!authContext.Users.Any())
         {
-            var usermanager = new User
+            var admin = new User
             {
                 Name = "Adam",
-                UserName = "get@the.manager",
+                UserName = "admin@admin.ad",
                 // Password = "Aaaa4@"
-                Role = Roles.Usermanager
+                Role = Roles.Admin
             };
-            await addUser(userManager, usermanager, "Aaaa4@");
+            await addUser(userManager, admin, "Aaaa4@");
 
             var worker1 = new User
             {

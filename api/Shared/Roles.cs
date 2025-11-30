@@ -5,6 +5,6 @@ namespace HealthCalendar.Shared
     {
         public static string Patient { get { return "Patient"; } }
         public static string Worker { get { return "Worker"; } }
-        public static string Usermanager { get { return "Usermanager"; } }
+        public static string Admin { get { return "Admin"; } }
     }
 }
