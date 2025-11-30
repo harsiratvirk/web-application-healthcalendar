@@ -99,10 +99,11 @@ export default function EventCalendar() {
         const othersEventsData = await apiService.getWeeksEventsByUserIds(othersUserIds, weekStartISO)
         // Step 5: Filter out availability already occupied by other patients events
         othersEventsData.forEach(event => {
+          const eventDay = convertISOtoDay(event.date)
           availabilityData = availabilityData.filter(av => 
-                                  av.startTime.localeCompare(event.startTime) < 0 ||
-                                  av.endTime.localeCompare(event.endTime) > 0 || 
-                                  av.day !== convertISOtoDay(event.date))
+                                  av.day !== eventDay ||
+                                  av.endTime <= event.startTime ||
+                                  av.startTime >= event.endTime)
         })
         setAvailability(availabilityData)
       } catch (err) {

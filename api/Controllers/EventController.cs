@@ -155,7 +155,7 @@ namespace HealthCalendar.Controllers
 
 
         // method for retreiving Events of Worker's Patients for the week
-        [HttpGet("getWeeksEventsForWorker")]
+        [HttpPost("getWeeksEventsForWorker")]
         [Authorize(Roles="Worker")]
         public async Task<IActionResult> getWeeksEventsForWorker([FromBody] List<UserDTO> patients, 
                                                                  [FromQuery] DateOnly monday)
