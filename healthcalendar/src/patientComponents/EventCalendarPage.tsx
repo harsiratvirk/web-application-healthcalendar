@@ -10,6 +10,9 @@ import NewEventForm from './NewEventForm'
 import EditEventForm from './EditEventForm'
 import { useAuth } from '../auth/AuthContext'
 
+// Patient event calendar page - displays weekly calendar with patient's events and worker availability
+
+// Convert Date object to YYYY-MM-DD ISO string in local timezone
 function toLocalISO(date: Date) {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
@@ -17,9 +20,10 @@ function toLocalISO(date: Date) {
   return `${y}-${m}-${d}`
 }
 
+// Get Monday of the week for a given date as ISO string
 function startOfWeekMondayISO(d: Date) {
   const date = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  const day = (date.getDay() + 6) % 7 // 0=Mon
+  const day = (date.getDay() + 6) % 7 // Convert to Monday=0 format
   date.setDate(date.getDate() - day)
   return toLocalISO(date)
 }
@@ -33,6 +37,7 @@ function addDaysISO(iso: string, days: number) {
   return toLocalISO(date)
 }
 
+// Convert ISO date string to day name
 function convertISOtoDay(iso: string) {
   const dayOfWeekMap: { [key: number]: string } = {
 		0: 'Sunday',
@@ -51,19 +56,28 @@ function convertISOtoDay(iso: string) {
 }
 
 export default function EventCalendarPage() {
+  // Toast notifications and authentication context
   const { showSuccess, showError } = useToast()
   const { logout, user } = useAuth()
-  const [events, setEvents] = useState<Event[]>([])
-  const [availability, setAvailability] = useState<Availability[]>([])
+  
+  // Calendar data state
+  const [events, setEvents] = useState<Event[]>([])                      // Patient's events
+  const [availability, setAvailability] = useState<Availability[]>([])   // Worker's available slots
   const [loading, setLoading] = useState(false)
   const [weekStartISO, setWeekStartISO] = useState(startOfWeekMondayISO(new Date()))
+  
+  // UI state for modals and forms
   const [showNew, setShowNew] = useState(false)
-  const [editing, setEditing] = useState<Event | null>(null)
+  const [editing, setEditing] = useState<Event | null>(null) 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  
+  // Form-specific error messages
   const [newFormError, setNewFormError] = useState<string | null>(null)
   const [editFormError, setEditFormError] = useState<string | null>(null)
+  
   const navigate = useNavigate()
 
+  // Format week range text for display
   const weekRangeText = useMemo(() => {
     const startDate = new Date(weekStartISO)
     const endDate = new Date(addDaysISO(weekStartISO, 6))
@@ -79,25 +93,30 @@ export default function EventCalendarPage() {
     Array.from({ length: 7 }, (_, i) => addDaysISO(weekStartISO, i))
   ), [weekStartISO])
 
-  // Load patient's events and worker's availability for the current week
+  // Load patient's events and worker's available time slots for the current week
+  // Availability is filtered to exclude slots already booked by other patients
   useEffect(() => {
     const load = async () => {
       if (!user?.nameid) return
       
       try {
-        // Step 1: Call getWeeksEventsByUserId() to retrieve patient's events
+        // Step 1: Fetch this patient's events for the week
         const patientsEventsData = await apiService.getWeeksEventsByUserId(user.nameid, weekStartISO)
         setEvents(patientsEventsData)
-        // Step 2: Call getWeeksAvailabilityProper() to retrieve worker's availability
-        // Get workerId from patient's JWT token (WorkerId field)
+        
+        // Step 2: Fetch worker's availability for the week
         const workerId = (user as PatientUser).WorkerId
         let availabilityData = await apiService.getWeeksAvailabilityProper(workerId, weekStartISO)
-        // Step 3: Call getIdsByWorkerId() to get all ids of patients assigned to worker
+        
+        // Step 3: Get all patient IDs assigned to this worker
         const userIds = await apiService.getIdsByWorkerId(workerId)
         const othersUserIds = userIds.filter(id => id !== user.nameid)
-        // Step 4: Call getWeeksEventsByUserIds() retreive other patients events
+        
+        // Step 4: Fetch events of other patients assigned to the same worker
         const othersEventsData = await apiService.getWeeksEventsByUserIds(othersUserIds, weekStartISO)
-        // Step 5: Filter out availability already occupied by other patients events
+        
+        // Step 5: Filter availability to exclude time slots occupied by other patients
+        // Only show slots that are available for this patient to book
         othersEventsData.forEach(event => {
           const eventDay = convertISOtoDay(event.date)
           availabilityData = availabilityData.filter(av => 
@@ -114,7 +133,7 @@ export default function EventCalendarPage() {
     load()
   }, [user, weekStartISO, showError])
 
-  // Complete create event workflow as per specification
+  // Handle creating a new event
   const onSaveNew = async (e: Omit<Event, 'eventId'>) => {
     if (!user?.nameid) {
       showError('User not authenticated')
@@ -122,33 +141,34 @@ export default function EventCalendarPage() {
     }
 
     try {
-      // Step 1: Call getIdsByWorkerId()
+      // Step 1: Get all patient IDs assigned to this worker for validation
       const workerId = (user as PatientUser).WorkerId
       const userIds = await apiService.getIdsByWorkerId(workerId)
 
-      // Step 2: Call validateEventForCreate()
+      // Step 2: Validate event doesn't overlap with other patients' events
       await apiService.validateEventForCreate(e, user.nameid, userIds)
       
-      // Step 3: Check if worker has availability for the requested time
-      // Events can only be created when worker is available
+      // Step 3: Check worker availability and get matching availability IDs
+      // Throws error if worker is not available during requested time
       const availabilityIds = await apiService.checkAvailabilityForCreate(e, workerId)
       
-      // Step 4: Call createEvent()
+      // Step 4: Create the event in the database
       const created = await apiService.createEvent(e, user.nameid)
       
-      // Step 5: Call createSchedules() with eventId and availabilityIds (if any)
+      // Step 5: Create schedules to link event with availability blocks
       if (availabilityIds.length > 0) {
         await apiService.createSchedules(created.eventId, e.date, availabilityIds)
       }
       
-      // Step 6: Add the new event to state immediately
+      // Step 6: Update local state with the new event for immediate UI feedback
       setEvents(prev => [...prev, created])
       
-      // Step 7: Close form and show success
+      // Step 7: Close form and show success message
       setShowNew(false)
       setNewFormError(null)
       showSuccess('Event created successfully')
     } catch (err) {
+      // Handle specific error cases
       if (err instanceof Error) {
         if (err.message.includes('Not Acceptable') || err.message.includes('not acceptable')) {
           setEditFormError('This time slot is not available. Please choose a different time.')
@@ -161,7 +181,7 @@ export default function EventCalendarPage() {
     }
   }
 
-  // Complete update event workflow as per specification
+  // Handle updating an existing event
   const onSaveEdit = async (updatedEvent: Event, originalEvent: Event) => {
     if (!user?.nameid) {
       showError('User not authenticated')
@@ -169,14 +189,15 @@ export default function EventCalendarPage() {
     }
 
     try {
-      // Step 1: Call getIdsByWorkerId()
+      // Step 1: Get all patient IDs for validation
       const workerId = (user as PatientUser).WorkerId
       const userIds = await apiService.getIdsByWorkerId(workerId)
       
-      // Step 2: Call validateEventForUpdate()
+      // Step 2: Validate updated event doesn't overlap with other patients
       await apiService.validateEventForUpdate(updatedEvent, user.nameid, userIds)
       
-      // Step 3: Call checkAvailabilityForUpdate()
+      // Step 3: Compare original and updated event to determine schedule changes needed
+      // Returns lists of availability IDs for create, delete, and update operations
       const availabilityLists = await apiService.checkAvailabilityForUpdate(
         updatedEvent,
         originalEvent.date,
@@ -185,9 +206,10 @@ export default function EventCalendarPage() {
         workerId
       )
       
-      // Step 4: Call updateEvent()
+      // Step 4: Update the event in the database
       await apiService.updateEvent(updatedEvent, user.nameid)
-      // Step 5: Call createSchedules() for new schedules
+      
+      // Step 5: Create new schedules for newly covered availability blocks
       if (availabilityLists.forCreateSchedules.length > 0) {
         await apiService.createSchedules(
           updatedEvent.eventId,
@@ -196,7 +218,7 @@ export default function EventCalendarPage() {
         )
       }
       
-      // Step 6: Call deleteSchedulesByAvailabilityIds() for removed schedules
+      // Step 6: Delete schedules for availability blocks no longer covered
       if (availabilityLists.forDeleteSchedules.length > 0) {
         await apiService.deleteSchedulesByAvailabilityIds(
           updatedEvent.eventId,
@@ -204,7 +226,7 @@ export default function EventCalendarPage() {
         )
       }
       
-      // Step 7: Call updateScheduledEvent() for updated schedules
+      // Step 7: Update existing schedules with new event details
       if (availabilityLists.forUpdateSchedules.length > 0) {
         await apiService.updateScheduledEvent(
           updatedEvent.eventId,
@@ -212,28 +234,30 @@ export default function EventCalendarPage() {
         )
       }
       
-      // Step 8: Update the event in state immediately
+      // Step 8: Update local state for immediate UI feedback
       setEvents(prev => prev.map(evt => 
         evt.eventId === updatedEvent.eventId ? updatedEvent : evt
       ))
       
       setEditing(null)
       setEditFormError(null)
-      showSuccess('Event updated successfully')
+      showSuccess('Event created successfully')
     } catch (err) {
+      // Handle specific error cases
       if (err instanceof Error) {
+        // 406 Not Acceptable - time slot unavailable or conflicts with other patient
         if (err.message.includes('Not Acceptable') || err.message.includes('not acceptable')) {
           setEditFormError('This time slot is not available. Please choose a different time.')
         } else {
           showError(err.message)
         }
       } else {
-        showError('Failed to update event')
+        showError('Failed to create event')
       }
     }
   }
 
-  // Complete delete event workflow as per specification
+  // Handle deleting an event
   const onDelete = async (id: number) => {
     if (!user?.nameid) {
       showError('User not authenticated')
@@ -241,13 +265,13 @@ export default function EventCalendarPage() {
     }
 
     try {
-      // Step 1: Call deleteSchedulesByEventId()
+      // Step 1: Delete all schedules linked to this event
       await apiService.deleteSchedulesByEventId(id)
       
-      // Step 2: Call deleteEvent()
+      // Step 2: Delete the event from the database
       await apiService.deleteEvent(id)
       
-      // Step 3: Remove the event from state immediately
+      // Step 3: Remove event from local state for immediate UI feedback
       setEvents(prev => prev.filter(evt => evt.eventId !== id))
       
       setEditing(null)
@@ -259,6 +283,7 @@ export default function EventCalendarPage() {
     }
   }
 
+  // Navigate to previous and next week
   const gotoPrevWeek = () => setWeekStartISO(addDaysISO(weekStartISO, -7))
   const gotoNextWeek = () => setWeekStartISO(addDaysISO(weekStartISO, 7))
 
@@ -292,6 +317,7 @@ export default function EventCalendarPage() {
 
         {loading && <div className="banner">Loading…</div>}
 
+        {/* Main calendar grid showing events and worker availability */}
         <CalendarGrid
           events={events}
           availability={availability}
@@ -300,6 +326,7 @@ export default function EventCalendarPage() {
         />
       </main>
 
+      {/* New event form modal */}
       {showNew && (
         <NewEventForm
           availableDays={availableDays}
@@ -314,6 +341,7 @@ export default function EventCalendarPage() {
         />
       )}
 
+      {/* Edit event form modal */}
       {editing && (
           <EditEventForm
             event={editing}
@@ -330,6 +358,7 @@ export default function EventCalendarPage() {
           />
       )}
 
+      {/* Logout confirmation modal */}
       {showLogoutConfirm && (
         <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title" aria-describedby="logout-confirm-desc">
           <div className="modal confirm-modal">
