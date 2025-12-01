@@ -35,10 +35,10 @@
 
 .auth-image {
     width: 100%;
-    max-width: 550px;
+    max-width: clamp(300px, 50vw, 550px);
     height: auto;
     border-radius: 12px;
-    margin-left: clamp(8rem, 9vw, 3rem);
+    margin-left: clamp(0.75rem, 4vw, 8rem);
 
 }
 
@@ -188,6 +188,6 @@
     }
 
     .auth-image {
-        margin-left: clamp(0.75rem, 3.5vw, 1.5rem);
+        display: none;
     }
 }
