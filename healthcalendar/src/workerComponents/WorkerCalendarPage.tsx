@@ -359,7 +359,7 @@ export default function EventCalendar() {
 				// Modal for confirming when a removed availability will delete an event
 				isOpen={showConfirmModal}
 				title="Are you sure?"
-				message="There's an event scheduled during this time. Removing your availability will delete the connected event."
+				message="There are one or more events scheduled during this time. Removing your availability will delete the connected event."
 				onConfirm={handleConfirmDeletion}
 				onCancel={() => {
 					setShowConfirmModal(false)
