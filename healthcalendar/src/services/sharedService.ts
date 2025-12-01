@@ -163,7 +163,7 @@ export const sharedService = {
 		}
 	},
 
-    // Delete availability by list of AvailabilityIds
+    // Delete Schedules by list of EventIds
 	async deleteSchedulesByEventIds(eventIds: number[]): Promise<void> {
 		try {
 			const queryParams = new URLSearchParams();
