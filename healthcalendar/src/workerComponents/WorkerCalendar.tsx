@@ -9,7 +9,9 @@ import '../styles/WorkerCalendar.css'
 import { useToast } from '../shared/toastContext'
 import { useAuth } from '../auth/AuthContext'
 import ViewEvent from './ViewEvent'
+import ConfirmationModal from './ConfirmationModal'
 
+// Helper function to convert Date to YYYY-MM-DD format
 function toLocalISO(date: Date) {
 	const y = date.getFullYear()
 	const m = String(date.getMonth() + 1).padStart(2, '0')
@@ -17,6 +19,7 @@ function toLocalISO(date: Date) {
 	return `${y}-${m}-${d}`
 }
 
+// Helper function to get the first Monday of the week
 function startOfWeekMondayISO(d: Date) {
 	const date = new Date(d.getFullYear(), d.getMonth(), d.getDate())
 	const day = (date.getDay() + 6) % 7 // 0=Mon
@@ -24,6 +27,7 @@ function startOfWeekMondayISO(d: Date) {
 	return toLocalISO(date)
 }
 
+// Helper function to add days to a date
 function addDaysISO(iso: string, days: number) {
 	const y = Number(iso.slice(0, 4))
 	const m = Number(iso.slice(5, 7)) - 1
@@ -36,7 +40,6 @@ function addDaysISO(iso: string, days: number) {
 export default function EventCalendar() {
 	const { showError } = useToast()
 	const { logout, user } = useAuth()
-	const [showNew, setShowNew] = useState(false)
 	const [events, setEvents] = useState<Event[]>([])
 	const [availability, setAvailability] = useState<Availability[]>([])
 	const [loading, setLoading] = useState(false)
@@ -45,6 +48,7 @@ export default function EventCalendar() {
 	const [isAvailabilityMode, setIsAvailabilityMode] = useState(false)
 	const navigate = useNavigate()
 
+	// Helper function to get the week range text
 	const weekRangeText = useMemo(() => {
 		const startDate = new Date(weekStartISO)
 		const endDate = new Date(addDaysISO(weekStartISO, 6))
@@ -58,7 +62,7 @@ export default function EventCalendar() {
 
 
 	const loadData = async () => {
-		if (!user?.nameid) return
+		if (!user?.nameid) return // User login check
 
 		try {
 			// Get worker's events from the worker's assigned users
@@ -66,10 +70,49 @@ export default function EventCalendar() {
 			const eventsData = await workerService.getWeeksEventsForWorker(userList, weekStartISO)
 			setEvents(eventsData)
 
-			// Get worker's availability
+			// Get worker's availability (all records including overlaps)
 			const workerId = (user as WorkerUser).nameid
-			const availabilityData = await workerService.getWeeksAvailabilityProper(workerId, weekStartISO)
-			setAvailability(availabilityData)
+			const allAvailability = await workerService.getAllWeeksAvailability(workerId, weekStartISO)
+
+			// Process availability to handle cancellations
+			// Db logic: if date availability overlaps with continuous availability, counts as cancelled.
+
+			const processedAvailability: Availability[] = []
+
+			// Filters continuous vs specific availability
+			const continuous = allAvailability.filter(a => !a.date) // date = null
+			const specific = allAvailability.filter(a => a.date) // date != null
+
+			// Check continuous availabilities (overlapping = unavailable)
+			continuous.forEach(c => {
+				// Checks if continuous availability is cancelled by any specific availability
+				const isCancelled = specific.some(s =>
+					s.day === c.day &&
+					s.startTime === c.startTime &&
+					s.endTime === c.endTime
+				)
+
+				if (!isCancelled) {
+					processedAvailability.push(c)
+				}
+			})
+
+			// Check specific availabilities (overlapping = unavailable)
+			specific.forEach(s => {
+				// Checks if specific availability is cancelling a continuous one
+				const isCancelling = continuous.some(c =>
+					c.day === s.day &&
+					c.startTime === s.startTime &&
+					c.endTime === s.endTime
+				)
+
+				// If NOT cancelling a continuous one, it's a specific availability
+				if (!isCancelling) {
+					processedAvailability.push(s)
+				}
+			})
+
+			setAvailability(processedAvailability)
 		} catch (e) {
 			const message = e instanceof Error ? e.message : 'Failed to load calendar data.'
 			showError(message)
@@ -89,56 +132,157 @@ export default function EventCalendar() {
 		setIsAvailabilityMode(!isAvailabilityMode)
 	}
 
+	// Confirmation modal state
+	const [showConfirmModal, setShowConfirmModal] = useState(false)
+	const [pendingDeletion, setPendingDeletion] = useState<{
+		availabilityId: number,
+		eventId: number,
+		action: 'delete' | 'mask',
+		date?: string,
+		startTime?: string,
+		endTime?: string,
+		dayOfWeek?: number
+	} | null>(null)
+
+	// Time slot click handler
 	const handleSlotClick = async (date: string, time: number, dayName: string) => {
 		if (!user?.nameid) return
 
+		// Calculates hours and minutes
 		const h = Math.floor(time / 60)
 		const m = time % 60
+		// Time string in HH:MM format
 		const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 
-		// Check if this slot is covered by an existing availability
-		const found = availability.find(a => {
-			if (a.day !== dayName) return false
-			const startMins = Number(a.startTime.split(':')[0]) * 60 + Number(a.startTime.split(':')[1])
-			const endMins = Number(a.endTime.split(':')[0]) * 60 + Number(a.endTime.split(':')[1])
-			return time >= startMins && time < endMins
-		})
+		// Calculate end time (30 mins later)
+		let endH = h
+		let endM = m + 30
+		if (endM >= 60) {
+			endH++
+			endM -= 60
+		}
+		// End time string in HH:MM format
+		const endTimeStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
 
 		try {
-			if (found) {
-				// Remove availability
-				await workerService.deleteAvailability(found.id)
-			} else {
-				// Add availability (30 min slot)
-				// Convert dayName to dayOfWeek number (0=Sunday, 1=Monday)
+			// New data to ensure latest state
+			const workerId = (user as WorkerUser).nameid
+			const allAvailability = await workerService.getAllWeeksAvailability(workerId, weekStartISO)
+
+			const continuous = allAvailability.filter(a => !a.date)
+			const specific = allAvailability.filter(a => a.date)
+
+			// Check for existing time slots matching this slot
+			const matchingContinuous = continuous.find(a =>
+				a.day === dayName &&
+				// Time string in HH:MM format
+				Number(a.startTime.split(':')[0]) * 60 + Number(a.startTime.split(':')[1]) === time
+			)
+
+			// Check for existing time slots matching this slot
+			const matchingSpecific = specific.find(a =>
+				a.date === date &&
+				// Time string in HH:MM format
+				Number(a.startTime.split(':')[0]) * 60 + Number(a.startTime.split(':')[1]) === time
+			)
+
+			// If slot is currently displayed as available (continuous): create specific availability to mask it (make unavailable)
+			if (matchingContinuous && !matchingSpecific) {
+				// Convert dayName to dayOfWeek number
 				const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 				const dayOfWeek = days.indexOf(dayName)
 
-				if (dayOfWeek === -1) {
-					console.error('Invalid day name:', dayName)
+				// Check for linked events, if any, ask worker for confirmation
+				const eventId = await workerService.findScheduledEventId(matchingContinuous.id, date)
+				if (eventId > 0) {
+					// Delete the event + create a specific availability to mask the continuous one
+					setPendingDeletion({
+						availabilityId: matchingContinuous.id,
+						eventId,
+						action: 'mask',
+						date: date,
+						startTime: timeStr,
+						endTime: endTimeStr,
+						dayOfWeek: dayOfWeek
+					})
+					setShowConfirmModal(true)
 					return
 				}
 
-				// Calculate end time (30 mins later)
-				let endH = h
-				let endM = m + 30
-				if (endM >= 60) {
-					endH++
-					endM -= 60
+				// Create specific availability to mask the continuous one
+				await workerService.createAvailability({
+					startTime: timeStr,
+					endTime: endTimeStr,
+					dayOfWeek,
+					date: date,
+				}, user.nameid)
+			}
+			// If slot is currently displayed as available (specific): delete the specific record
+			else if (!matchingContinuous && matchingSpecific) {
+				// Check for linked events, if any, ask worker for confirmation
+				const eventId = await workerService.findScheduledEventId(matchingSpecific.id, date)
+				if (eventId > 0) {
+					setPendingDeletion({ availabilityId: matchingSpecific.id, eventId, action: 'delete' })
+					setShowConfirmModal(true)
+					return
 				}
-				const endTimeStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
+
+				// Delete the specific record
+				await workerService.deleteAvailability(matchingSpecific.id)
+			}
+			// If unavailable (cancelled - continuous + specific overlap): delete specific record to unmask the continuous one (make available)
+			else if (matchingContinuous && matchingSpecific) {
+				await workerService.deleteAvailability(matchingSpecific.id)
+			}
+			// If slot is unavailable (empty): create specific record (make available)
+			else {
+				const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+				const dayOfWeek = days.indexOf(dayName)
 
 				await workerService.createAvailability({
 					startTime: timeStr,
 					endTime: endTimeStr,
 					dayOfWeek,
-					date: date, // date
+					date: date,
 				}, user.nameid)
 			}
-			// Refresh data
+
 			await loadData()
 		} catch (e) {
 			const message = e instanceof Error ? e.message : 'Failed to update availability.'
+			showError(message)
+		}
+	}
+
+	// Confirmation modal handlers
+	const handleConfirmDeletion = async () => {
+		if (!pendingDeletion) return
+
+		try {
+			// Delete the event first
+			await workerService.deleteEvent(pendingDeletion.eventId)
+
+			// If masking, create masking availability
+			if (pendingDeletion.action === 'mask' && user?.nameid) {
+				if (pendingDeletion.startTime && pendingDeletion.endTime && pendingDeletion.dayOfWeek !== undefined) {
+					await workerService.createAvailability({
+						startTime: pendingDeletion.startTime,
+						endTime: pendingDeletion.endTime,
+						dayOfWeek: pendingDeletion.dayOfWeek,
+						date: pendingDeletion.date,
+					}, user.nameid)
+				}
+			} else {
+				// Remove availability
+				await workerService.deleteAvailability(pendingDeletion.availabilityId)
+			}
+
+			// Reset state
+			setShowConfirmModal(false)
+			setPendingDeletion(null)
+			await loadData()
+		} catch (e) {
+			const message = e instanceof Error ? e.message : 'Failed to delete event and availability.'
 			showError(message)
 		}
 	}
@@ -186,9 +330,11 @@ export default function EventCalendar() {
 				{loading && <div className="banner">Loading…</div>}
 
 				<WorkerCalendarGrid
+					// Main calendar grid with worker's patient's events and worker's availability
 					events={events}
 					availability={availability}
 					weekStartISO={weekStartISO}
+					endHour={20}
 					isAvailabilityMode={isAvailabilityMode}
 					onEdit={(e) => setViewing(e)}
 					onSlotClick={isAvailabilityMode ? handleSlotClick : undefined}
@@ -204,10 +350,22 @@ export default function EventCalendar() {
 			)}
 
 			{isAvailabilityMode && (
+				// Notification alert in bottom right for notifying worker on how to change availability
 				<div className="availability-notification">
 					Press timeboxes to change your availability
 				</div>
 			)}
+			<ConfirmationModal
+				// Modal for confirming when a removed availability will delete an event
+				isOpen={showConfirmModal}
+				title="Are you sure?"
+				message="There's an event scheduled during this time. Removing your availability will delete the connected event."
+				onConfirm={handleConfirmDeletion}
+				onCancel={() => {
+					setShowConfirmModal(false)
+					setPendingDeletion(null)
+				}}
+			/>
 		</div>
 	)
 }

@@ -23,10 +23,6 @@ public static class DbInit
         // an HealthCalendarDbContext, used to do db operations
         HealthCalendarDbContext context = scope.ServiceProvider.GetRequiredService<HealthCalendarDbContext>();
 
-        // Makes sure database is created before seeding
-        await authContext.Database.EnsureCreatedAsync();
-        await context.Database.EnsureCreatedAsync();
-
         /* ----- Seeding User table: ----- */
 
         // Only seeds if User table is empty
