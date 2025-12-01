@@ -139,7 +139,7 @@ public static class DbInit
             context.AddRange(availabilityRange4);
             var availabilityRange5 = 
                 generateContinuousAvailability(TimeOnly.Parse("09:00:00"), TimeOnly.Parse("15:00:00"),
-                                               DayOfWeek.Friday, DateOnly.Parse("5/12/2025"), worker1!);
+                                               DayOfWeek.Friday, null, worker1!);
             context.AddRange(availabilityRange5);
 
             // generates availability for Worker "Arne"
