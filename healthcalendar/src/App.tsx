@@ -49,7 +49,7 @@ const App: React.FC = () => {
             path='/worker/WorkerCalendar'
             element={
               <ProtectedRoute allowedRoles={['Worker']} redirectPrefix='/worker'>
-                <WorkerCalendar />
+                <WorkerCalendarPage />
               </ProtectedRoute>
             }
           />
@@ -58,7 +58,7 @@ const App: React.FC = () => {
             path='/worker'
             element={
               <ProtectedRoute allowedRoles={['Worker']} redirectPrefix='/worker'>
-                <WorkerCalendar />
+                <WorkerCalendarPage />
               </ProtectedRoute>
             }
           />
@@ -67,7 +67,7 @@ const App: React.FC = () => {
             path='/admin/Dashboard'
             element={
               <ProtectedRoute allowedRoles={['Admin']} redirectPrefix='/worker'>
-                <WorkerCalendar />
+                <WorkerCalendarPage />
               </ProtectedRoute>
             }
           />
