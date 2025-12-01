@@ -1,11 +1,11 @@
 // API service layer for User Management (Admin operations)
 
-// Represents a user (Patient, Worker, or Usermanager) in the system
+// Represents a user (Patient, Worker, or Admin) in the system
 export interface UserDTO {
   Id: string;             
   UserName: string;       
   Name: string;            
-  Role: string;            // User role: "Patient", "Worker", or "Usermanager"
+  Role: string;            // User role: "Patient", "Worker", or "Admin"
   WorkerId?: string;       // ID of assigned worker (only for patients)
 }
 
@@ -70,7 +70,7 @@ export const userService = {
     return handleResponse(response);
   },
 
-  // Get all healthcare workers, used in Usermanager dashboard for worker management
+  // Get all healthcare workers, used in Admin dashboard for worker management
   async getAllWorkers(): Promise<UserDTO[]> {
     const response = await fetch(`${API_BASE_URL}/User/getAllWorkers`, {
       method: 'GET',
@@ -79,7 +79,7 @@ export const userService = {
     return handleResponse<UserDTO[]>(response);
   },
 
-  // Get all patients, used in Usermanager dashboard for patient overview
+  // Get all patients, used in Admin dashboard for patient overview
   async getAllPatients(): Promise<UserDTO[]> {
     const response = await fetch(`${API_BASE_URL}/User/getAllPatients`, {
       method: 'GET',

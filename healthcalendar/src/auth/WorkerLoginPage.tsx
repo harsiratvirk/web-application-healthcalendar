@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext'
 import '../styles/WorkerLoginPage.css'
 import NavBar from '../shared/NavBar'
 
-// Worker/Usermanager login page for authenticating healthcare personnel
+// Worker/Admin login page for authenticating healthcare personnel
 
 const WorkerLoginPage: React.FC = () => {
   const navigate = useNavigate()
@@ -22,7 +22,7 @@ const WorkerLoginPage: React.FC = () => {
   // Form-level error state for authentication failures
   const [formError, setFormError] = useState<string | null>(null)
 
-  // Handle form submission and worker/usermanager authentication
+  // Handle form submission and worker/Admin authentication
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -45,7 +45,7 @@ const WorkerLoginPage: React.FC = () => {
       // Authenticate using worker login endpoint
       const decoded = await loginWorker({ email, password })
       
-      // Route user based on their role (handles Worker, Usermanager, or wrong login form)
+      // Route user based on their role (handles Worker, Admin, or wrong login form)
       const role = decoded?.role
   if (role === 'Admin') navigate('/admin/manage', { replace: true })
   else if (role === 'Worker') navigate('/worker/WorkerCalendar', { replace: true })

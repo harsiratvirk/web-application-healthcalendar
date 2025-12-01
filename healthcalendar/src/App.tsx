@@ -40,10 +40,10 @@ const App: React.FC = () => {
           <Route path='/patient/login' element={<PatientLoginPage />} />
           {/* Patient self-registration page */}
           <Route path='/register' element={<PatientRegistrationPage />} />
-          {/* Worker and Usermanager login page */}
+          {/* Worker and Admin login page */}
           <Route path='/worker/login' element={<WorkerLoginPage />} />
           
-          {/* Worker routes - require Worker or Usermanager role */}
+          {/* Worker routes - require Worker or Admin role */}
           {/* Worker calendar shows availability and patient events */}
           <Route
             path='/worker/WorkerCalendar'
@@ -72,7 +72,7 @@ const App: React.FC = () => {
             }
           />
           
-          {/* Admin routes for user management - require Usermanager role */}
+          {/* Admin routes for user management - require Admin role */}
           {/* Register new healthcare workers */}
           <Route
             path='/admin/register-worker'
