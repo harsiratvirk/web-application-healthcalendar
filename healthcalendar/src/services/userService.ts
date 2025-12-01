@@ -1,20 +1,21 @@
 // API service layer for User Management (Admin operations)
 
+// Represents a user (Patient, Worker, or Usermanager) in the system
 export interface UserDTO {
-  Id: string;
-  UserName: string;
-  Name: string;
-  Role: string;
-  WorkerId?: string;
+  Id: string;             
+  UserName: string;       
+  Name: string;            
+  Role: string;            // User role: "Patient", "Worker", or "Usermanager"
+  WorkerId?: string;       // ID of assigned worker (only for patients)
 }
 
+// Data required to register a new healthcare worker
 export interface RegisterWorkerDto {
-  Name: string;
-  Email: string;
-  Password: string;
+  Name: string;            
+  Email: string;           
+  Password: string;       
 }
 
-// Base API URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5080/api';
 
 // Helper to get auth token from localStorage
@@ -23,6 +24,7 @@ function getAuthToken(): string | null {
 }
 
 // Helper to create headers with auth token
+// Adds Authorization header with Bearer token for authenticated requests
 function getHeaders(): HeadersInit {
   const token = getAuthToken();
   const headers: HeadersInit = {
@@ -35,6 +37,7 @@ function getHeaders(): HeadersInit {
 }
 
 // Helper to handle API responses
+// Throws descriptive errors for HTTP failures, parses JSON responses
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const errorText = await response.text();
@@ -67,7 +70,7 @@ export const userService = {
     return handleResponse(response);
   },
 
-  // Get all healthcare workers
+  // Get all healthcare workers, used in Usermanager dashboard for worker management
   async getAllWorkers(): Promise<UserDTO[]> {
     const response = await fetch(`${API_BASE_URL}/User/getAllWorkers`, {
       method: 'GET',
@@ -76,7 +79,7 @@ export const userService = {
     return handleResponse<UserDTO[]>(response);
   },
 
-  // Get all patients
+  // Get all patients, used in Usermanager dashboard for patient overview
   async getAllPatients(): Promise<UserDTO[]> {
     const response = await fetch(`${API_BASE_URL}/User/getAllPatients`, {
       method: 'GET',
@@ -103,7 +106,7 @@ export const userService = {
     return handleResponse<UserDTO[]>(response);
   },
 
-  // Assign multiple patients to a worker (by worker username)
+  // Assign multiple patients to a worker
   async assignPatientsToWorker(patientIds: string[], workerUsername: string): Promise<any> {
     const queryParams = patientIds.map(id => `userIds=${encodeURIComponent(id)}`).join('&');
     const response = await fetch(

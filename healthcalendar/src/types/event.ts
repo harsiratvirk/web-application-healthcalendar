@@ -8,22 +8,21 @@ export interface Event {
   eventId: number;
   title: string;
   location: string;
-  date: ISODate;        // Day of event
-  startTime: ISOTime;   // Inclusive start
-  endTime: ISOTime;     // Exclusive end (convention)
+  date: ISODate;      
+  startTime: ISOTime;   
+  endTime: ISOTime;    
   patientName?: string; // Added when viewed by worker
 }
 
 export interface Availability {
   id: number;
-  day: string;       // Monday, Tuesday, etc.
+  day: string;     
   startTime: ISOTime;
   endTime: ISOTime;
 }
 
 export type UserRole = 'patient' | 'worker' | 'admin';
 
-// Basic user type kept minimal for MVP forms and role-based rendering.
 export interface User {
   id: number;
   name: string;
@@ -32,8 +31,8 @@ export interface User {
   token?: string; // Mock auth token placeholder
 }
 
-// Utility type for creating a new event from a form (without id yet)
+// Utility type for creating a new event from a form
 export type NewEventInput = Omit<Event, 'eventId'>;
 
-// Update payload keeps full Event in this MVP
+// Update payload keeps full Event
 export type UpdateEventInput = Event;

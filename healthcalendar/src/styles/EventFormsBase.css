@@ -101,6 +101,22 @@
     flex-wrap: wrap;
 }
 
+/* Info message for unavailable times */
+.info-message {
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    color: #856404;
+}
+
+.info-message--error {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
 /* Edit form layout helpers */
 .form__actions--edit {
     justify-content: flex-end;
@@ -194,20 +210,4 @@
     .form--new-event .form__row {
         grid-template-columns: 1fr;
     }
-}
-
-/* Info message for unavailable times */
-.info-message {
-    padding: 10px;
-    margin-bottom: 15px;
-    background-color: #fff3cd;
-    border: 1px solid #ffc107;
-    border-radius: 4px;
-    color: #856404;
-}
-
-.info-message--error {
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-    color: #721c24;
 }

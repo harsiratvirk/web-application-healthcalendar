@@ -1,6 +1,3 @@
-//import { useState } from 'react'
-//import reactLogo from './assets/react.svg'
-//import viteLogo from '/vite.svg'
 import HomePage from './home/HomePage'
 import EventCalendarPage from './patientComponents/EventCalendarPage'
 import WorkerCalendarPage from './workerComponents/WorkerCalendarPage'
@@ -28,6 +25,7 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          {/* EventCalendar path for patient calendar */}
           <Route
             path='/patient/EventCalendar'
             element={
@@ -36,18 +34,17 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          {/* Back-compat alias for older path references */}
-          <Route
-            path='/patient/events'
-            element={
-              <ProtectedRoute allowedRoles={['Patient']} redirectPrefix='/patient'>
-                <EventCalendarPage />
-              </ProtectedRoute>
-            }
-          />
+          
+          {/* Public authentication routes - no login required */}
+          {/* Patient login page */}
           <Route path='/patient/login' element={<PatientLoginPage />} />
+          {/* Patient self-registration page */}
           <Route path='/register' element={<PatientRegistrationPage />} />
+          {/* Worker and Usermanager login page */}
           <Route path='/worker/login' element={<WorkerLoginPage />} />
+          
+          {/* Worker routes - require Worker or Usermanager role */}
+          {/* Worker calendar shows availability and patient events */}
           <Route
             path='/worker/WorkerCalendar'
             element={
@@ -74,7 +71,9 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          {/* Admin routes for user management */}
+          
+          {/* Admin routes for user management - require Usermanager role */}
+          {/* Register new healthcare workers */}
           <Route
             path='/admin/register-worker'
             element={
@@ -83,6 +82,7 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          {/* Manage users, assign patients to workers */}
           <Route
             path='/admin/manage'
             element={
@@ -91,6 +91,8 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          
+          {/* Fallback route - any unmatched paths redirect to home page */}
           <Route path='*' element={<HomePage />} />
         </Routes>
       </AuthProvider>

@@ -1,17 +1,16 @@
-// API service layer for HealthCalendar - Patient CRUD operations
-// Provides async operations for Events, Availability, and Schedules
-
 import type { Event, Availability, NewEventInput, UpdateEventInput } from '../types/event';
 
-// Base API URL
+// API service layer for HealthCalendar - Patient CRUD operations
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5080/api';
 
-// Helper to get auth token from localStorage
+// Helper to get auth token from localStorage. Returns the JWT token stored during login, null if not logged in
 function getAuthToken(): string | null {
 	return localStorage.getItem('hc_token');
 }
 
 // Helper to create headers with auth token
+// Adds Authorization header with Bearer token if user is logged in
 function getHeaders(): HeadersInit {
 	const token = getAuthToken();
 	const headers: HeadersInit = {
@@ -24,6 +23,7 @@ function getHeaders(): HeadersInit {
 }
 
 // Helper to handle API responses
+// Throws descriptive errors for HTTP failures, parses JSON responses
 async function handleResponse<T>(response: Response): Promise<T> {
 	if (!response.ok) {
 		const errorText = await response.text();
@@ -96,6 +96,7 @@ function fromAvailabilityDTO(dto: any): Availability {
 // Public API surface
 export const apiService = {
 	// Get patient's events for a specific week
+	// Used in EventCalendarPage to load patient's own events
 	async getWeeksEventsByUserId(userId: string, monday: string): Promise<Event[]> {
 		try {
 			const response = await fetch(
@@ -113,6 +114,7 @@ export const apiService = {
 	},
 
 	// Get several patients events for a specific week
+	// Used to detect conflicts and show other patients' bookings
 	async getWeeksEventsByUserIds(userIds: string[], monday: string): Promise<Event[]> {
 		try {
 			const queryParams = new URLSearchParams();
@@ -133,6 +135,7 @@ export const apiService = {
 	},
 
 	// Get worker's availability for a specific week (excluding overlapping ones)
+	// Used in EventCalendarPage to show available time slots for booking
 	async getWeeksAvailabilityProper(workerId: string, monday: string): Promise<Availability[]> {
 		try {
 			const response = await fetch(
@@ -185,10 +188,12 @@ export const apiService = {
 
 
 	// Validate event for create operation
+	// Step 1 of create workflow: checks for conflicts with other patients' events
 	async validateEventForCreate(event: NewEventInput, userId: string, userIds: string[]): Promise<void> {
 		try {
 			const eventDTO = toEventDTO(event, userId);
 			const queryParams = new URLSearchParams();
+			// Pass all patient IDs for conflict checking
 			userIds.filter(id => id != null).forEach(id => queryParams.append('userIds', encodeURIComponent(id)));
 			const response = await fetch(
 				`${API_BASE_URL}/Event/validateEventForCreate?${queryParams.toString()}`,
@@ -205,6 +210,7 @@ export const apiService = {
 	},
 
 	// Check availability for create operation - returns list of availability IDs
+	// Step 2: finds which availability slots the event will occupy
 	async checkAvailabilityForCreate(event: NewEventInput, userId: string): Promise<number[]> {
 		try {
 			const eventDTO = toEventDTO(event, userId);
@@ -226,6 +232,7 @@ export const apiService = {
 	},
 
 	// Create a new event
+	// Step 3: inserts event into database
 	async createEvent(input: NewEventInput, userId: string): Promise<Event> {
 		try {
 			const eventDTO = toEventDTO(input, userId);
@@ -237,9 +244,7 @@ export const apiService = {
 					body: JSON.stringify(eventDTO)
 				}
 			);
-			// Backend returns { EventId: number } with capital E
 			const result = await handleResponse<{ EventId: number }>(response);
-			// Backend returns the created event's ID
 			return {
 				eventId: result.EventId,
 				...input
@@ -250,6 +255,8 @@ export const apiService = {
 	},
 
 	// Create schedules for an event
+	// Step 4: links event to specific availability slots
+	// Schedule rows mark which availability slots are booked by this event
 	async createSchedules(eventId: number, date: string, availabilityIds: number[]): Promise<void> {
 		try {
 			const queryParams = new URLSearchParams();
@@ -271,6 +278,7 @@ export const apiService = {
 	},
 
 	// Validate event for update operation
+	// Step 1 of update workflow: checks for conflicts excluding the event being updated
 	async validateEventForUpdate(event: Event, userId: string, userIds: string[]): Promise<void> {
 		try {
 			const eventDTO = toEventDTO(event, userId);
@@ -291,6 +299,7 @@ export const apiService = {
 	},
 
 	// Check availability for update operation - returns three lists of availability IDs
+	// Step 2: compares old and new event times to determine schedule changes
 	async checkAvailabilityForUpdate(
 		updatedEvent: Event,
 		oldDate: string,
@@ -299,8 +308,7 @@ export const apiService = {
 		workerId: string
 	): Promise<{ forCreateSchedules: number[]; forDeleteSchedules: number[]; forUpdateSchedules: number[] }> {
 		try {
-			// Get patientId from the event (for DTO), but use workerId for availability check
-			const patientId = (updatedEvent as any).userId || workerId; // fallback to workerId if userId not on event
+			const patientId = (updatedEvent as any).userId || workerId;
 			const eventDTO = toEventDTO(updatedEvent, patientId);
 			const response = await fetch(
 				`${API_BASE_URL}/Availability/checkAvailabilityForUpdate?oldDate=${oldDate}&oldFrom=${oldFrom}:00&oldTo=${oldTo}:00&userId=${workerId}`,
@@ -322,6 +330,7 @@ export const apiService = {
 	},
 
 	// Update an existing event
+	// Step 3: updates event record in database
 	async updateEvent(update: UpdateEventInput, userId: string): Promise<Event> {
 		try {
 			const eventDTO = toEventDTO(update, userId);
@@ -341,6 +350,7 @@ export const apiService = {
 	},
 
 	// Delete schedules by availability IDs after event update
+	// Step 4: removes schedule links for availability slots no longer used
 	async deleteSchedulesByAvailabilityIds(eventId: number, availabilityIds: number[]): Promise<void> {
 		try {
 			const queryParams = new URLSearchParams();
@@ -361,6 +371,7 @@ export const apiService = {
 	},
 
 	// Update schedules with new event
+	// Step 5: updates existing schedule links that remain valid
 	async updateScheduledEvent(eventId: number, availabilityIds: number[]): Promise<void> {
 		try {
 			const queryParams = new URLSearchParams();
@@ -381,6 +392,8 @@ export const apiService = {
 	},
 
 	// Delete schedules by event ID
+	// Step 1 of delete workflow: removes all schedule links for this event
+	// Frees up the availability slots so other patients can book them
 	async deleteSchedulesByEventId(eventId: number): Promise<void> {
 		try {
 			const response = await fetch(
@@ -397,6 +410,8 @@ export const apiService = {
 	},
 
 	// Delete an event
+	// Step 2: removes event record from database
+	// Must delete schedules first to avoid foreign key constraint violation
 	async deleteEvent(eventId: number): Promise<void> {
 		try {
 			const response = await fetch(
@@ -411,24 +426,6 @@ export const apiService = {
 			throw normalizeError(err);
 		}
 	},
-
-	// Legacy mock methods for backward compatibility
-	async getEvents(): Promise<Event[]> {
-		// This is deprecated - use getWeeksEventsByUserId instead
-		console.warn('getEvents() is deprecated. Use getWeeksEventsByUserId() instead.');
-		return [];
-	},
-
-	async getAvailability(): Promise<Availability[]> {
-		// This is deprecated - use getWeeksAvailabilityProper instead
-		console.warn('getAvailability() is deprecated. Use getWeeksAvailabilityProper() instead.');
-		return [];
-	},
-
-	async updateAvailability(_list: Availability[]): Promise<void> {
-		// Worker functionality - not implemented for patient
-		console.warn('updateAvailability() is for worker components only.');
-	}
 };
 
 // Normalize unknown error types
