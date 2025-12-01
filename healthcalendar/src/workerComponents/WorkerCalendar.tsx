@@ -10,6 +10,7 @@ import { useToast } from '../shared/toastContext'
 import { useAuth } from '../auth/AuthContext'
 import ViewEvent from './ViewEvent'
 import ConfirmationModal from './ConfirmationModal'
+import { sharedService } from '../services/sharedService.ts'
 
 // Helper function to convert Date to YYYY-MM-DD format
 function toLocalISO(date: Date) {
@@ -260,7 +261,7 @@ export default function EventCalendar() {
 
 		try {
 			// Delete the event first
-			await workerService.deleteEvent(pendingDeletion.eventId)
+			await sharedService.deleteEvent(pendingDeletion.eventId)
 
 			// If masking, create masking availability
 			if (pendingDeletion.action === 'mask' && user?.nameid) {
