@@ -77,9 +77,30 @@ public class AvailabilityRepo : IAvailabilityRepo
         }
     }
 
+    // method for retreiving specific Availability by DayOfWeek and From properties where Date is not set
+    public async Task<(Availability?, OperationStatus)> 
+        getAvailabilityByDoW(string userId, DayOfWeek dayOfWeek, TimeOnly from)
+    {
+        try
+        {
+            var availability = await _db.Availability
+                .Where(a => a.UserId == userId && a.DayOfWeek == dayOfWeek && a.Date == null && a.From == from)
+                .FirstAsync();
+            return (availability, OperationStatus.Ok);
+        }
+        catch (Exception e) // In case of unexpected exception
+        {
+            _logger.LogError("[AvailabilityRepo] Error from getAvailabilityByDoW(): \n" +
+                             "Something went wrong when retreiving Availability where " +
+                            $"where UserID = {userId}, DayOfWeek = {dayOfWeek}, Date = null and " +
+                            $"From = {from}, Error message: {e}");
+            return (null, OperationStatus.Error);
+        }
+    }
+
     // method for retreiving Availability by DayOfWeek and From properties
     public async Task<(List<Availability>, OperationStatus)> 
-        getAvailabilityByDoW(string userId, DayOfWeek dayOfWeek, TimeOnly from)
+        getAvailabilityRangeByDoW(string userId, DayOfWeek dayOfWeek, TimeOnly from)
     {
         try
         {
@@ -90,7 +111,7 @@ public class AvailabilityRepo : IAvailabilityRepo
         }
         catch (Exception e) // In case of unexpected exception
         {
-            _logger.LogError("[AvailabilityRepo] Error from getAvailabilityByDoW(): \n" +
+            _logger.LogError("[AvailabilityRepo] Error from getAvailabilityRangeByDoW(): \n" +
                              "Something went wrong when retreiving Availability where " +
                             $"where UserID = {userId}, DayOfWeek = {dayOfWeek} and From = {from}, " +
                             $"Error message: {e}");

@@ -168,6 +168,41 @@ namespace HealthCalendar.Controllers
             }
         }
 
+        // method for retreiving specific AvailabilityId by DoW where Date is null
+        [HttpGet("getAvailabilityIdByDoW")]
+        [Authorize(Roles="Worker")]
+        public async Task<IActionResult> 
+            getAvailabilityIdByDoW([FromQuery] string userId, [FromQuery] DayOfWeek dayOfWeek, [FromQuery] TimeOnly from)
+        {
+            try
+            {
+                // retreives Availability
+                var (availability, status) = await _availabilityRepo
+                    .getAvailabilityByDoW(userId,dayOfWeek, from);
+                // In case getAvailabilityByDoW() did not succeed
+                if (status == OperationStatus.Error || availability == null)
+                {
+                    _logger.LogError("[AvailabilityController] Error from getAvailabilityIdByDoW(): \n" +
+                                    "Could not retreive Availability with getAvailabilityByDoW() " + 
+                                    "from AvailabilityRepo.");
+                    return StatusCode(500, "Something went wrong when retreiving Availability");
+                }
+
+                // retreives all AvailabilityIds from availabilityRange
+                var availabilityId = availability.AvailabilityId;
+
+                return Ok(availabilityId);
+            }
+            catch (Exception e) // In case of unexpected exception
+            {
+                _logger.LogError("[AvailabilityController] Error from getAvailabilityIdByDoW(): \n" +
+                                 "Something went wrong when trying to retreive AvailabilityIds from " + 
+                                $"range of Availability where UserId = {userId}, DayOfWeek = {dayOfWeek}, " +
+                                $"Date = null and From = {from}, Error message: {e}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         // method for retreiving AvailabilityIds from range of Availability 
         // The range of Availability is retreived using given DayOfWeek and From properties
         [HttpGet("getAvailabilityIdsByDoW")]
@@ -179,12 +214,12 @@ namespace HealthCalendar.Controllers
             {
                 // retreives list of Availability
                 var (availabilityRange, status) = await _availabilityRepo
-                    .getAvailabilityByDoW(userId,dayOfWeek, from);
-                // In case getAvailabilityByDoW() did not succeed
+                    .getAvailabilityRangeByDoW(userId,dayOfWeek, from);
+                // In case getAvailabilityRangeByDoW() did not succeed
                 if (status == OperationStatus.Error)
                 {
-                    _logger.LogError("[AvailabilityController] Error from getAvailabilityByDoW(): \n" +
-                                    "Could not retreive Availability with getAvailabilityByDoW() " + 
+                    _logger.LogError("[AvailabilityController] Error from getAvailabilityIdsByDoW(): \n" +
+                                    "Could not retreive Availability with getAvailabilityRangeByDoW() " + 
                                     "from AvailabilityRepo.");
                     return StatusCode(500, "Something went wrong when retreiving Availability");
                 }
@@ -198,8 +233,8 @@ namespace HealthCalendar.Controllers
             {
                 _logger.LogError("[AvailabilityController] Error from getAvailabilityIdsByDoW(): \n" +
                                  "Something went wrong when trying to retreive AvailabilityIds from " + 
-                                $"range of Availability where DayOfWeek = {dayOfWeek} and From = {from}, " +
-                                $"Error message: {e}");
+                                $"range of Availability where UserId = {userId}, DayOfWeek = {dayOfWeek} " +
+                                $"and From = {from}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -599,12 +634,12 @@ namespace HealthCalendar.Controllers
             {
                 // retreives range of Availability that should be deleted
                 var (availabilityRange, getStatus) = 
-                    await _availabilityRepo.getAvailabilityByDoW(userId, dayOfWeek, from);
-                // In case getAvailabilityByDoW() did not succeed
+                    await _availabilityRepo.getAvailabilityRangeByDoW(userId, dayOfWeek, from);
+                // In case getAvailabilityRangeByDoW() did not succeed
                 if (getStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[AvailabilityController] Error from deleteAvailabilityByDoW(): \n" +
-                                     "Could not retreive Availability with getAvailabilityByDoW() " + 
+                                     "Could not retreive Availability with getAvailabilityRangeByDoW() " + 
                                      "from AvailabilityRepo.");
                     return StatusCode(500, "Something went wrong when retreiving Availability");
                 }

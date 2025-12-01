@@ -215,6 +215,26 @@ export const workerService = {
 		}
 	},
 
+	// Gets Ids of all Availability in a specific timeslot on a specific day of the week
+	async getAvailabilityIdByDoW(userId: string, dayOfWeek: number, from: string): Promise<number> {
+		try {
+			// Fixes HH:MM:SS format
+			const fromTime = from.length === 5 ? `${from}:00` : from;
+			
+			const response = await fetch(
+				`${API_BASE_URL}/Availability/getAvailabilityIdByDoW?userId=${encodeURIComponent(userId)}&dayOfWeek=${dayOfWeek}&from=${encodeURIComponent(fromTime)}`,
+				{
+					method: 'GET',
+					headers: getHeaders()
+				}
+			);
+			const availabilityIds = await handleResponse<number>(response);
+			return availabilityIds;
+		} catch (err) {
+			throw normalizeError(err);
+		}
+	},
+
 	// Update schedules with new availability
 	async updateScheduledAvailability(oldAvailabilityIds: number[], newAvailabilityId: number): Promise<void> {
 		try {
