@@ -1,45 +1,6 @@
 import type { Availability } from '../types/event';
-
-// Base URL for API requests
-const API_BASE = 'http://localhost:5080/api';
-
-// Helper to get auth token from localStorage
-function getAuthToken(): string | null {
-	return localStorage.getItem('hc_token');
-}
-
-// Helper to create headers with auth token
-function getHeaders(): HeadersInit {
-	const token = getAuthToken();
-	const headers: HeadersInit = {
-		'Content-Type': 'application/json',
-	};
-	if (token) {
-		headers['Authorization'] = `Bearer ${token}`;
-	}
-	return headers;
-}
-
-// Helper to handle API responses
-async function handleResponse<T>(response: Response): Promise<T> {
-	if (!response.ok) {
-		const errorText = await response.text();
-		if (response.status === 406) {
-			throw new Error('Request not acceptable: ' + errorText);
-		} else if (response.status === 500) {
-			throw new Error('Server error: ' + errorText);
-		} else if (response.status === 401) {
-			throw new Error('Unauthorized. Please log in again.');
-		} else {
-			throw new Error(`HTTP ${response.status}: ${errorText}`);
-		}
-	}
-	const contentType = response.headers.get('content-type');
-	if (contentType && contentType.includes('application/json')) {
-		return await response.json();
-	}
-	return {} as T;
-}
+// Imports functions shared with other services
+import { API_BASE_URL, getHeaders, handleResponse } from './sharedService.ts'
 
 interface AvailabilityDTO {
 	AvailabilityId?: number;
@@ -120,7 +81,7 @@ export const workerService = {
 	async getUsersByWorkerId(workerId: string): Promise<UserDTO[]> {
 		try {
 			const response = await fetch(
-				`${API_BASE}/User/getUsersByWorkerId?workerId=${encodeURIComponent(workerId)}`,
+				`${API_BASE_URL}/User/getUsersByWorkerId?workerId=${encodeURIComponent(workerId)}`,
 				{
 					method: 'GET',
 					headers: getHeaders()
@@ -137,7 +98,7 @@ export const workerService = {
 	async getWeeksEventsForWorker(patients: UserDTO[], monday: string): Promise<any[]> {
 		try {
 			const response = await fetch(
-				`${API_BASE}/Event/getWeeksEventsForWorker?monday=${monday}`,
+				`${API_BASE_URL}/Event/getWeeksEventsForWorker?monday=${monday}`,
 				{
 					method: 'POST',
 					headers: getHeaders(),
@@ -164,7 +125,7 @@ export const workerService = {
 		try {
 			const availabilityDTO = toAvailabilityDTO(availability, userId);
 			const response = await fetch(
-				`${API_BASE}/Availability/createAvailability`,
+				`${API_BASE_URL}/Availability/createAvailability`,
 				{
 					method: 'POST',
 					headers: getHeaders(),
@@ -181,7 +142,7 @@ export const workerService = {
 	async getAllWeeksAvailability(workerId: string, monday: string): Promise<Availability[]> {
 		try {
 			const response = await fetch(
-				`${API_BASE}/Availability/getAllWeeksAvailability?userId=${workerId}&monday=${monday}`,
+				`${API_BASE_URL}/Availability/getAllWeeksAvailability?userId=${workerId}&monday=${monday}`,
 				{
 					method: 'GET',
 					headers: getHeaders()
@@ -198,7 +159,7 @@ export const workerService = {
 	async getWeeksAvailabilityProper(workerId: string, monday: string): Promise<Availability[]> {
 		try {
 			const response = await fetch(
-				`${API_BASE}/Availability/getWeeksAvailabilityProper?userId=${workerId}&monday=${monday}`,
+				`${API_BASE_URL}/Availability/getWeeksAvailabilityProper?userId=${workerId}&monday=${monday}`,
 				{
 					method: 'GET',
 					headers: getHeaders()
@@ -215,7 +176,7 @@ export const workerService = {
 	async deleteAvailability(availabilityId: number): Promise<void> {
 		try {
 			const response = await fetch(
-				`${API_BASE}/Availability/deleteAvailability/${availabilityId}`,
+				`${API_BASE_URL}/Availability/deleteAvailability/${availabilityId}`,
 				{
 					method: 'DELETE',
 					headers: getHeaders()
@@ -234,7 +195,7 @@ export const workerService = {
 			const fromTime = from.length === 5 ? `${from}:00` : from;
 			
 			const response = await fetch(
-				`${API_BASE}/Availability/deleteAvailabilityByDoW?dayOfWeek=${dayOfWeek}&from=${encodeURIComponent(fromTime)}`,
+				`${API_BASE_URL}/Availability/deleteAvailabilityByDoW?dayOfWeek=${dayOfWeek}&from=${encodeURIComponent(fromTime)}`,
 				{
 					method: 'DELETE',
 					headers: getHeaders()
@@ -250,7 +211,7 @@ export const workerService = {
 	async findScheduledEventId(availabilityId: number, date: string): Promise<number> {
 		try {
 			const response = await fetch(
-				`${API_BASE}/Schedule/findScheduledEventId?availabilityId=${availabilityId}&date=${date}`,
+				`${API_BASE_URL}/Schedule/findScheduledEventId?availabilityId=${availabilityId}&date=${date}`,
 				{
 					method: 'GET',
 					headers: getHeaders()
@@ -266,7 +227,7 @@ export const workerService = {
 	async deleteEvent(eventId: number): Promise<void> {
 		try {
 			const response = await fetch(
-				`${API_BASE}/Event/deleteEvent/${eventId}`,
+				`${API_BASE_URL}/Event/deleteEvent/${eventId}`,
 				{
 					method: 'DELETE',
 					headers: getHeaders()
