@@ -46,10 +46,24 @@ export const adminService = {
     }
   },
 
-  // Gets all EventIds from patient's events
+  // Gets all EventIds from a patient's events
   async getEventIdsByUserId(userId: string): Promise<number[]> {
     try {
       const response = await fetch(`${API_BASE_URL}/Event/getEventIdsByUserId?userId=${encodeURIComponent(userId)}`, {
+        method: 'GET',
+        headers: getHeaders(),
+      });
+      return handleResponse<number[]>(response);
+    } catch (err) {
+      throw normalizeError(err);
+    }
+  },
+
+  // Gets all EventIds from several patients events
+  async getEventIdsByUserIds(userIds: string[]): Promise<number[]> {
+    const queryParams = userIds.map(id => `userIds=${encodeURIComponent(id)}`).join('&');
+    try {
+      const response = await fetch(`${API_BASE_URL}/Event/getEventIdsByUserIds?${queryParams}`, {
         method: 'GET',
         headers: getHeaders(),
       });
@@ -89,10 +103,37 @@ export const adminService = {
     }
   },
 
+  // Unassign several patients from their worker
+  async unassignPatientsFromWorker(patientIds: string[]): Promise<any> {
+    try {
+      const queryParams = patientIds.map(id => `userIds=${encodeURIComponent(id)}`).join('&');
+      const response = await fetch(`${API_BASE_URL}/User/unassignPatientsFromWorker?${queryParams}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+      });
+      return handleResponse(response);
+    } catch (err) {
+      throw normalizeError(err);
+    }
+  },
+
   // Delete a user (worker or patient)
   async deleteUser(userId: string): Promise<any> {
     try {
       const response = await fetch(`${API_BASE_URL}/User/deleteUser/${encodeURIComponent(userId)}`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      });
+      return handleResponse(response);
+    } catch (err) {
+      throw normalizeError(err);
+    }
+  },
+
+  // Delete all of a worker's availability
+  async deleteAvailabilityByUserId(userId: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/Availability/deleteAvailabilityByUserId?userId=${encodeURIComponent(userId)}`, {
         method: 'DELETE',
         headers: getHeaders(),
       });

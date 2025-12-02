@@ -321,7 +321,6 @@ namespace HealthCalendar.Controllers
         {
             try
             {
-                foreach (var i in userIds) {_logger.LogInformation("id = " + i);}
                 // iterates through 
                 var (datesEvents, getStatus) = 
                     await _eventRepo.getDatesEvents(userIds, eventDTO.Date);
