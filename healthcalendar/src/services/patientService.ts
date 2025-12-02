@@ -1,6 +1,6 @@
 import type { Event, Availability, NewEventInput, UpdateEventInput } from '../types/event.ts';
 // Imports functions shared with other services
-import { API_BASE_URL, getHeaders, handleResponse, normalizeError } from './sharedService.ts'
+import { API_BASE_URL, getHeaders, handleResponse, normalizeError, fromAvailabilityDTO } from './sharedService.ts'
 
 // Convert frontend Event format to backend EventDTO format
 function toEventDTO(event: Event | NewEventInput, userId: string): any {
@@ -33,6 +33,24 @@ function fromEventDTO(dto: any): Event {
 
 // Public API surface
 export const patientService = {
+	// Get worker's availability for a specific week (excluding overlapping ones)
+    // Used in EventCalendarPage to show available time slots for booking
+    async getWeeksAvailabilityProper(workerId: string, monday: string): Promise<Availability[]> {
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/Availability/getWeeksAvailabilityProper?userId=${encodeURIComponent(workerId)}&monday=${monday}`,
+                {
+                    method: 'GET',
+                    headers: getHeaders()
+                }
+            );
+            const dtos = await handleResponse<any[]>(response);
+            return dtos.map(fromAvailabilityDTO);
+        } catch (err) {
+            throw normalizeError(err);
+        }
+    },
+
 	// Get patient's events for a specific week
 	// Used in EventCalendarPage to load patient's own events
 	async getWeeksEventsByUserId(userId: string, monday: string): Promise<Event[]> {
@@ -253,7 +271,7 @@ export const patientService = {
 
 	// Delete schedules by availability IDs after event update
 	// Step 4: removes schedule links for availability slots no longer used
-	async deleteSchedulesByAvailabilityIds(eventId: number, availabilityIds: number[]): Promise<void> {
+	async deleteSchedulesAfterEventUpdate(eventId: number, availabilityIds: number[]): Promise<void> {
 		try {
 			const queryParams = new URLSearchParams();
 			queryParams.append('eventId', eventId.toString());
@@ -271,6 +289,7 @@ export const patientService = {
 			throw normalizeError(err);
 		}
 	},
+	
 
 	// Update schedules with new event
 	// Step 5: updates existing schedule links that remain valid
@@ -284,6 +303,24 @@ export const patientService = {
 				`${API_BASE_URL}/Schedule/updateScheduledEvent?${queryParams.toString()}`,
 				{
 					method: 'PUT',
+					headers: getHeaders()
+				}
+			);
+			await handleResponse<any>(response);
+		} catch (err) {
+			throw normalizeError(err);
+		}
+	},
+
+	// Delete schedules by event ID
+	// Step 1 of delete event workflow: removes all schedule links for this event
+	// Frees up the availability slots so other patients can book them
+	async deleteSchedulesByEventId(eventId: number): Promise<void> {
+		try {
+			const response = await fetch(
+				`${API_BASE_URL}/Schedule/deleteSchedulesByEventId?eventId=${eventId}`,
+				{
+					method: 'DELETE',
 					headers: getHeaders()
 				}
 			);
