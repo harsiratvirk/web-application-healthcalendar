@@ -244,42 +244,6 @@ namespace HealthCalendar.Controllers
 
         // HTTP PUT functions
 
-        // Assigns Patient to Worker
-        [HttpPut("assignPatientToWorker")]
-        [Authorize(Roles="Admin")]
-        public async Task<IActionResult> 
-            assignPatientsToWorker([FromQuery] string patientId, [FromQuery] string workerId)
-        {
-            try
-            {
-                var worker = await _userManager.FindByIdAsync(workerId);
-                var patient = await _userManager.FindByIdAsync(patientId);
-                // Adds Worker to Patient's Worker related parameters
-                patient!.WorkerId = workerId;
-                patient.Worker = worker;
-                // Update table with patient
-                var result = await _userManager.UpdateAsync(patient);
-                // In case update did not succeed
-                if (!result.Succeeded)
-                {
-                    _logger.LogError("[UserController] Error from assignPatientToWorker(): \n" +
-                                    $"User {@patient} was not updated");
-                    return StatusCode(500, "Something went wrong when assigning Patient to Worker");
-                }
-
-                return Ok(new { Message = "Patient has been assigned" });
-
-            }
-            catch (Exception e) // In case of unexpected exception
-            {
-                _logger.LogError("[UserController] Error from assignPatientToWorker(): \n" +
-                                 "Something went wrong when trying to assign User " + 
-                                $"with Id = {patientId} to User with Id = {workerId}," + 
-                                $"Error message: {e}");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
         // Unassigns Patient from their Worker
         [HttpPut("unassignPatientFromWorker/{userId}")]
         [Authorize(Roles="Admin")]
@@ -350,12 +314,12 @@ namespace HealthCalendar.Controllers
         [HttpPut("assignPatientsToWorker")]
         [Authorize(Roles="Admin")]
         public async Task<IActionResult> 
-        assignPatientsToWorker([FromQuery] string[] userIds, [FromQuery] string username)
+        assignPatientsToWorker([FromQuery] string[] userIds, [FromQuery] string workerId)
         {
             try
             {
                 // retreives Worker and Patients
-                var worker = await _userManager.FindByNameAsync(username);
+                var worker = await _userManager.FindByIdAsync(workerId);
                 var patients = await _userManager.Users
                     .Where(u => userIds.Contains(u.Id))
                     .ToListAsync();
@@ -387,8 +351,8 @@ namespace HealthCalendar.Controllers
 
                 _logger.LogError("[UserController] Error from assignPatientsToWorker(): \n" +
                                  "Something went wrong when trying to assign Users " + 
-                                $"with Ids {userIdsString} to User with UserName = " + 
-                                $"{username}, Error message: {e}");
+                                $"with Ids {userIdsString} to User with Id = " + 
+                                $"{workerId}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }

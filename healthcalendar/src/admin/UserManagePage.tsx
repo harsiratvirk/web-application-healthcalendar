@@ -102,7 +102,7 @@ const UserManagePage: React.FC = () => {
 
     try {
       setLoading(true)
-      await adminService.assignPatientsToWorker(selectedPatientIds, selectedWorker.UserName)
+      await adminService.assignPatientsToWorker(selectedPatientIds, selectedWorker.Id)
       showSuccess(`Assigned ${selectedPatientIds.length} patient(s) to ${selectedWorker.Name}`)
       
       // Refresh lists to reflect the changes

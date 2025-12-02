@@ -35,10 +35,10 @@ export const adminService = {
   },
 
   // Assign multiple patients to a worker
-  async assignPatientsToWorker(patientIds: string[], workerUsername: string): Promise<any> {
+  async assignPatientsToWorker(patientIds: string[], workerId: string): Promise<any> {
     const queryParams = patientIds.map(id => `userIds=${encodeURIComponent(id)}`).join('&');
     const response = await fetch(
-      `${API_BASE_URL}/User/assignPatientsToWorker?${queryParams}&username=${encodeURIComponent(workerUsername)}`,
+      `${API_BASE_URL}/User/assignPatientsToWorker?${queryParams}&workerId=${encodeURIComponent(workerId)}`,
       {
         method: 'PUT',
         headers: getHeaders(),
