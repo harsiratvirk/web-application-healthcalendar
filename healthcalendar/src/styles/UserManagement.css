@@ -266,7 +266,7 @@
 }
 
 .btn--primary {
-  background: var(--primary);
+  background: var(--primary-strong);
   color: #fff;
   border: none;
 }

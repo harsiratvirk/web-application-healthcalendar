@@ -420,30 +420,34 @@ export default function EventCalendar() {
 					</div>
 					<div className="event-header__right">
 						<button
-							className="btn-logout"
+							className="logout-btn"
 							onClick={() => setShowLogoutConfirm(true)}
 						>
 							<img src="/images/logout.png" alt="Logout" />
 							<span>Log Out</span>
 						</button>
 
-						<div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'flex-end' }}>
+						<div className="event-header__actions">
 							{isAvailabilityMode && (
 								<>
-									<button
-										className={isContinuousMode ? 'btn-static-g' : 'btn-toggle'}
-										onClick={handleContinuousToggle}
-										title="Toggle between continuous and specific date availability"
-									>
-										{isContinuousMode ? 'Weekly' : 'Daily'}
-									</button>
+									<label className="toggle-switch">
+										<span className="toggle-label">Repeat Weekly?</span>
+										<div className="toggle-input-container">
+											<input
+												type="checkbox"
+												checked={isContinuousMode}
+												onChange={handleContinuousToggle}
+											/>
+											<span className="slider round"></span>
+										</div>
+									</label>
 								</>
 							)}
 							<button
-								className={isAvailabilityMode ? 'btn-static-g' : 'btn-static'}
+								className={'btn-static-blue'}
 								onClick={handleAvailabilityToggle}
 							>
-								{isAvailabilityMode ? 'Done' : 'Change Availability'}
+								{isAvailabilityMode ? 'Done' : 'Edit Availability'}
 							</button>
 						</div>
 
@@ -475,7 +479,7 @@ export default function EventCalendar() {
 			{isAvailabilityMode && (
 				// Notification alert in bottom right for notifying worker on how to change availability
 				<div className="availability-notification">
-					Press timeboxes to change your availability
+					Tap a timebox to change your availability, then hit 'Done'.
 				</div>
 			)}
 			<ConfirmationModal

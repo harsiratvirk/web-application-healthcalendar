@@ -30,13 +30,16 @@
 }
 
 .cal-grid__day {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     padding: 0.9rem;
-    text-align: center;
     border-right: 1px solid #e5e7eb;
+    font-size: clamp(0.85rem, 1.2vw, 1rem);
 }
 
 .cal-grid__dayname {
-    color: #6b7280;
+    color: #2c2d2e;
     font-weight: 700;
 }
 
@@ -61,7 +64,7 @@
     align-items: center;
     justify-content: center;
     font-size: clamp(0.95rem, 1.2vw, 1.1rem);
-    color: #6b7280;
+    color: #3d3d3d;
     border-bottom: 1px solid #d7dde6;
 }
 
@@ -180,7 +183,7 @@
 
 .cal-grid__event--passthrough {
     pointer-events: none;
-    opacity: 0.5;
+    opacity: 0.2;
 }
 
 @media (max-width: 1080px) {

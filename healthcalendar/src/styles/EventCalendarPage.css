@@ -35,8 +35,15 @@
     gap: clamp(1rem, 2vw, 1rem);
 }
 
+.event-header__actions {
+    display: flex;
+    gap: 1.8rem;
+    align-items: center;
+    justify-content: flex-end;
+}
+
 .event-title {
-    font-size: 2rem;
+    font-size: 2.4rem;
     font-weight: 800;
     margin: 0 0 clamp(0.35rem, 1.5vw, 0.8rem);
     color: #1f2937;
@@ -51,9 +58,8 @@
 
 .icon-btn {
     background: #ffffff;
-    border: 1px solid #d1d5db;
-    width: 30px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -69,6 +75,8 @@
 .event-week__range {
     font-weight: 600;
     color: #374151;
+    min-width: 270px;
+    text-align: center;
 }
 
 .add-btn {
@@ -88,18 +96,22 @@
 .logout-btn {
     display: flex;
     align-items: center;
-    gap: 0.35rem; 
+    justify-content: center;
+    height: 40px;
+    width: 170px;
     background: #fff;
     border: 1px solid #d1d5db;
-    padding: 0.45rem 0.7rem; 
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
+    margin-left: auto;
+    padding: 0.8rem 1.3rem;
 }
 
 .logout-btn img {
     width: 18px;
     height: 18px;
+    padding-right: 8px;
 }
 
 .banner {
@@ -110,10 +122,31 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, .06);
 }
 
+@media (max-width: 750px) {
+    .logout-btn {
+        margin-left: 0;
+    }
+}
 
-
-@media (max-width:720px) {
+@media (max-width:750px) {
     .event-main {
-        padding: 1rem .75rem 2rem;
+        /* padding: 3rem clamp(2rem,4vw,5rem) 2.5rem; */
+        padding: 2rem;
+    }
+
+    .event-title {
+        font-size: 2rem;
+    }
+
+    .event-week__range {
+        min-width: 200px;
+        font-size: 1rem;
+    }
+
+    .event-header__right {
+        flex-direction: row;
+        align-items: top;
+        width: 100%;
+        justify-content: space-between;
     }
 }
