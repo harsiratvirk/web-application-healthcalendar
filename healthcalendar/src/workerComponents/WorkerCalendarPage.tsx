@@ -203,31 +203,10 @@ export default function EventCalendar() {
 			if (isContinuousMode) {
 				if (matchingContinuous) {
 					// Delete continuous availability
-					// Check for any linked events across all dates
-					const eventIds = await workerService.getScheduledEventIds(matchingContinuous.id)
-					if (eventIds.length > 0) {
-						// Warn user if events are linked
-						setPendingDeletion({
-							eventIds: eventIds,
-							workerId: workerId,
-							dayOfWeek: dayOfWeek,
-							startTime: timeStr,
-							action: 'deleteContinuous'
-						})
-						setShowConfirmModal(true)
-						return
-					}
-
-					await workerService.deleteAvailabilityByDoW(workerId, dayOfWeek, timeStr);
-
+					await deleteContinuous(matchingContinuous.id, workerId, dayOfWeek, timeStr)		
 				} else {
-					// Create continuous availability (date: null)
-					await workerService.createAvailability({
-						startTime: timeStr,
-						endTime: endTimeStr,
-						dayOfWeek,
-						date: null, // Continuous
-					}, user.nameid)
+					// Create continuous availability
+					await createContinuous(workerId, dayOfWeek, timeStr, endTimeStr)
 				}
 			}
 			// Specific date
@@ -235,7 +214,7 @@ export default function EventCalendar() {
 			else if (matchingContinuous && !matchingSpecific) {
 				// Check for linked events, if any, ask worker for confirmation
 				const eventId = await workerService.findScheduledEventId(matchingContinuous.id, date)
-				if (eventId > 0) {
+				if (eventId) {
 					// Delete the event + create a specific availability to mask the continuous one
 					setPendingDeletion({
 						availabilityId: matchingContinuous.id,
@@ -262,7 +241,7 @@ export default function EventCalendar() {
 			else if (!matchingContinuous && matchingSpecific) {
 				// Check for linked events, if any, ask worker for confirmation
 				const eventId = await workerService.findScheduledEventId(matchingSpecific.id, date)
-				if (eventId > 0) {
+				if (eventId) {
 					setPendingDeletion({
 						availabilityId: matchingSpecific.id,
 						eventIds: [eventId],
@@ -296,7 +275,51 @@ export default function EventCalendar() {
 		}
 	}
 
-	// Confirmation modal handlers
+	const deleteContinuous = async (avId: number, workerId: string, dayOfWeek: number, timeStr: string) => {
+
+		// Check for any linked events across all dates
+		const eventIds = await workerService.getScheduledEventIds(avId)
+		if (eventIds.length > 0) {
+			// Warn user if events are linked
+			setPendingDeletion({
+				eventIds: eventIds,
+				workerId: workerId,
+				dayOfWeek: dayOfWeek,
+				startTime: timeStr,
+				action: 'deleteContinuous'
+			})
+			setShowConfirmModal(true)
+			return
+		}
+
+		// No linked events: Delete continuous availability
+		await workerService.deleteAvailabilityByDoW(workerId, dayOfWeek, timeStr);
+		await loadData()
+	}
+
+	const createContinuous = async (workerId: string, dayOfWeek: number, timeStr: string, endTimeStr: string) => {
+		// Gets list of availability for relevant slot
+		const oldAvailabilityIds = await workerService.getAvailabilityIdsByDoW(workerId, dayOfWeek, timeStr)
+					
+		// Create continuous availability (date: null)
+		await workerService.createAvailability({
+			startTime: timeStr,
+			endTime: endTimeStr,
+			dayOfWeek,
+			date: null, // Continuous
+		}, workerId)
+
+		// If availability exists in relevant slot, they are to be be removed
+		if (oldAvailabilityIds.length > 0) {
+			const newAvailabilityId = await workerService.getAvailabilityIdByDoW(workerId, dayOfWeek, timeStr)
+			await workerService.updateScheduledAvailability(oldAvailabilityIds, newAvailabilityId)
+			await workerService.deleteAvailabilityByIds(oldAvailabilityIds)
+		}
+
+		await loadData()
+	}
+
+	// Confirmation model handlers
 	const handleConfirmDeletion = async () => {
 		if (!pendingDeletion) return
 
