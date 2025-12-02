@@ -85,11 +85,15 @@ export const sharedService = {
 
     // Get patients assigned to a specific worker
     async getUsersByWorkerId(workerId: string): Promise<UserDTO[]> {
-        const response = await fetch(`${API_BASE_URL}/User/getUsersByWorkerId?workerId=${encodeURIComponent(workerId)}`, {
-        method: 'GET',
-        headers: getHeaders(),
-        });
-        return handleResponse<UserDTO[]>(response);
+        try {
+			const response = await fetch(`${API_BASE_URL}/User/getUsersByWorkerId?workerId=${encodeURIComponent(workerId)}`, {
+			method: 'GET',
+			headers: getHeaders(),
+			});
+			return handleResponse<UserDTO[]>(response);
+		} catch (err) {
+            throw normalizeError(err);
+        }
     },
     
     // Get Users Ids by their WorkerId

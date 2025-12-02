@@ -120,6 +120,12 @@ const UserManagePage: React.FC = () => {
   const handleUnassignPatient = async (patientId: string) => {
     try {
       setLoading(true)
+      // step 1: retreive ids from all of patient's events
+      const eventIds = await adminService.getEventIdsByUserId(patientId)
+      // step 2: delete all patient's events and related schedules
+      await sharedService.deleteSchedulesByEventIds(eventIds)
+      await sharedService.deleteEventsByIds(eventIds)
+      // step 3: unassign patient from their worker
       await adminService.unassignPatientFromWorker(patientId)
             showSuccess('Patient unassigned successfully')
       // Refresh lists to show updated assignments

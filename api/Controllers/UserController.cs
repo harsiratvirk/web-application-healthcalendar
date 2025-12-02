@@ -260,32 +260,6 @@ namespace HealthCalendar.Controllers
                     return NotFound("Patient not found");
                 }
                 
-                // Delete all events and schedules for this patient
-                var patientEvents = await _db.Events
-                    .Where(e => e.UserId == userId)
-                    .ToListAsync();
-                
-                // Delete schedules for each event
-                foreach (var evt in patientEvents)
-                {
-                    var schedules = await _db.Schedule
-                        .Where(s => s.EventId == evt.EventId)
-                        .ToListAsync();
-                    
-                    if (schedules.Any())
-                    {
-                        _db.Schedule.RemoveRange(schedules);
-                    }
-                }
-                
-                // Delete all events for this patient
-                if (patientEvents.Any())
-                {
-                    _db.Events.RemoveRange(patientEvents);
-                    await _db.SaveChangesAsync();
-                    _logger.LogInformation($"[UserController] Deleted {patientEvents.Count} events and their schedules for patient {userId}");
-                }
-                
                 // Nulls out Patient's Worker related parameters
                 patient.WorkerId = null;
                 patient.Worker = null;
