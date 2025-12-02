@@ -112,24 +112,6 @@ export const sharedService = {
             throw normalizeError(err);
         }
     },
-    
-    // Get worker's availability for a specific week (excluding overlapping ones)
-    // Used in EventCalendarPage to show available time slots for booking
-    async getWeeksAvailabilityProper(workerId: string, monday: string): Promise<Availability[]> {
-        try {
-            const response = await fetch(
-                `${API_BASE_URL}/Availability/getWeeksAvailabilityProper?userId=${encodeURIComponent(workerId)}&monday=${monday}`,
-                {
-                    method: 'GET',
-                    headers: getHeaders()
-                }
-            );
-            const dtos = await handleResponse<any[]>(response);
-            return dtos.map(fromAvailabilityDTO);
-        } catch (err) {
-            throw normalizeError(err);
-        }
-    },
 
     // Delete an event
 	// Step 2 of delete event workflow: removes event record from database
@@ -168,23 +150,6 @@ export const sharedService = {
 		}
 	},
 
-    // Delete schedules by event ID
-	// Step 1 of delete event workflow: removes all schedule links for this event
-	// Frees up the availability slots so other patients can book them
-	async deleteSchedulesByEventId(eventId: number): Promise<void> {
-		try {
-			const response = await fetch(
-				`${API_BASE_URL}/Schedule/deleteSchedulesByEventId?eventId=${eventId}`,
-				{
-					method: 'DELETE',
-					headers: getHeaders()
-				}
-			);
-			await handleResponse<any>(response);
-		} catch (err) {
-			throw normalizeError(err);
-		}
-	},
 
     // Delete Schedules by list of EventIds
 	async deleteSchedulesByEventIds(eventIds: number[]): Promise<void> {

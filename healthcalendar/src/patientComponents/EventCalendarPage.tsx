@@ -107,7 +107,7 @@ export default function EventCalendarPage() {
         
         // Step 2: Fetch worker's availability for the week
         const workerId = (user as PatientUser).WorkerId
-        let availabilityData = await sharedService.getWeeksAvailabilityProper(workerId, weekStartISO)
+        let availabilityData = await patientService.getWeeksAvailabilityProper(workerId, weekStartISO)
         
         // Step 3: Get all patient IDs assigned to this worker
         const userIds = await sharedService.getIdsByWorkerId(workerId)
@@ -221,7 +221,7 @@ export default function EventCalendarPage() {
       
       // Step 6: Delete schedules for availability blocks no longer covered
       if (availabilityLists.forDeleteSchedules.length > 0) {
-        await patientService.deleteSchedulesByAvailabilityIds(
+        await patientService.deleteSchedulesAfterEventUpdate(
           updatedEvent.eventId,
           availabilityLists.forDeleteSchedules
         )
@@ -267,7 +267,7 @@ export default function EventCalendarPage() {
 
     try {
       // Step 1: Delete all schedules linked to this event
-      await sharedService.deleteSchedulesByEventId(id)
+      await patientService.deleteSchedulesByEventId(id)
       
       // Step 2: Delete the event from the database
       await sharedService.deleteEvent(id)
