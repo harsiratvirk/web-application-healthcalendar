@@ -159,7 +159,7 @@ export default function EventCalendar() {
 
 		try {
 			// Gets relevant parameters
-			const [workerId, dayOfWeek, timeStr, endTimeStr] = await calculateParameters(time, dayName)
+			const [workerId, dayOfWeek, timeStr, endTimeStr] = await getAndValidateParameters(date, time, dayName)
 
 			// New data to ensure latest state
 			const allAvailability = await workerService.getAllWeeksAvailability(workerId, weekStartISO)
@@ -219,7 +219,8 @@ export default function EventCalendar() {
 	}
 
 	// calculates Parameters for create or delete operation
-	const calculateParameters = async (time: number, dayName: string): Promise<[string, number, string, string]> => {
+	const getAndValidateParameters = async (date: string, time: number, dayName: string): 
+									   Promise<[string, number, string, string]> => {
 		
 		// Retreives Worker's Id
 		const workerId = (user as WorkerUser).nameid
@@ -243,6 +244,12 @@ export default function EventCalendar() {
 		}
 		// End time string in HH:MM format
 		const endTimeStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
+
+		// Validation check
+		const currentDate = toLocalISO(new Date)
+		if (dayOfWeek === -1 || time % 30 !== 0 || date < currentDate) {
+			throw new Error('Request not acceptable.');
+		}
 
 		return [workerId, dayOfWeek, timeStr, endTimeStr]
 	}
@@ -384,13 +391,6 @@ export default function EventCalendar() {
 			else {
 				await workerService.deleteAvailabilityByDoW(pendingDeletion.workerId!, pendingDeletion.dayOfWeek!, pendingDeletion.startTime!);
 			}
-
-
-			// FOR LATER:
-			/*if (pendingDeletion.action === 'mask' && user?.nameid) {
-				if (pendingDeletion.startTime && pendingDeletion.endTime && pendingDeletion.dayOfWeek !== undefined) {
-				}
-			}*/
 
 			// Reset state
 			setShowConfirmModal(false)
