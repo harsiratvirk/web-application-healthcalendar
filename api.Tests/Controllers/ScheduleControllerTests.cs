@@ -338,7 +338,7 @@ public class ScheduleControllerTests
                 Event = event2
             }
         };
-
+        
 
         var mockEventRepo = new Mock<IEventRepo>();
 
