@@ -16,7 +16,7 @@ type Props = {
   onClearError?: () => void                                    // Callback to clear error message
 }
 
-export default function NewEventForm({ availableDays, availability, existingEvents, onClose, onSave, error, onClearError }: Props) {
+export default function NewEventForm({ availableDays, availability, existingEvents, onClose, onSave, error }: Props) {
   const [title, setTitle] = useState('')
   const [location, setLocation] = useState('')
   
@@ -41,6 +41,7 @@ export default function NewEventForm({ availableDays, availability, existingEven
   const [titleError, setTitleError] = useState<string | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
   const [dateError, setDateError] = useState<string | null>(null)
+  const [conflictError, setConflictError] = useState<String | null>(null)
   
   // UI state for save operation
   const [saving, setSaving] = useState(false)
@@ -130,7 +131,7 @@ export default function NewEventForm({ availableDays, availability, existingEven
   }, [validDays, date])
 
   // Show conflict error when time range overlaps with existing event
-  useEffect(() => {
+  useEffect(() => { 
     if (hasTimeConflict) {
       setConflictError('This time slot is already booked by you. Please select a different time.')
     } else {
