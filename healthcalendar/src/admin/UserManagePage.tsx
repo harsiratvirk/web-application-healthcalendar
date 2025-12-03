@@ -165,7 +165,7 @@ const UserManagePage: React.FC = () => {
           await sharedService.deleteEventsByIds(eventIds)
         }
       }
-      
+
       // step 5: delete all worker's availability
       await adminService.deleteAvailabilityByUserId(workerToDelete.Id)
       // step 6: delete the worker
@@ -235,7 +235,7 @@ const UserManagePage: React.FC = () => {
       <main className="manage-main manage-main--no-top-padding">
         {/* Page header with title and action buttons */}
         <header className="manage-header">
-          <h1 className="manage-title">Manage Healthcare Workers & Patients</h1>
+          <h1 className="manage-title">Manage Workers and Patients</h1>
           <div className="manage-actions manage-actions--vertical">
             {/* Logout button */}
             <button

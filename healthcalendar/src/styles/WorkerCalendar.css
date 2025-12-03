@@ -25,8 +25,6 @@
     animation: slideIn 0.3s ease-out;
 }
 
-
-
 /* Toggle switch between continuous and specific availability */
 .toggle-switch {
     display: flex;
@@ -91,7 +89,7 @@ input:checked + .slider:before {
 }
 
 /* For smaller screens */
-@media (max-width: 750px) {
+@media (max-width: 900px) {
     .btn-logout {
         margin-left: 0;
     }
@@ -102,9 +100,6 @@ input:checked + .slider:before {
         gap: 0.5rem;
     }
 
-    /* .btn-toggle {
-        font-size: 0.8rem;
-    } */
     .btn-static-blue {
         font-size: 0.8rem;
     }
