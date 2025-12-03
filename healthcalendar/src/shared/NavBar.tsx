@@ -11,7 +11,7 @@ const NavBar: React.FC = () => {
         </Link>
       </div>
       <nav className="navbar__right">
-        <Link to="/patient/login" className="navbar__link navbar__link--primary">Private Person Log In</Link>
+        <Link to="/patient/login" className="navbar__link navbar__link--primary">Patient Log In</Link>
         <Link to="/worker/login" className="navbar__link">Worker Login</Link>
       </nav>
     </header>

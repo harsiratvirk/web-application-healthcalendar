@@ -226,22 +226,19 @@ const UserManagePage: React.FC = () => {
 
   return (
     <div className="manage-page">
-      {/* Logout button in header */}
-      <div className="admin-logout-header">
-        <button
-          className="logout-btn"
-          onClick={() => setShowLogoutConfirm(true)}
-        >
-          <img src="/images/logout.png" alt="Logout" />
-          <span>Log Out</span>
-        </button>
-      </div>
-
       <main className="manage-main manage-main--no-top-padding">
         {/* Page header with title and action buttons */}
         <header className="manage-header">
           <h1 className="manage-title">Manage Healthcare Workers & Patients</h1>
-          <div className="manage-actions">
+          <div className="manage-actions manage-actions--vertical">
+            {/* Logout button */}
+            <button
+              className="logout-btn"
+              onClick={() => setShowLogoutConfirm(true)}
+            >
+              <img src="/images/logout.png" alt="Logout" />
+              <span>Log Out</span>
+            </button>
             <button
               className="btn btn--secondary"
               onClick={() => navigate('/admin/register-worker')}

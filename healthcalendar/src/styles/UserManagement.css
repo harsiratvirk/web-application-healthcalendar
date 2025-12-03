@@ -10,7 +10,7 @@
 .manage-main {
   flex: 1;
   padding: 2rem;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
 }
@@ -28,13 +28,15 @@
 }
 
 .admin-logout-header .logout-btn {
-  padding: 0.7rem 1.2rem;
-  font-size: 1.1rem;
+  padding: 0.1rem 0.25rem;
+  font-size: 0.7rem;
+  border-radius: 6px;
+  min-width: 24px;
+  min-height: 18px;
 }
 
 .admin-logout-header .logout-btn img {
-  width: 22px;
-  height: 22px;
+  width: 12px;
 }
 
 /* Admin registration form container */
@@ -87,6 +89,13 @@
   flex-wrap: wrap;
 }
 
+.manage-actions--vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
 .manage-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -112,38 +121,33 @@
 }
 
 .manage-card-title {
-  font-size: 1.375rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--primary-strong);
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.7rem 0;
 }
 
 .manage-worker-selector {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.45rem;
   align-items: center;
   flex-wrap: wrap;
-  margin-top: 0.5rem;
+  margin-top: 0.3rem;
 }
 
 .manage-worker-selector .manage-select {
   flex: 1;
-  min-width: 200px;
+  min-width: 160px;
   margin-top: 0;
-}
-
-.manage-worker-selector .btn--small {
-  margin-top: 0;
-  white-space: nowrap;
 }
 
 .manage-select {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.45rem;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 1.0625rem;
-  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
   background: #fff;
   cursor: pointer;
 }
@@ -159,16 +163,16 @@
   overflow-y: auto;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 0.75rem;
-  margin-top: 0.5rem;
+  padding: 0.5rem;
+  margin-top: 0.3rem;
   background: #f9fafb;
 }
 
 .manage-checkbox-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
+  gap: 0.45rem;
+  padding: 0.3rem;
   cursor: pointer;
   border-radius: 4px;
   transition: background 0.2s;
@@ -178,7 +182,8 @@
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.18rem;
+  font-size: 0.8rem;
 }
 
 .manage-checkbox-item .btn {
@@ -190,21 +195,20 @@
 }
 
 .manage-checkbox-item input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   cursor: pointer;
 }
 
 .manage-checkbox-item span {
   flex: 1;
-  font-size: 1.0625rem;
-  color: #374151;
+  font-size: 0.8rem;
 }
 
 .manage-empty {
   text-align: center;
   color: #9ca3af;
-  font-size: 1.0625rem;
+  font-size: 0.8rem;
   padding: 1rem;
   margin: 0;
 }
@@ -212,14 +216,14 @@
 .manage-patient-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.55rem;
 }
 
 .manage-patient-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0.55rem;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #f9fafb;
@@ -228,17 +232,18 @@
 
 .manage-patient-info {
   flex: 1;
+  font-size: 0.8rem;
 }
 
 .manage-patient-name {
   font-weight: 600;
-  font-size: 1.0625rem;
+  font-size: 0.85rem;
   color: #1f2937;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.12rem;
 }
 
 .manage-patient-email {
-  font-size: 1rem;
+  font-size: 0.8rem;
   color: #6b7280;
 }
 
@@ -251,10 +256,10 @@
 
 /* Button Styles */
 .btn {
-  padding: 0.75rem 1.5rem;
+  padding: 0.7rem 1rem;
   border: 2px solid #d1d5db;
   border-radius: 8px;
-  font-size: 1.0625rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -307,8 +312,8 @@
 }
 
 .btn--small {
-  padding: 0.65rem 1rem;
-  font-size: 0.9rem;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.75rem;
 }
 
 /* Responsive Design */
