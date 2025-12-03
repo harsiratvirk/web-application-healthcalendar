@@ -17,7 +17,7 @@ namespace HealthCalendar.DTOs
         public DateOnly Date { get; set; }
 
         [Required]
-        [StringLength(30,MinimumLength = 1)]
+        [StringLength(50,MinimumLength = 1)]
         public string Title { get; set; } = string.Empty;
 
         [Required]
