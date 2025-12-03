@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext'
 import '../styles/PatientLoginPage.css'
 import NavBar from '../shared/NavBar'
 
-// Worker/Admin login page for authenticating healthcare personnel
+// Worker/Admin login page for authenticating healthcare workers
 
 const WorkerLoginPage: React.FC = () => {
   const navigate = useNavigate()
@@ -69,7 +69,7 @@ const WorkerLoginPage: React.FC = () => {
         </section>
         {/* Right side with login form */}
         <section className="auth-right">
-          <h1 className="auth-title">Personnel Login</h1>
+          <h1 className="auth-title">Worker Login</h1>
           {/* Display form-level errors (authentication failures) */}
           {formError && <div role="alert" className="form-error-banner">{formError}</div>}
           <form className="auth-form" onSubmit={onSubmit} noValidate>

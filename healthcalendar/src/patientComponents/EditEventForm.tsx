@@ -249,7 +249,7 @@ export default function EditEventForm({ event, availableDays, availability, onCl
               <button type="button" className="btn btn--danger" onClick={() => setShowConfirm(true)} disabled={deleting}>Delete</button>
               <div className="form__actions-spacer" />
               <button type="button" className="btn" onClick={onClose}>Cancel</button>
-              <button type="submit" className="btn btn--primary" disabled={saving}>Save</button>
+              <button type="submit" className="btn btn--primary" disabled={saving || startTimeOptions.length === 0 || endTimeOptions.length === 0}>Save</button>
             </div>
           </form>
         </div>
