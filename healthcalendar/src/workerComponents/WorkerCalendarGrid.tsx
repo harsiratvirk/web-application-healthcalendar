@@ -1,5 +1,7 @@
 import { useRef, useState, useLayoutEffect } from 'react';
-import type { Event, Availability } from '../types/event';
+import type { Event } from '../types/event';
+import type { Availability } from '../types/availability'
+
 import '../styles/CalendarGrid.css';
 
 export type CalendarGridProps = {

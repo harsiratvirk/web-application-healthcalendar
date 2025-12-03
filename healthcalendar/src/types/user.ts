@@ -1,3 +1,6 @@
+// Type definitions for Users within the HealthCalendar MVP
+// These types are client-side representations and can later be aligned with backend DTOs.
+
 export type Role = 'Patient' | 'Worker' | 'Admin';
 
 // Common fields for all user types

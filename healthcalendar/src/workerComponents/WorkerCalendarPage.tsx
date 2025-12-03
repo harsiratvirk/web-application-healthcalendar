@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import type { Event, Availability } from '../types/event'
+import type { Availability } from '../types/availability'
+import type { Event } from '../types/event'
 import type { WorkerUser } from '../types/user'
 import { sharedService } from '../services/sharedService.ts'
 import { workerService } from '../services/workerService.ts'
