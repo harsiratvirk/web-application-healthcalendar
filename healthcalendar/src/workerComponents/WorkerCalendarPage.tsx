@@ -432,7 +432,7 @@ export default function EventCalendar() {
 							{isAvailabilityMode && (
 								<>
 									<label className="toggle-switch">
-										<span className="toggle-label">Repeat Weekly?</span>
+										<span className="toggle-label">Repeat Weekly</span>
 										<div className="toggle-input-container">
 											<input
 												type="checkbox"

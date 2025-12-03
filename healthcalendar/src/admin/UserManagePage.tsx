@@ -153,13 +153,19 @@ const UserManagePage: React.FC = () => {
       setShowDeleteConfirm(false)
       // step 1: retreive ids from all patients assigned to worker
       const patientIds = await sharedService.getIdsByWorkerId(workerToDelete.Id)
-      // step 2: unassign all patients from worker
-      await adminService.unassignPatientsFromWorker(patientIds)
-      // step 3: retreive ids from all of patients events
-      const eventIds = await adminService.getEventIdsByUserIds(patientIds)
-      // step 4: delete all patients events and related schedules
-      await sharedService.deleteSchedulesByEventIds(eventIds)
-      await sharedService.deleteEventsByIds(eventIds)
+      // Only process patients and events if there are any patients assigned
+      if (patientIds && patientIds.length > 0) {
+        // step 2: unassign all patients from worker
+        await adminService.unassignPatientsFromWorker(patientIds)
+        // step 3: retreive ids from all of patients events
+        const eventIds = await adminService.getEventIdsByUserIds(patientIds)
+        // step 4: delete all patients events and related schedules
+        if (eventIds && eventIds.length > 0) {
+          await sharedService.deleteSchedulesByEventIds(eventIds)
+          await sharedService.deleteEventsByIds(eventIds)
+        }
+      }
+      
       // step 5: delete all worker's availability
       await adminService.deleteAvailabilityByUserId(workerToDelete.Id)
       // step 6: delete the worker

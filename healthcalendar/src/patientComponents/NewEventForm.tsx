@@ -9,13 +9,14 @@ import '../styles/EventFormsBase.css'
 type Props = {
   availableDays: string[]                                      // Array of ISO date strings for the week
   availability: Availability[]                                 // Worker's available time slots (pre-filtered)
+  existingEvents: Event[]                                      // Patient's existing events for conflict detection
   onClose: () => void                                          // Callback to close the form
   onSave: (e: Omit<Event, 'eventId'>) => void | Promise<void> // Callback to save the new event
   error?: string | null                                        // Form-level error message
   onClearError?: () => void                                    // Callback to clear error message
 }
 
-export default function NewEventForm({ availableDays, availability, onClose, onSave, error, onClearError }: Props) {
+export default function NewEventForm({ availableDays, availability, existingEvents, onClose, onSave, error, onClearError }: Props) {
   const [title, setTitle] = useState('')
   const [location, setLocation] = useState('')
   
@@ -59,6 +60,25 @@ export default function NewEventForm({ availableDays, availability, onClose, onS
     const startTimes = [...new Set(daySlots.map(a => a.startTime))].sort()
     return startTimes
   }, [date, availability])
+
+  // Check if the selected date and time overlap with existing events
+  const hasTimeConflict = useMemo(() => {
+    if (!date || !startTime || !endTime) return false
+    
+    // Check if any existing event overlaps with the selected time slot
+    return existingEvents.some(event => {
+      if (event.date !== date) return false
+      
+      // Convert times to comparable format
+      const newStart = startTime
+      const newEnd = endTime
+      const eventStart = event.startTime
+      const eventEnd = event.endTime
+      
+      // Check for overlap: events overlap if one starts before the other ends
+      return (newStart < eventEnd && newEnd > eventStart)
+    })
+  }, [date, startTime, endTime, existingEvents])
 
   // Compute available end times based on selected start time
   // Only shows contiguous time slots (stops at first gap in availability)
@@ -110,6 +130,15 @@ export default function NewEventForm({ availableDays, availability, onClose, onS
     }
   }, [validDays, date])
 
+  // Show conflict error when time range overlaps with existing event
+  useEffect(() => {
+    if (hasTimeConflict) {
+      setConflictError('This time slot is already booked by you. Please select a different time.')
+    } else {
+      setConflictError(null)
+    }
+  }, [hasTimeConflict])
+
   // Format ISO date for display in dropdown (e.g., "Monday 01-12-2025")
   const formatDateOption = (iso: string) => {
     const d = new Date(`${iso}T00:00:00Z`)
@@ -128,6 +157,7 @@ export default function NewEventForm({ availableDays, availability, onClose, onS
     setTitleError(null)
     setLocationError(null)
     setDateError(null)
+    setConflictError(null)
     let hasError = false
     
     // Validate required fields
@@ -138,6 +168,12 @@ export default function NewEventForm({ availableDays, availability, onClose, onS
     // Validate time selection (worker must be available)
     if (!startTime || !endTime) {
       setDateError('Your worker is not available on this day. Please select a different date.');
+      hasError = true;
+    }
+    
+    // Check for time conflicts with existing events
+    if (hasTimeConflict) {
+      setConflictError('This time slot is already booked by you. Please select a different time.');
       hasError = true;
     }
     
@@ -246,6 +282,12 @@ export default function NewEventForm({ availableDays, availability, onClose, onS
               ⚠️ Your worker is not available on this day. Please select a different date.
             </div>
           )}
+          {/* Display conflict warning */}
+          {conflictError && (
+            <div className="info-message info-message--error">
+              ⚠️ {conflictError}
+            </div>
+          )}
           {/* Display form-level errors */}
           {error && (
             <div className="info-message info-message--error">
@@ -255,7 +297,7 @@ export default function NewEventForm({ availableDays, availability, onClose, onS
           {/* Form action buttons */}
           <div className="form__actions">
             <button type="button" className="btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn--primary" disabled={saving || validDays.length === 0 || startTimeOptions.length === 0 || endTimeOptions.length === 0}>Save</button>
+            <button type="submit" className="btn btn--primary" disabled={saving || validDays.length === 0 || startTimeOptions.length === 0 || endTimeOptions.length === 0 || hasTimeConflict}>Save</button>
           </div>
         </form>
       </div>

@@ -73,15 +73,6 @@ const WorkerRegistrationPage: React.FC = () => {
 
   return (
     <div className="auth-page">
-      <div className="admin-logout-header">
-        <button
-          className="logout-btn"
-          onClick={() => setShowLogoutConfirm(true)}
-        >
-          <img src="/images/logout.png" alt="Logout" />
-          <span>Log Out</span>
-        </button>
-      </div>
       <main className="admin-form-container">
         <section className="admin-form-content">
           <h1 className="auth-title">Register Healthcare Worker</h1>

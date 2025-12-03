@@ -332,6 +332,7 @@ export default function EventCalendarPage() {
         <NewEventForm
           availableDays={availableDays}
           availability={availability}
+          existingEvents={events}
           onClose={() => {
             setShowNew(false)
             setNewFormError(null)
