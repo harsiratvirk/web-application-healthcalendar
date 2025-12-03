@@ -161,7 +161,7 @@ const WorkerRegistrationPage: React.FC = () => {
               onClick={() => navigate('/admin/manage')}
               className="admin-link-button"
             >
-              Go to Manage Workers & Patients
+              Go back to Manage Workers & Patients
             </button>
           </p>
         </section>

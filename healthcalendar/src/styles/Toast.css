@@ -11,18 +11,19 @@
 .toast {
     background: #ffffff;
     border: 1px solid #e5e7eb;
-    border-left-width: 4px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, .12);
-    min-width: 240px;
-    max-width: 360px;
+    border-left-width: 3px;
+    padding: 10px 8px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+    min-width: 180px;
+    max-width: 340px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 6px;
     animation: toastIn .2s ease;
     font-weight: 600;
+    font-size: 0.85rem;
 }
 
 .toast--success {
@@ -40,7 +41,7 @@
 .toast__close {
     background: transparent;
     border: none;
-    font-size: 18px;
+    font-size: 14px;
     cursor: pointer;
     opacity: 0.6;
 }
