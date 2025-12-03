@@ -226,7 +226,7 @@ namespace HealthCalendar.Controllers
                 {
                     _logger.LogError("[EventController] Error from getEventIdsByUserId(): \n" +
                                      "Could not retreive Events with getEventsByUserId() from EventRepo.");
-                        return StatusCode(500, "Something went wrong when retreiving Events");
+                    return StatusCode(500, "Something went wrong when retreiving Events");
                 }
 
                 var eventIds = events.Select(e => e.EventId);

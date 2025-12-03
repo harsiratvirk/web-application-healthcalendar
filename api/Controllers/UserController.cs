@@ -319,8 +319,7 @@ namespace HealthCalendar.Controllers
                                            "unassignPatientsFromWorker(): \n" +
                                            "updateUser() from UserRepo did not" +
                                           $"update patient {@patient}");
-                        // Error code is not returned since patients need to be updated one at a time
-                        // Returning something would stop the entire operation
+                        return NotFound("Patient(s) not updated");
                     }
                 }
 
@@ -358,7 +357,7 @@ namespace HealthCalendar.Controllers
                 // retreives Patients
                 var (patients, getPatientStatus) = await _userRepo.getUsersByIds(userIds);
                 // in case Patient was not retreived
-                if (getWorkerStatus == OperationStatus.Error || !patients.Any())
+                if (getPatientStatus == OperationStatus.Error || !patients.Any())
                 {
                     _logger.LogError("[UserController] Error from assignPatientsToWorker(): " + 
                                      "Patients not found with getUsersByIds() from UserRepo");
@@ -373,14 +372,13 @@ namespace HealthCalendar.Controllers
                     // Update table with patient
                     var updateStatus = await _userRepo.updateUser(patient);
                     // In case update did not succeed
-                    if (getWorkerStatus == OperationStatus.Error)
+                    if (updateStatus == OperationStatus.Error)
                     {
                         _logger.LogWarning("[UserController] Warning from " + 
                                            "assignPatientsToWorker(): \n" +
                                            "updateUser() from UserRepo did not" +
                                           $"update patient {@patient}");
-                        // Error code is not returned since patients need to be updated one at a time
-                        // Returning something would stop the entire operation
+                       return NotFound("Patient(s) not updated");
                     }
                 }
 
@@ -422,7 +420,7 @@ namespace HealthCalendar.Controllers
                 // deletes user from table
                 var deleteStatus = await _userRepo.deleteUser(user);
                 // In case deletion did not succeed
-                if (getStatus == OperationStatus.Error)
+                if (deleteStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[UserController] Error from deleteUser(): \n" +
                                     $"User {@user} was not deleted with deleteUser() " + 
