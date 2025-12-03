@@ -169,7 +169,7 @@ namespace HealthCalendar.Controllers
                 var (availabilityRange, getAvailabilityStatus) = 
                     await _availabilityRepo.getAvailabilityByIds(availabilityIds);
                 // In case getAvailabilityByIds() did not succeed
-                if (getEventStatus == OperationStatus.Error || eventt == null)
+                if (getAvailabilityStatus == OperationStatus.Error || eventt == null)
                 {
                     _logger.LogError("[ScheduleController] Error from createSchedules(): \n" +
                                      "Could not retreive range of Availability with " + 
@@ -186,10 +186,10 @@ namespace HealthCalendar.Controllers
                     EventId = eventId,
                     Event = eventt
                 }).ToList();
-                var status = await _scheduleRepo.createSchedules(schedules);
+                var createStatus = await _scheduleRepo.createSchedules(schedules);
 
                 // In case createSchedules() did not succeed
-                if (status == OperationStatus.Error)
+                if (createStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[ScheduleController] Error from createSchedules(): \n" +
                                      "Could not create Schedules with createSchedules() " + 

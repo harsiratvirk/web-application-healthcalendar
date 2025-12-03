@@ -4,7 +4,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Collections.Generic;
 using HealthCalendar.DTOs;
 using HealthCalendar.Models;
 using HealthCalendar.Shared;
@@ -35,7 +34,7 @@ namespace HealthCalendar.Controllers
         {
             try
             {
-                // Create User with Role set to Patient
+                // Create User with Roe set to Patient
                 var patient = new User
                 {
                     Name = registerDTO.Name,
