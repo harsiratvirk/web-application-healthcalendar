@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
-import '../styles/WorkerLoginPage.css'
+import '../styles/PatientLoginPage.css'
 import NavBar from '../shared/NavBar'
 
 // Worker/Admin login page for authenticating healthcare personnel

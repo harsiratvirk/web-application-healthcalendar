@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import { useRef, useState, useLayoutEffect } from 'react';
 import type { Event, Availability } from '../types/event';
 import '../styles/CalendarGrid.css';
 
@@ -201,7 +201,7 @@ export default function CalendarGrid({
             return (
               <div className={colClasses} key={d}>
                 {/* slots background */}
-                {timeLabels.map((m, si) => {
+                {timeLabels.map((m) => {
                   const slotStart = m;
                   const slotEnd = m + slotMinutes;
                   const isAvailable = isSlotAvailable(d, slotStart, slotEnd);
