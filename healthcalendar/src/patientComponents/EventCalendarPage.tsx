@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+
 import type { Event, Availability } from '../types/event'
 import type { PatientUser } from '../types/user'
 import { sharedService } from '../services/sharedService'
@@ -9,6 +9,7 @@ import '../styles/EventCalendarPage.css'
 import { useToast } from '../shared/toastContext'
 import NewEventForm from './NewEventForm'
 import EditEventForm from './EditEventForm'
+import LogoutConfirmationModal from '../shared/LogoutConfirmationModal'
 import { useAuth } from '../auth/AuthContext'
 
 // Patient event calendar page - displays weekly calendar with patient's events and worker availability
@@ -41,14 +42,14 @@ function addDaysISO(iso: string, days: number) {
 // Convert ISO date string to day name
 function convertISOtoDay(iso: string) {
   const dayOfWeekMap: { [key: number]: string } = {
-		0: 'Sunday',
-		1: 'Monday',
-		2: 'Tuesday',
-		3: 'Wednesday',
-		4: 'Thursday',
-		5: 'Friday',
-		6: 'Saturday'
-	};
+    0: 'Sunday',
+    1: 'Monday',
+    2: 'Tuesday',
+    3: 'Wednesday',
+    4: 'Thursday',
+    5: 'Friday',
+    6: 'Saturday'
+  };
   const y = Number(iso.slice(0, 4))
   const m = Number(iso.slice(5, 7)) - 1
   const d = Number(iso.slice(8, 10))
@@ -59,24 +60,22 @@ function convertISOtoDay(iso: string) {
 export default function EventCalendarPage() {
   // Toast notifications and authentication context
   const { showSuccess, showError } = useToast()
-  const { logout, user } = useAuth()
-  
+  const { user } = useAuth()
+
   // Calendar data state
   const [events, setEvents] = useState<Event[]>([])                      // Patient's events
   const [availability, setAvailability] = useState<Availability[]>([])   // Worker's available slots
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
   const [weekStartISO, setWeekStartISO] = useState(startOfWeekMondayISO(new Date()))
-  
+
   // UI state for modals and forms
   const [showNew, setShowNew] = useState(false)
-  const [editing, setEditing] = useState<Event | null>(null) 
+  const [editing, setEditing] = useState<Event | null>(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
-  
+
   // Form-specific error messages
   const [newFormError, setNewFormError] = useState<string | null>(null)
   const [editFormError, setEditFormError] = useState<string | null>(null)
-  
-  const navigate = useNavigate()
 
   // Format week range text for display
   const weekRangeText = useMemo(() => {
@@ -99,31 +98,31 @@ export default function EventCalendarPage() {
   useEffect(() => {
     const load = async () => {
       if (!user?.nameid) return
-      
+
       try {
         // Step 1: Fetch this patient's events for the week
         const patientsEventsData = await patientService.getWeeksEventsByUserId(user.nameid, weekStartISO)
         setEvents(patientsEventsData)
-        
+
         // Step 2: Fetch worker's availability for the week
         const workerId = (user as PatientUser).WorkerId
         let availabilityData = await patientService.getWeeksAvailabilityProper(workerId, weekStartISO)
-        
+
         // Step 3: Get all patient IDs assigned to this worker
         const userIds = await sharedService.getIdsByWorkerId(workerId)
         const othersUserIds = userIds.filter(id => id !== user.nameid)
-        
+
         // Step 4: Fetch events of other patients assigned to the same worker
         const othersEventsData = await patientService.getWeeksEventsByUserIds(othersUserIds, weekStartISO)
-        
+
         // Step 5: Filter availability to exclude time slots occupied by other patients
         // Only show slots that are available for this patient to book
         othersEventsData.forEach(event => {
           const eventDay = convertISOtoDay(event.date)
-          availabilityData = availabilityData.filter(av => 
-                                  av.day !== eventDay ||
-                                  av.endTime <= event.startTime ||
-                                  av.startTime >= event.endTime)
+          availabilityData = availabilityData.filter(av =>
+            av.day !== eventDay ||
+            av.endTime <= event.startTime ||
+            av.startTime >= event.endTime)
         })
         setAvailability(availabilityData)
       } catch (err) {
@@ -148,22 +147,22 @@ export default function EventCalendarPage() {
 
       // Step 2: Validate event doesn't overlap with other patients' events
       await patientService.validateEventForCreate(e, user.nameid, userIds)
-      
+
       // Step 3: Check worker availability and get matching availability IDs
       // Throws error if worker is not available during requested time
       const availabilityIds = await patientService.checkAvailabilityForCreate(e, workerId)
-      
+
       // Step 4: Create the event in the database
       const created = await patientService.createEvent(e, user.nameid)
-      
+
       // Step 5: Create schedules to link event with availability blocks
       if (availabilityIds.length > 0) {
         await patientService.createSchedules(created.eventId, e.date, availabilityIds)
       }
-      
+
       // Step 6: Update local state with the new event for immediate UI feedback
       setEvents(prev => [...prev, created])
-      
+
       // Step 7: Close form and show success message
       setShowNew(false)
       setNewFormError(null)
@@ -193,10 +192,10 @@ export default function EventCalendarPage() {
       // Step 1: Get all patient IDs for validation
       const workerId = (user as PatientUser).WorkerId
       const userIds = await sharedService.getIdsByWorkerId(workerId)
-      
+
       // Step 2: Validate updated event doesn't overlap with other patients
       await patientService.validateEventForUpdate(updatedEvent, user.nameid, userIds)
-      
+
       // Step 3: Compare original and updated event to determine schedule changes needed
       // Returns lists of availability IDs for create, delete, and update operations
       const availabilityLists = await patientService.checkAvailabilityForUpdate(
@@ -206,10 +205,10 @@ export default function EventCalendarPage() {
         originalEvent.endTime,
         workerId
       )
-      
+
       // Step 4: Update the event in the database
       await patientService.updateEvent(updatedEvent, user.nameid)
-      
+
       // Step 5: Create new schedules for newly covered availability blocks
       if (availabilityLists.forCreateSchedules.length > 0) {
         await patientService.createSchedules(
@@ -218,7 +217,7 @@ export default function EventCalendarPage() {
           availabilityLists.forCreateSchedules
         )
       }
-      
+
       // Step 6: Delete schedules for availability blocks no longer covered
       if (availabilityLists.forDeleteSchedules.length > 0) {
         await patientService.deleteSchedulesAfterEventUpdate(
@@ -226,7 +225,7 @@ export default function EventCalendarPage() {
           availabilityLists.forDeleteSchedules
         )
       }
-      
+
       // Step 7: Update existing schedules with new event details
       if (availabilityLists.forUpdateSchedules.length > 0) {
         await patientService.updateScheduledEvent(
@@ -234,12 +233,12 @@ export default function EventCalendarPage() {
           availabilityLists.forUpdateSchedules
         )
       }
-      
+
       // Step 8: Update local state for immediate UI feedback
-      setEvents(prev => prev.map(evt => 
+      setEvents(prev => prev.map(evt =>
         evt.eventId === updatedEvent.eventId ? updatedEvent : evt
       ))
-      
+
       setEditing(null)
       setEditFormError(null)
       showSuccess('Event created successfully')
@@ -268,13 +267,13 @@ export default function EventCalendarPage() {
     try {
       // Step 1: Delete all schedules linked to this event
       await patientService.deleteSchedulesByEventId(id)
-      
+
       // Step 2: Delete the event from the database
       await sharedService.deleteEvent(id)
-      
+
       // Step 3: Remove event from local state for immediate UI feedback
       setEvents(prev => prev.filter(evt => evt.eventId !== id))
-      
+
       setEditing(null)
       showSuccess('Event deleted successfully')
     } catch (err) {
@@ -344,50 +343,26 @@ export default function EventCalendarPage() {
 
       {/* Edit event form modal */}
       {editing && (
-          <EditEventForm
-            event={editing}
-            availableDays={availableDays}
-            availability={availability}
-            onClose={() => {
-              setEditing(null)
-              setEditFormError(null)
-            }}
-            onSave={(updatedEvent) => onSaveEdit(updatedEvent, editing)}
-            onDelete={onDelete}
-            error={editFormError}
-            onClearError={() => setEditFormError(null)}
-          />
+        <EditEventForm
+          event={editing}
+          availableDays={availableDays}
+          availability={availability}
+          onClose={() => {
+            setEditing(null)
+            setEditFormError(null)
+          }}
+          onSave={(updatedEvent) => onSaveEdit(updatedEvent, editing)}
+          onDelete={onDelete}
+          error={editFormError}
+          onClearError={() => setEditFormError(null)}
+        />
       )}
 
       {/* Logout confirmation modal */}
-      {showLogoutConfirm && (
-        <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title" aria-describedby="logout-confirm-desc">
-          <div className="modal confirm-modal">
-            <header className="modal__header">
-              <h2 id="logout-confirm-title">Confirm Logout</h2>
-              <button className="icon-btn" onClick={() => setShowLogoutConfirm(false)} aria-label="Close confirmation">
-                <img src="/images/exit.png" alt="Close" />
-              </button>
-            </header>
-            <div id="logout-confirm-desc" className="confirm-body">
-              Are you sure you want to log out?
-            </div>
-            <div className="confirm-actions">
-              <button type="button" className="btn" onClick={() => setShowLogoutConfirm(false)}>Cancel</button>
-              <button 
-                type="button" 
-                className="btn btn--primary" 
-                onClick={() => {
-                  logout();
-                  window.location.href = '/';
-                }}
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <LogoutConfirmationModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+      />
     </div>
   )
 }

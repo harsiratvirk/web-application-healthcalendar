@@ -11,6 +11,7 @@ import { useToast } from '../shared/toastContext'
 import { useAuth } from '../auth/AuthContext'
 import ViewEvent from './ViewEvent'
 import ConfirmationModal from './ConfirmationModal'
+import LogoutConfirmationModal from '../shared/LogoutConfirmationModal'
 
 // Helper function to convert Date to YYYY-MM-DD format
 function toLocalISO(date: Date) {
@@ -40,7 +41,7 @@ function addDaysISO(iso: string, days: number) {
 
 export default function EventCalendar() {
 	const { showError } = useToast()
-	const { logout, user } = useAuth()
+	const { user } = useAuth()
 	const [events, setEvents] = useState<Event[]>([])
 	const [availability, setAvailability] = useState<Availability[]>([])
 	const [loading] = useState(false)
@@ -493,34 +494,10 @@ export default function EventCalendar() {
 					setPendingDeletion(null)
 				}}
 			/>
-			{showLogoutConfirm && (
-				<div className="overlay" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title" aria-describedby="logout-confirm-desc">
-					<div className="modal confirm-modal">
-						<header className="modal__header">
-							<h2 id="logout-confirm-title">Confirm Logout</h2>
-							<button className="icon-btn" onClick={() => setShowLogoutConfirm(false)} aria-label="Close confirmation">
-								<img src="/images/exit.png" alt="Close" />
-							</button>
-						</header>
-						<div id="logout-confirm-desc" className="confirm-body">
-							Are you sure you want to log out?
-						</div>
-						<div className="confirm-actions">
-							<button type="button" className="btn" onClick={() => setShowLogoutConfirm(false)}>Cancel</button>
-							<button
-								type="button"
-								className="btn btn--primary"
-								onClick={() => {
-									logout();
-									window.location.href = '/';
-								}}
-							>
-								Confirm
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
+			<LogoutConfirmationModal
+				isOpen={showLogoutConfirm}
+				onClose={() => setShowLogoutConfirm(false)}
+			/>
 		</div>
 	)
 }
