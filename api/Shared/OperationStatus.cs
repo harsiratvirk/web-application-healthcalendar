@@ -5,7 +5,7 @@ namespace HealthCalendar.Shared
     {
         Ok,
         Error,
-        NotFound,
-        NotAcceptable
+        NotAcceptable,
+        Unauthorized
     }
 }

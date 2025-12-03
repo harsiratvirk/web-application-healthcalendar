@@ -188,8 +188,8 @@ public static class DbInit
             var event1 = new Event
             {
                 From = TimeOnly.Parse("10:30:00"),
-                To = TimeOnly.Parse("12:00:00"),
-                Date = DateOnly.Parse("5/12/2025"),
+                To = new TimeOnly(12, 0),
+                Date = new DateOnly(2025, 12, 5),
                 Title = "I wanna take a walk.",
                 Location = "Outside",
                 UserId = patient1!.Id

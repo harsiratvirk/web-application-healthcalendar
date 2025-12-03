@@ -1,6 +1,6 @@
 /* Additional classes to the EventCalendar.css for the worker page */
 
-.btn-static {
+/* .btn-static {
     background: var(--primary-strong);
     width: 190px;
     color: #fff;
@@ -9,11 +9,11 @@
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
-}
+} */
 
-.btn-static-g {
-    background: #3cb53c;
-    width: 190px;
+.btn-static-blue {
+    background: var(--primary-strong);
+    width: 170px;
     color: #fff;
     border: none;
     padding: 0.8rem 1.3rem;
@@ -22,36 +22,16 @@
     cursor: pointer;
 }
 
-.btn-toggle {
-    background: #2562E8; /* Explicit blue */
-    width: 180px;
+/* .btn-toggle {
+    background: #565656;
+    width: 150px;
     color: #fff;
     border: none;
     padding: 0.8rem 1.3rem;
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
-}
-
-.btn-logout {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 40px;
-    width: 140px;
-    background: #fff;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-left: auto;
-}
-
-.btn-logout img {
-    width: 18px;
-    height: 18px;
-    padding-right: 8px;
-}
+} */
 
 .availability-notification {
     position: fixed;
@@ -67,7 +47,87 @@
     animation: slideIn 0.3s ease-out;
 }
 
+
+
+/* Toggle switch between continuous and specific availability */
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.toggle-label {
+    font-weight: 600;
+    color: #2c2d2e;
+    font-size: 1rem;
+}
+
+.toggle-input-container {
+    position: relative;
+    width: 52px;
+    height: 30px;
+}
+
+.toggle-input-container input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #a6a6a6;
+    transition: 0.3s;
+    border-radius: 28px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 24px;
+    width: 24px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #ffffff;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-strong);
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+/* Slide animation */
 @keyframes slideIn {
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+}
+
+/* For smaller screens */
+@media (max-width: 750px) {
+    .btn-logout {
+        margin-left: 0;
+    }
+
+    .event-header__actions {
+        flex-direction: column-reverse;
+        align-items: flex-end;
+        gap: 0.5rem;
+    }
+
+    /* .btn-toggle {
+        font-size: 0.8rem;
+    } */
+    .btn-static-blue {
+        font-size: 0.8rem;
+    }
 }

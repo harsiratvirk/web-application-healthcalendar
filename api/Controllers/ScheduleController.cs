@@ -25,8 +25,8 @@ namespace HealthCalendar.Controllers
         public ScheduleController(IScheduleRepo scheduleRepo, IAvailabilityRepo availabilityRepo, 
                                   IEventRepo eventRepo, ILogger<ScheduleController> logger)
         {
-            _eventRepo = eventRepo;
             _scheduleRepo = scheduleRepo;
+            _eventRepo = eventRepo;
             _availabilityRepo = availabilityRepo;
             _logger = logger;
         }
@@ -89,7 +89,7 @@ namespace HealthCalendar.Controllers
                 }
                 
                 // retreives list of distinct eventIds from schedules
-                var eventIds = schedules.Select(s => s.EventId).Distinct();
+                var eventIds = schedules.Select(s => s.EventId);
                 
                 return Ok(eventIds);
             }
@@ -259,7 +259,7 @@ namespace HealthCalendar.Controllers
                 // updates table with updated schedules
                 var updateStatus = await _scheduleRepo.updateSchedules(schedules);
                 // In case updateSchedules() did not succeed
-                if (getSchedulesStatus == OperationStatus.Error)
+                if (updateStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[ScheduleController] Error from updateScheduledAvailability(): \n" +
                                      "Could not update Schedules with updateSchedules() from ScheduleRepo.");
@@ -323,7 +323,7 @@ namespace HealthCalendar.Controllers
                 // updates table with updated schedules
                 var updateStatus = await _scheduleRepo.updateSchedules(schedules);
                 // In case updateSchedules() did not succeed
-                if (getSchedulesStatus == OperationStatus.Error)
+                if (updateStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[ScheduleController] Error from updateScheduledEvent(): \n" +
                                      "Could not update Schedules with updateSchedules() from ScheduleRepo.");

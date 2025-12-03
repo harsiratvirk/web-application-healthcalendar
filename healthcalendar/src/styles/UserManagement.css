@@ -9,10 +9,9 @@
 
 .manage-main {
   flex: 1;
-  padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
-  width: 100%;
+  width: 90%;
 }
 
 .manage-main--no-top-padding {
@@ -266,7 +265,7 @@
 }
 
 .btn--primary {
-  background: var(--primary);
+  background: var(--primary-strong);
   color: #fff;
   border: none;
 }

@@ -97,15 +97,6 @@ export const userService = {
     return handleResponse<UserDTO[]>(response);
   },
 
-  // Get patients assigned to a specific worker
-  async getUsersByWorkerId(workerId: string): Promise<UserDTO[]> {
-    const response = await fetch(`${API_BASE_URL}/api/User/getUsersByWorkerId?workerId=${encodeURIComponent(workerId)}`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-    return handleResponse<UserDTO[]>(response);
-  },
-
   // Assign multiple patients to a worker
   async assignPatientsToWorker(patientIds: string[], workerUsername: string): Promise<any> {
     const queryParams = patientIds.map(id => `userIds=${encodeURIComponent(id)}`).join('&');

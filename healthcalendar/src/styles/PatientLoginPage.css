@@ -17,13 +17,15 @@
 
 .auth-main {
     flex: 1;
-    display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: clamp(1.25rem, 3vw, 3rem);
+    display: flex;
+    /* grid-template-columns: 1.1fr 0.9fr; */
+    /* gap: clamp(1.25rem, 3vw, 3rem); */
     align-items: center;
+    justify-content: center;
     width: 100%;
     max-width: none;
-    padding: clamp(1.1rem, 2.2vw, 2.75rem) clamp(3.5rem, 5.5vw, 6.75rem) clamp(1.1rem, 2.2vw, 2.75rem) clamp(0.75rem, 2.4vw, 2rem);
+    /* padding: clamp(1.1rem, 2.2vw, 2.75rem) clamp(3.5rem, 5.5vw, 6.75rem) clamp(1.1rem, 2.2vw, 2.75rem) clamp(0.75rem, 2.4vw, 2rem); */
+    padding: 1rem;
     margin: 0;
     box-sizing: border-box;
 }
@@ -38,15 +40,16 @@
     max-width: clamp(300px, 50vw, 550px);
     height: auto;
     border-radius: 12px;
-    margin-left: clamp(0.75rem, 4vw, 8rem);
+    margin-right: 4rem;
+    /* margin-left: clamp(0.75rem, 4vw, 8rem); */
 
 }
 
 .auth-right {
     max-width: 550px;
     width: 100%;
-    margin-left: 0;
-    margin-right: auto;
+    /* margin-left: 0;
+    margin-right: auto; */
 }
 
 .auth-title {
@@ -147,8 +150,11 @@
 
 @media (max-width: 960px) {
     .auth-main {
-        grid-template-columns: 1fr;
-        padding: clamp(0.95rem, 3.5vw, 1.65rem) clamp(2.75rem, 7vw, 3.5rem) clamp(1.1rem, 3.5vw, 1.9rem) clamp(0.6rem, 4vw, 1.25rem);
+        /* grid-template-columns: 1fr; */
+        /* padding: clamp(0.95rem, 3.5vw, 1.65rem) clamp(2.75rem, 7vw, 3.5rem) clamp(1.1rem, 3.5vw, 1.9rem) clamp(0.6rem, 4vw, 1.25rem); */
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
     }
 
     .auth-title {
@@ -183,7 +189,7 @@
 
     .auth-left {
         order: -1;
-        display: flex;
+        display: none;
         justify-content: flex-start;
     }
 

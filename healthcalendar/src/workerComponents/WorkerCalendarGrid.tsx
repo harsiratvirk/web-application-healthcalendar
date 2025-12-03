@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import { useRef, useState, useLayoutEffect } from 'react';
 import type { Event, Availability } from '../types/event';
 import '../styles/CalendarGrid.css';
 
@@ -57,7 +57,7 @@ export default function CalendarGrid({
   const totalSlots = Math.floor((endMins - startMins) / slotMinutes);
 
   // time labels (slot top boundaries)
-  const timeLabels = Array.from({ length: totalSlots + 1 }, (_, i) => startMins + i * slotMinutes);
+  const timeLabels = Array.from({ length: totalSlots }, (_, i) => startMins + i * slotMinutes);
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStartISO, i));
   const now = new Date();
@@ -201,8 +201,7 @@ export default function CalendarGrid({
             return (
               <div className={colClasses} key={d}>
                 {/* slots background */}
-                {timeLabels.map((m, si) => {
-                  if (si === timeLabels.length - 1) return null; // Skip last label (it's just a boundary)
+                {timeLabels.map((m) => {
                   const slotStart = m;
                   const slotEnd = m + slotMinutes;
                   const isAvailable = isSlotAvailable(d, slotStart, slotEnd);

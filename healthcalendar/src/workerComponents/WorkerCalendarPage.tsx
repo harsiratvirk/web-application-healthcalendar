@@ -11,6 +11,7 @@ import { useToast } from '../shared/toastContext'
 import { useAuth } from '../auth/AuthContext'
 import ViewEvent from './ViewEvent'
 import ConfirmationModal from './ConfirmationModal'
+import LogoutConfirmationModal from '../shared/LogoutConfirmationModal'
 
 // Helper function to convert Date to YYYY-MM-DD format
 function toLocalISO(date: Date) {
@@ -40,7 +41,7 @@ function addDaysISO(iso: string, days: number) {
 
 export default function EventCalendar() {
 	const { showError } = useToast()
-	const { logout, user } = useAuth()
+	const { user } = useAuth()
 	const [events, setEvents] = useState<Event[]>([])
 	const [availability, setAvailability] = useState<Availability[]>([])
 	const [loading] = useState(false)
@@ -48,7 +49,7 @@ export default function EventCalendar() {
 	const [viewing, setViewing] = useState<Event | null>(null)
 	const [isAvailabilityMode, setIsAvailabilityMode] = useState(false)
 	const [isContinuousMode, setIsContinuousMode] = useState(false)
-	const navigate = useNavigate()
+	const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
 	// Helper function to get the week range text
 	const weekRangeText = useMemo(() => {
@@ -68,7 +69,7 @@ export default function EventCalendar() {
 
 		try {
 			// Get worker's events from the worker's assigned users
-			const userList = await workerService.getUsersByWorkerId(user.nameid)
+			const userList = await sharedService.getUsersByWorkerId(user.nameid)
 			const eventsData = await workerService.getWeeksEventsForWorker(userList, weekStartISO)
 			setEvents(eventsData)
 
@@ -185,7 +186,7 @@ export default function EventCalendar() {
 			if (isContinuousMode) {
 				if (matchingContinuous) {
 					// Delete continuous availability
-					await deleteContinuous(matchingContinuous.id, workerId, dayOfWeek, timeStr)		
+					await deleteContinuous(matchingContinuous.id, workerId, dayOfWeek, timeStr)
 				} else {
 					// Create continuous availability
 					await createContinuous(workerId, dayOfWeek, timeStr, endTimeStr)
@@ -219,12 +220,12 @@ export default function EventCalendar() {
 	}
 
 	// calculates Parameters for create or delete operation
-	const getAndValidateParameters = async (date: string, time: number, dayName: string): 
-									   Promise<[string, number, string, string]> => {
-		
+	const getAndValidateParameters = async (date: string, time: number, dayName: string):
+		Promise<[string, number, string, string]> => {
+
 		// Retreives Worker's Id
 		const workerId = (user as WorkerUser).nameid
-		
+
 		// Convert dayName to dayOfWeek number
 		const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 		const dayOfWeek = days.indexOf(dayName)
@@ -278,8 +279,8 @@ export default function EventCalendar() {
 	}
 
 	// Workflow for properly creating masked specific availability
-	const createMask = async (avId: number, workerId: string, dayOfWeek: number, 
-							  date: string, timeStr: string, endTimeStr: string) => {
+	const createMask = async (avId: number, workerId: string, dayOfWeek: number,
+		date: string, timeStr: string, endTimeStr: string) => {
 		// Check for linked events, if any, ask worker for confirmation
 		const eventId = await workerService.findScheduledEventId(avId, date)
 		if (eventId) {
@@ -330,7 +331,7 @@ export default function EventCalendar() {
 	const createContinuous = async (workerId: string, dayOfWeek: number, timeStr: string, endTimeStr: string) => {
 		// Gets list of availability for relevant slot
 		const oldAvailabilityIds = await workerService.getAvailabilityIdsByDoW(workerId, dayOfWeek, timeStr)
-					
+
 		// Create continuous availability (date: null)
 		await workerService.createAvailability({
 			startTime: timeStr,
@@ -355,8 +356,8 @@ export default function EventCalendar() {
 	}
 
 	// Workflow for creating specific availability
-	const createSingular = async (workerId: string, dayOfWeek: number, date: string, 
-								  timeStr: string, endTimeStr: string) => {
+	const createSingular = async (workerId: string, dayOfWeek: number, date: string,
+		timeStr: string, endTimeStr: string) => {
 		await workerService.createAvailability({
 			startTime: timeStr,
 			endTime: endTimeStr,
@@ -420,33 +421,34 @@ export default function EventCalendar() {
 					</div>
 					<div className="event-header__right">
 						<button
-							className="btn-logout"
-							onClick={() => {
-								logout();
-								navigate('/worker/login', { replace: true });
-							}}
+							className="logout-btn"
+							onClick={() => setShowLogoutConfirm(true)}
 						>
 							<img src="/images/logout.png" alt="Logout" />
 							<span>Log Out</span>
 						</button>
 
-						<div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'flex-end' }}>
+						<div className="event-header__actions">
 							{isAvailabilityMode && (
 								<>
-									<button
-										className={isContinuousMode ? 'btn-static-g' : 'btn-toggle'}
-										onClick={handleContinuousToggle}
-										title="Toggle between continuous and specific date availability"
-									>
-										{isContinuousMode ? 'Weekly' : 'Daily'}
-									</button>
+									<label className="toggle-switch">
+										<span className="toggle-label">Repeat Weekly?</span>
+										<div className="toggle-input-container">
+											<input
+												type="checkbox"
+												checked={isContinuousMode}
+												onChange={handleContinuousToggle}
+											/>
+											<span className="slider round"></span>
+										</div>
+									</label>
 								</>
 							)}
 							<button
-								className={isAvailabilityMode ? 'btn-static-g' : 'btn-static'}
+								className={'btn-static-blue'}
 								onClick={handleAvailabilityToggle}
 							>
-								{isAvailabilityMode ? 'Done' : 'Change Availability'}
+								{isAvailabilityMode ? 'Done' : 'Edit Availability'}
 							</button>
 						</div>
 
@@ -478,7 +480,7 @@ export default function EventCalendar() {
 			{isAvailabilityMode && (
 				// Notification alert in bottom right for notifying worker on how to change availability
 				<div className="availability-notification">
-					Press timeboxes to change your availability
+					Tap a timebox to change your availability, then hit 'Done'.
 				</div>
 			)}
 			<ConfirmationModal
@@ -491,6 +493,10 @@ export default function EventCalendar() {
 					setShowConfirmModal(false)
 					setPendingDeletion(null)
 				}}
+			/>
+			<LogoutConfirmationModal
+				isOpen={showLogoutConfirm}
+				onClose={() => setShowLogoutConfirm(false)}
 			/>
 		</div>
 	)

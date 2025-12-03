@@ -13,12 +13,12 @@ namespace HealthCalendar.Controllers
     [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly UserManager<User> _userManager;
+        private readonly IUserRepo _userRepo;
         private readonly ILogger<UserController> _logger;
 
-        public UserController(UserManager<User> userManager, ILogger<UserController> logger)
+        public UserController(IUserRepo userRepo, ILogger<UserController> logger)
         {
-            _userManager = userManager;
+            _userRepo = userRepo;
             _logger = logger;
         }
 
@@ -32,12 +32,13 @@ namespace HealthCalendar.Controllers
             try
             {
                 // retreives User with Id
-                var user = await _userManager.FindByIdAsync(userId);
+                var (user, status) = await _userRepo.getUserById(userId);
                 // in case User was not retreived
-                if (user == null)
+                if (status == OperationStatus.Error || user == null)
                 {
                     _logger.LogError("[UserController] Error from getUser(): \n" +
-                                     "Could not retreive User");
+                                     "Could not retreive User with getUserById() " + 
+                                     "from UserRepo");
                     return StatusCode(500, "Could not retreive User");
                 }
 
@@ -67,18 +68,26 @@ namespace HealthCalendar.Controllers
         {
             try
             {
-                // retreives list of Users with "Patient" role
+                // retreives list of Users by their WorkerId
+                var (users, status) = await _userRepo.getUsersByWorkerId(workerId);
+                // In case error occured
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[UserController] Error from getUsersByWorkerId(): \n" +
+                                     "Could not retreive User with getUsersByWorkerId() " + 
+                                     "from UserRepo");
+                    return StatusCode(500, "Could not retreive Users");
+                }
+                
                 // converts list into UserDTOs
-                var userDTOs = await _userManager.Users
-                    .Where(u => u.WorkerId == workerId)
-                    .Select(u => new UserDTO
+                var userDTOs = users.Select(u => new UserDTO
                     {
                         Id = u.Id,
                         UserName = u.UserName!,
                         Name = u.Name,
                         Role = u.Role,
                         WorkerId = u.WorkerId
-                    }).ToListAsync();
+                    });
                 return Ok(userDTOs);
             }
             catch (Exception e) // In case of unexpected exception
@@ -98,60 +107,32 @@ namespace HealthCalendar.Controllers
             try
             {
                 // retreives list of Users with "Worker" role
+                var (workers, status) = await _userRepo.getAllWorkers();
+                // In case error occured
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[UserController] Error from getAllWorkers(): \n" +
+                                     "Could not retreive User with getAllWorkers() " + 
+                                     "from UserRepo");
+                    return StatusCode(500, "Could not retreive Users");
+                }
+                
                 // converts list into UserDTOs
-                var userDTOs = await _userManager.Users
-                    .Where(u => u.Role == Roles.Worker)
-                    .Select(u => new UserDTO
-                    {
-                        Id = u.Id,
-                        UserName = u.UserName!,
-                        Name = u.Name,
-                        Role = u.Role
-                    }).ToListAsync();
+                var userDTOs = workers.Select(u => new UserDTO
+                {
+                    Id = u.Id,
+                    UserName = u.UserName!,
+                    Name = u.Name,
+                    Role = u.Role,
+                    WorkerId = u.WorkerId
+                });
                 return Ok(userDTOs);
             }
             catch (Exception e) // In case of unexpected exception
             {
                 _logger.LogError("[UserController] Error from getAllWorkers(): \n" +
                                  "Something went wrong when trying to retreive Users " + 
-                                $"where Role = \"Worker\", Error message: {e}");
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        // Retrieves all Workers not related to any Patient
-        [HttpGet("getUnassignedWorkers")]
-        [Authorize(Roles="Admin")]
-        public async Task<IActionResult> getUnassignedWorkers()
-        {
-            try
-            {
-                // retreives list of Users with "Patient" role and a non-null WorkerId
-                // converts list into WorkerIds
-                var workerIds = await _userManager.Users
-                    .Where(u => u.Role == Roles.Patient && u.WorkerId != null)
-                    .Select(u => u.WorkerId)
-                    .ToListAsync();
-                
-                // retreives list of Users with "Worker" role and no assigned Users with "Patient" role
-                // converts list into UserDTOs
-                var userDTOs = await _userManager.Users
-                    .Where(u => u.Role == Roles.Worker && !workerIds.Contains(u.WorkerId))
-                    .Select(u => new UserDTO
-                    {
-                        Id = u.Id,
-                        UserName = u.UserName!,
-                        Name = u.Name,
-                        Role = u.Role
-                    }).ToListAsync();
-                return Ok(userDTOs);
-            }
-            catch (Exception e) // In case of unexpected exception
-            {
-                _logger.LogError("[UserController] Error from getUnassignedWorkers(): \n" +
-                                 "Something went wrong when trying to retreive Users " + 
-                                 "where Role = \"Worker\" and Id is not the WorkerId " + 
-                                $"of any User, Error message: {e}");
+                                $"where Role = {Roles.Worker}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -164,23 +145,32 @@ namespace HealthCalendar.Controllers
             try
             {
                 // retreives list of Users with "Patient" role
+                var (patients, status) = await _userRepo.getAllPatients();
+                // In case error occured
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[UserController] Error from getAllPatients(): \n" +
+                                     "Could not retreive User with getAllPatients() " + 
+                                     "from UserRepo");
+                    return StatusCode(500, "Could not retreive Users");
+                }
+                
                 // converts list into UserDTOs
-                var userDTOs = await _userManager.Users
-                    .Where(u => u.Role == Roles.Patient)
-                    .Select(u => new UserDTO
-                    {
-                        Id = u.Id,
-                        UserName = u.UserName!,
-                        Name = u.Name,
-                        Role = u.Role
-                    }).ToListAsync();
+                var userDTOs = patients.Select(u => new UserDTO
+                {
+                    Id = u.Id,
+                    UserName = u.UserName!,
+                    Name = u.Name,
+                    Role = u.Role,
+                    WorkerId = u.WorkerId
+                });
                 return Ok(userDTOs);
             }
             catch (Exception e) // In case of unexpected exception
             {
                 _logger.LogError("[UserController] Error from getAllPatients(): \n" +
                                  "Something went wrong when trying to retreive Users " + 
-                                $"where Role = \"Patient\", Error message: {e}");
+                                $"where Role = {Roles.Patient}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -193,23 +183,32 @@ namespace HealthCalendar.Controllers
             try
             {
                 // retreives list of Users with "Patient" role and no WorkerId
+                var (patients, status) = await _userRepo.getUnassignedPatients();
+                // In case error occured
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[UserController] Error from getUnassignedPatients(): \n" +
+                                     "Could not retreive User with getUnassignedPatients() " + 
+                                     "from UserRepo");
+                    return StatusCode(500, "Could not retreive Users");
+                }
+                
                 // converts list into UserDTOs
-                var userDTOs = await _userManager.Users
-                    .Where(u => u.Role == Roles.Patient && u.WorkerId == null)
-                    .Select(u => new UserDTO
-                    {
-                        Id = u.Id,
-                        UserName = u.UserName!,
-                        Name = u.Name,
-                        Role = u.Role
-                    }).ToListAsync();
+                var userDTOs = patients.Select(u => new UserDTO
+                {
+                    Id = u.Id,
+                    UserName = u.UserName!,
+                    Name = u.Name,
+                    Role = u.Role,
+                    WorkerId = u.WorkerId
+                });
                 return Ok(userDTOs);
             }
             catch (Exception e) // In case of unexpected exception
             {
                 _logger.LogError("[UserController] Error from getUnassignedPatients(): \n" +
                                  "Something went wrong when trying to retreive Users " + 
-                                 "where Role = \"Patient\" and WorkerId = null, " + 
+                                $"where Role = {Roles.Patient} and WorkerId = null, " + 
                                 $"Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
@@ -222,13 +221,19 @@ namespace HealthCalendar.Controllers
         {
             try
             {
-                // retreives list of Users with "Patient" role
-                // converts list into Ids
-                var userIdss = await _userManager.Users
-                    .Where(u => u.WorkerId == workerId)
-                    .Select(u => u.Id)
-                    .ToListAsync();
-                return Ok(userIdss);
+                // retreives list of Users by their WorkerId
+                var (users, status) = await _userRepo.getUsersByWorkerId(workerId);
+                // In case error occured
+                if (status == OperationStatus.Error)
+                {
+                    _logger.LogError("[UserController] Error from getIdsByWorkerId(): \n" +
+                                     "Could not retreive User with getUsersByWorkerId() " + 
+                                     "from UserRepo");
+                    return StatusCode(500, "Could not retreive Users");
+                }
+
+                var userIds = users.Select(u => u.Id);
+                return Ok(userIds);
             }
             catch (Exception e) // In case of unexpected exception
             {
@@ -250,11 +255,12 @@ namespace HealthCalendar.Controllers
         {
             try
             {
-                var patient = await _userManager.FindByIdAsync(userId);
-                
-                if (patient == null)
+                var (patient, getStatus) = await _userRepo.getUserById(userId);
+                // in case User was not retreived
+                if (getStatus == OperationStatus.Error || patient == null)
                 {
-                    _logger.LogError("[UserController] Error from unassignPatientFromWorker(): Patient not found");
+                    _logger.LogError("[UserController] Error from unassignPatientFromWorker(): " + 
+                                     "Patient not found with getUserById() from UserRepo");
                     return NotFound("Patient not found");
                 }
                 
@@ -262,12 +268,12 @@ namespace HealthCalendar.Controllers
                 patient.WorkerId = null;
                 patient.Worker = null;
                 // Update table with patient
-                var result = await _userManager.UpdateAsync(patient);
+                var updateStatus = await _userRepo.updateUser(patient);
                 // In case update did not succeed
-                if (!result.Succeeded)
+                if (updateStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[UserController] Error from unassignPatientFromWorker(): \n" +
-                                    $"User {@patient} was not updated");
+                                    $"User was not updated with updateUser() from UserRepo");
                     return StatusCode(500, "Something went wrong when assigning Patient to Worker");
                 }
 
@@ -290,13 +296,12 @@ namespace HealthCalendar.Controllers
             try
             {
                 
-                var patients = await _userManager.Users
-                    .Where(u => userIds.Contains(u.Id))
-                    .ToListAsync();
-                
-                if (!patients.Any())
+                var (patients, getStatus) = await _userRepo.getUsersByIds(userIds);
+                // in case Users were not retreived
+                if (getStatus == OperationStatus.Error || !patients.Any())
                 {
-                    _logger.LogError("[UserController] Error from unassignPatientsFromWorker(): Patients not found");
+                    _logger.LogError("[UserController] Error from unassignPatientsFromWorker(): " + 
+                                     "Patient not found with getUsersByIds() from UserRepo");
                     return NotFound("Patients not found");
                 }
                 
@@ -306,13 +311,14 @@ namespace HealthCalendar.Controllers
                     patient.WorkerId = null;
                     patient.Worker = null;
                     // Update table with patient
-                    var result = await _userManager.UpdateAsync(patient);
+                    var updateStatus = await _userRepo.updateUser(patient);
                     // In case update did not succeed
-                    if (!result.Succeeded)
+                    if (updateStatus == OperationStatus.Error)
                     {
                         _logger.LogWarning("[UserController] Warning from " + 
                                            "unassignPatientsFromWorker(): \n" +
-                                          $"User {@patient} was not updated");
+                                           "updateUser() from UserRepo did not" +
+                                          $"update patient {@patient}");
                         // Error code is not returned since patients need to be updated one at a time
                         // Returning something would stop the entire operation
                     }
@@ -327,7 +333,7 @@ namespace HealthCalendar.Controllers
 
                 _logger.LogError("[UserController] Error from unassignPatientsFromWorker(): \n" +
                                  "Something went wrong when trying to unassign User " + 
-                                $"with Ids {userIds} from their Worker, Error message: {e}");
+                                $"with Ids {userIdsString} from their Worker, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -340,24 +346,39 @@ namespace HealthCalendar.Controllers
         {
             try
             {
-                // retreives Worker and Patients
-                var worker = await _userManager.FindByIdAsync(workerId);
-                var patients = await _userManager.Users
-                    .Where(u => userIds.Contains(u.Id))
-                    .ToListAsync();
-                // Adds Worker to Patients Worker related parameters
+                // retreives Worker
+                var (worker, getWorkerStatus) = await _userRepo.getUserById(workerId);
+                // in case Worker was not retreived
+                if (getWorkerStatus == OperationStatus.Error || worker == null)
+                {
+                    _logger.LogError("[UserController] Error from assignPatientsToWorker(): " + 
+                                     "Worker not found with getUserById() from UserRepo");
+                    return NotFound("Worker not found");
+                }
+                // retreives Patients
+                var (patients, getPatientStatus) = await _userRepo.getUsersByIds(userIds);
+                // in case Patient was not retreived
+                if (getWorkerStatus == OperationStatus.Error || !patients.Any())
+                {
+                    _logger.LogError("[UserController] Error from assignPatientsToWorker(): " + 
+                                     "Patients not found with getUsersByIds() from UserRepo");
+                    return NotFound("Patients not found");
+                }
+                
+                // Adds Worker to Patients Worker-related parameters
                 foreach (var patient in patients)
                 {
                     patient.WorkerId = worker!.Id;
                     patient.Worker = worker;
                     // Update table with patient
-                    var result = await _userManager.UpdateAsync(patient);
+                    var updateStatus = await _userRepo.updateUser(patient);
                     // In case update did not succeed
-                    if (!result.Succeeded)
+                    if (getWorkerStatus == OperationStatus.Error)
                     {
                         _logger.LogWarning("[UserController] Warning from " + 
                                            "assignPatientsToWorker(): \n" +
-                                          $"User {@patient} was not updated");
+                                           "updateUser() from UserRepo did not" +
+                                          $"update patient {@patient}");
                         // Error code is not returned since patients need to be updated one at a time
                         // Returning something would stop the entire operation
                     }
@@ -389,22 +410,23 @@ namespace HealthCalendar.Controllers
             try
             {
                 // retreives User that should be deleted
-                var user = await _userManager.FindByIdAsync(userId);
+                var (user, getStatus) = await _userRepo.getUserById(userId);
                 
-                if (user == null)
+                if (getStatus == OperationStatus.Error || user == null)
                 {
                     _logger.LogError("[UserController] Error from deleteUser(): \n" +
-                                     "User not found");
+                                     "User not found with getUserById() from UserRepo");
                     return NotFound("User not found");
                 }
                 
                 // deletes user from table
-                var result = await _userManager.DeleteAsync(user);
+                var deleteStatus = await _userRepo.deleteUser(user);
                 // In case deletion did not succeed
-                if (!result.Succeeded)
+                if (getStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[UserController] Error from deleteUser(): \n" +
-                                    $"User {@user} was not deleted");
+                                    $"User {@user} was not deleted with deleteUser() " + 
+                                    "from UserRepo");
                     return StatusCode(500, "Something went wrong when deleting user");
                 }
                 

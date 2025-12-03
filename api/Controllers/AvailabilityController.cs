@@ -178,7 +178,7 @@ namespace HealthCalendar.Controllers
             {
                 // retreives Availability
                 var (availability, status) = await _availabilityRepo
-                    .getAvailabilityByDoW(userId,dayOfWeek, from);
+                    .getAvailabilityByDoW(userId, dayOfWeek, from);
                 // In case getAvailabilityByDoW() did not succeed
                 if (status == OperationStatus.Error || availability == null)
                 {
@@ -214,7 +214,7 @@ namespace HealthCalendar.Controllers
             {
                 // retreives list of Availability
                 var (availabilityRange, status) = await _availabilityRepo
-                    .getAvailabilityRangeByDoW(userId,dayOfWeek, from);
+                    .getAvailabilityRangeByDoW(userId, dayOfWeek, from);
                 // In case getAvailabilityRangeByDoW() did not succeed
                 if (status == OperationStatus.Error)
                 {

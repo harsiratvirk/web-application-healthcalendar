@@ -49,23 +49,6 @@ function toAvailabilityDTO(availability: NewAvailabilityInput | Availability, us
 }
 
 export const workerService = {
-	// Get patients assigned to a worker
-	async getUsersByWorkerId(workerId: string): Promise<UserDTO[]> {
-		try {
-			const response = await fetch(
-				`${API_BASE_URL}/User/getUsersByWorkerId?workerId=${encodeURIComponent(workerId)}`,
-				{
-					method: 'GET',
-					headers: getHeaders()
-				}
-			);
-			const users = await handleResponse<UserDTO[]>(response);
-			return users;
-		} catch (err) {
-			throw normalizeError(err);
-		}
-	},
-
 	// Get week's events for worker (all events from assigned patients)
 	async getWeeksEventsForWorker(patients: UserDTO[], monday: string): Promise<any[]> {
 		try {

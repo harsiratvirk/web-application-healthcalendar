@@ -1,26 +1,24 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { sharedService, type UserDTO  } from '../services/sharedService'
+import { sharedService, type UserDTO } from '../services/sharedService'
 import { adminService } from '../services/adminService'
 import { useToast } from '../shared/toastContext'
-import { useAuth } from '../auth/AuthContext'
 import '../styles/UserManagement.css'
 import '../styles/EventCalendarPage.css'
+import LogoutConfirmationModal from '../shared/LogoutConfirmationModal'
 
 // Admin page for managing healthcare workers and patient assignments
 
 const UserManagePage: React.FC = () => {
   const navigate = useNavigate()
   const { showSuccess, showError } = useToast()
-  const { logout } = useAuth()
-  
   // State for managing workers and patients
   const [workers, setWorkers] = useState<UserDTO[]>([])
   const [selectedWorker, setSelectedWorker] = useState<UserDTO | null>(null)
   const [assignedPatients, setAssignedPatients] = useState<UserDTO[]>([])
   const [unassignedPatients, setUnassignedPatients] = useState<UserDTO[]>([])
   const [selectedPatientIds, setSelectedPatientIds] = useState<string[]>([])
-  
+
   // UI state for loading and modals
   const [loading, setLoading] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
@@ -104,7 +102,7 @@ const UserManagePage: React.FC = () => {
       setLoading(true)
       await adminService.assignPatientsToWorker(selectedPatientIds, selectedWorker.Id)
       showSuccess(`Assigned ${selectedPatientIds.length} patient(s) to ${selectedWorker.Name}`)
-      
+
       // Refresh lists to reflect the changes
       await loadAssignedPatients(selectedWorker.Id)
       await loadUnassignedPatients()
@@ -127,7 +125,7 @@ const UserManagePage: React.FC = () => {
       await sharedService.deleteEventsByIds(eventIds)
       // step 3: unassign patient from their worker
       await adminService.unassignPatientFromWorker(patientId)
-            showSuccess('Patient unassigned successfully')
+      showSuccess('Patient unassigned successfully')
       // Refresh lists to show updated assignments
       if (selectedWorker) {
         await loadAssignedPatients(selectedWorker.Id)
@@ -167,17 +165,17 @@ const UserManagePage: React.FC = () => {
       // step 6: delete the worker
       await adminService.deleteUser(workerToDelete.Id)
       showSuccess(`Worker ${workerToDelete.Name} has been removed`)
-      
+
       // Clear selection if the deleted worker was currently selected
       if (selectedWorker?.Id === workerToDelete.Id) {
         setSelectedWorker(null)
         setAssignedPatients([])
       }
-      
+
       // Refresh lists to show updated data
       await loadWorkers()
       await loadUnassignedPatients()
-      
+
       setWorkerToDelete(null)
     } catch (err: any) {
       showError(err?.message || 'Failed to delete healthcare worker')
@@ -208,16 +206,16 @@ const UserManagePage: React.FC = () => {
       // step 3: delete the patient
       await adminService.deleteUser(patientToDelete.Id)
       showSuccess(`Patient ${patientToDelete.Name} has been deleted`)
-      
+
       // Clear patient selection if they were in the selected list
       setSelectedPatientIds(prev => prev.filter(id => id !== patientToDelete.Id))
-      
+
       // Refresh lists to show updated data
       if (selectedWorker) {
         await loadAssignedPatients(selectedWorker.Id)
       }
       await loadUnassignedPatients()
-      
+
       setPatientToDelete(null)
     } catch (err: any) {
       showError(err?.message || 'Failed to delete patient')
@@ -238,14 +236,14 @@ const UserManagePage: React.FC = () => {
           <span>Log Out</span>
         </button>
       </div>
-      
+
       <main className="manage-main manage-main--no-top-padding">
         {/* Page header with title and action buttons */}
         <header className="manage-header">
           <h1 className="manage-title">Manage Healthcare Workers & Patients</h1>
           <div className="manage-actions">
-            <button 
-              className="btn btn--secondary" 
+            <button
+              className="btn btn--secondary"
               onClick={() => navigate('/admin/register-worker')}
             >
               + Add New Worker
@@ -261,8 +259,8 @@ const UserManagePage: React.FC = () => {
             <div className="manage-card">
               <h2 className="manage-card-title">Select Healthcare Worker</h2>
               <div className="manage-worker-selector">
-                <select 
-                  value={selectedWorker?.Id || ''} 
+                <select
+                  value={selectedWorker?.Id || ''}
                   onChange={handleWorkerChange}
                   className="manage-select"
                 >
@@ -308,8 +306,8 @@ const UserManagePage: React.FC = () => {
                   )}
                 </div>
                 {/* Assign button (disabled when no patients selected) */}
-                <button 
-                  className="btn btn--primary" 
+                <button
+                  className="btn btn--primary"
                   onClick={handleAssignPatients}
                   disabled={loading || selectedPatientIds.length === 0}
                 >
@@ -324,8 +322,8 @@ const UserManagePage: React.FC = () => {
             <div className="manage-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h2 className="manage-card-title" style={{ margin: 0 }}>
-                  {selectedWorker 
-                    ? `Patients Assigned to ${selectedWorker.Name}` 
+                  {selectedWorker
+                    ? `Patients Assigned to ${selectedWorker.Name}`
                     : 'Select a worker to view assigned patients'}
                 </h2>
                 {selectedWorker && (
@@ -352,15 +350,15 @@ const UserManagePage: React.FC = () => {
                           <div className="manage-patient-email">{patient.UserName}</div>
                         </div>
                         <div className="manage-button-actions">
-                          <button 
-                            className="btn btn--grey btn--small" 
+                          <button
+                            className="btn btn--grey btn--small"
                             onClick={() => handleUnassignPatient(patient.Id)}
                             disabled={loading}
                           >
                             Unassign
                           </button>
-                          <button 
-                            className="btn btn--danger btn--small" 
+                          <button
+                            className="btn btn--danger btn--small"
                             onClick={() => handleDeletePatientClick(patient)}
                             disabled={loading}
                             title="Delete this patient"
@@ -379,34 +377,10 @@ const UserManagePage: React.FC = () => {
       </main>
 
       {/* Logout confirmation modal */}
-      {showLogoutConfirm && (
-        <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title" aria-describedby="logout-confirm-desc">
-          <div className="modal confirm-modal">
-            <header className="modal__header">
-              <h2 id="logout-confirm-title">Confirm Logout</h2>
-              <button className="icon-btn" onClick={() => setShowLogoutConfirm(false)} aria-label="Close confirmation">
-                <img src="/images/exit.png" alt="Close" />
-              </button>
-            </header>
-            <div id="logout-confirm-desc" className="confirm-body">
-              Are you sure you want to log out?
-            </div>
-            <div className="confirm-actions">
-              <button type="button" className="btn" onClick={() => setShowLogoutConfirm(false)}>Cancel</button>
-              <button 
-                type="button" 
-                className="btn btn--primary" 
-                onClick={() => {
-                  logout();
-                  window.location.href = '/';
-                }}
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <LogoutConfirmationModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+      />
 
       {/* Worker deletion confirmation modal */}
       {showDeleteConfirm && workerToDelete && (
@@ -431,9 +405,9 @@ const UserManagePage: React.FC = () => {
                 setShowDeleteConfirm(false)
                 setWorkerToDelete(null)
               }}>Cancel</button>
-              <button 
-                type="button" 
-                className="btn btn--danger" 
+              <button
+                type="button"
+                className="btn btn--danger"
                 onClick={handleDeleteWorkerConfirm}
                 disabled={loading}
               >
@@ -467,9 +441,9 @@ const UserManagePage: React.FC = () => {
                 setShowDeletePatientConfirm(false)
                 setPatientToDelete(null)
               }}>Cancel</button>
-              <button 
-                type="button" 
-                className="btn btn--danger" 
+              <button
+                type="button"
+                className="btn btn--danger"
                 onClick={handleDeletePatientConfirm}
                 disabled={loading}
               >

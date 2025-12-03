@@ -91,7 +91,7 @@ export default function EventCalendar() {
         // Step 2: Call getWeeksAvailabilityProper() to retrieve worker's availability
         // Get workerId from patient's JWT token (WorkerId field)
         const workerId = (user as PatientUser).WorkerId
-        let availabilityData = await sharedService.getWeeksAvailabilityProper(workerId, weekStartISO)
+        let availabilityData = await patientService.getWeeksAvailabilityProper(workerId, weekStartISO)
         // Step 3: Call getIdsByWorkerId() to get all ids of patients assigned to worker
         const userIds = await sharedService.getIdsByWorkerId(workerId)
         const othersUserIds = userIds.filter(id => id !== user.nameid)
@@ -195,9 +195,9 @@ export default function EventCalendar() {
         )
       }
       
-      // Step 6: Call deleteSchedulesByAvailabilityIds() for removed schedules
+      // Step 6: Call deleteSchedulesAfterEventUpdate() for removed schedules
       if (availabilityLists.forDeleteSchedules.length > 0) {
-        await patientService.deleteSchedulesByAvailabilityIds(
+        await patientService.deleteSchedulesAfterEventUpdate(
           updatedEvent.eventId,
           availabilityLists.forDeleteSchedules
         )
@@ -241,7 +241,7 @@ export default function EventCalendar() {
 
     try {
       // Step 1: Call deleteSchedulesByEventId()
-      await sharedService.deleteSchedulesByEventId(id)
+      await patientService.deleteSchedulesByEventId(id)
       
       // Step 2: Call deleteEvent()
       await sharedService.deleteEvent(id)

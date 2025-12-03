@@ -2,27 +2,26 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { registerWorker } from '../services/authService'
 import { useToast } from '../shared/toastContext'
-import { useAuth } from '../auth/AuthContext'
 import '../styles/PatientRegistrationPage.css'
 import '../styles/UserManagement.css'
 import '../styles/EventCalendarPage.css'
+import LogoutConfirmationModal from '../shared/LogoutConfirmationModal'
 
 // Admin page for registering new healthcare workers
 
 const WorkerRegistrationPage: React.FC = () => {
   const navigate = useNavigate()
-  const { showSuccess, showError } = useToast()
-  const { logout } = useAuth()
-  
+  const { showSuccess } = useToast()
+
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  
+
   // Validation error state for each field
   const [nameError, setNameError] = useState<string | null>(null)
   const [emailError, setEmailError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
-  
+
   // UI state
   const [loading, setLoading] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
@@ -30,25 +29,24 @@ const WorkerRegistrationPage: React.FC = () => {
   // Handle form submission and worker registration
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
     setNameError(null)
     setEmailError(null)
     setPasswordError(null)
     let hasError = false
-    
+
     // Client-side validation
     if (!name) { setNameError('Name is required.'); hasError = true }
     if (!email) { setEmailError('Email is required.'); hasError = true }
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { 
-      setEmailError('Enter a valid email address (e.g., name@example.com).'); 
-      hasError = true 
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError('Enter a valid email address (e.g., name@example.com).');
+      hasError = true
     }
     if (!password) { setPasswordError('Password is required.'); hasError = true }
-    else if (password.length < 6) { 
-      setPasswordError('Password must be at least 6 characters long.'); 
-      hasError = true 
+    else if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters long.');
+      hasError = true
     }
-    
+
     // Attempt registration if email format is valid (backend will check for duplicates)
     const emailIsValid = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
     if (emailIsValid) {
@@ -107,7 +105,7 @@ const WorkerRegistrationPage: React.FC = () => {
               />
               {nameError && <small className="field-error">{nameError}</small>}
             </label>
-            
+
             {/* Email input field with format validation */}
             <label>
               Email
@@ -130,7 +128,7 @@ const WorkerRegistrationPage: React.FC = () => {
               />
               {emailError && <small className="field-error">{emailError}</small>}
             </label>
-            
+
             {/* Password input field with minimum length requirement */}
             <label>
               Password
@@ -158,9 +156,9 @@ const WorkerRegistrationPage: React.FC = () => {
             </button>
           </form>
           <p className="auth-alt">
-            <button 
-              type="button" 
-              onClick={() => navigate('/admin/manage')} 
+            <button
+              type="button"
+              onClick={() => navigate('/admin/manage')}
               className="admin-link-button"
             >
               Go to Manage Workers & Patients
@@ -170,34 +168,10 @@ const WorkerRegistrationPage: React.FC = () => {
       </main>
 
       {/* Logout confirmation modal */}
-      {showLogoutConfirm && (
-        <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title" aria-describedby="logout-confirm-desc">
-          <div className="modal confirm-modal">
-            <header className="modal__header">
-              <h2 id="logout-confirm-title">Confirm Logout</h2>
-              <button className="icon-btn" onClick={() => setShowLogoutConfirm(false)} aria-label="Close confirmation">
-                <img src="/images/exit.png" alt="Close" />
-              </button>
-            </header>
-            <div id="logout-confirm-desc" className="confirm-body">
-              Are you sure you want to log out?
-            </div>
-            <div className="confirm-actions">
-              <button type="button" className="btn" onClick={() => setShowLogoutConfirm(false)}>Cancel</button>
-              <button 
-                type="button" 
-                className="btn btn--primary" 
-                onClick={() => {
-                  logout();
-                  window.location.href = '/';
-                }}
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <LogoutConfirmationModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+      />
     </div>
   )
 }
