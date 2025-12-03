@@ -248,8 +248,14 @@ export default function EventCalendar() {
 
 		// Validation check
 		const currentDate = toLocalISO(new Date)
-		if (dayOfWeek === -1 || time % 30 !== 0 || date < currentDate) {
-			throw new Error('Request not acceptable.');
+		if (dayOfWeek === -1) {
+			throw new Error('Invalid day selected.');
+		}
+		if (time % 30 !== 0) {
+			throw new Error('Invalid time slot. Please select a 30-minute interval.');
+		}
+		if (date < currentDate) {
+			throw new Error('Cannot set availability for past dates.');
 		}
 
 		return [workerId, dayOfWeek, timeStr, endTimeStr]
