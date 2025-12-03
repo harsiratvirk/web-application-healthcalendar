@@ -7,7 +7,7 @@ const NavBar: React.FC = () => {
       <div className="navbar__left">
         <Link to="/" className="navbar__brand">
           <img src="/logo/logo.png" alt="HelseKalenderen logo" className="navbar__logo" />
-          <span className="navbar__title">HelseKalenderen</span>
+          <span className="navbar__title">HealthCalendar</span>
         </Link>
       </div>
       <nav className="navbar__right">
