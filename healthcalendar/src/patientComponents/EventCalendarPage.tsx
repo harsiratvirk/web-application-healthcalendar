@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import type { Event, Availability } from '../types/event'
+import type { Availability } from '../types/availability'
+import type { Event } from '../types/event'
 import type { PatientUser } from '../types/user'
 import { sharedService } from '../services/sharedService'
 import { patientService } from '../services/patientService'

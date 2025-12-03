@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Event, Availability } from '../types/event'
+import type { Availability } from '../types/availability'
+import type { Event } from '../types/event'
 import '../styles/EventFormsBase.css'
 import '../styles/ConfirmDialog.css'
 
