@@ -87,6 +87,8 @@
     border-radius: 10px;
     font-size: 1.1rem;
     outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 .form input:focus,
