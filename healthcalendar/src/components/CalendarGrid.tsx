@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import { useRef, useState, useLayoutEffect } from 'react';
 import type { Event } from '../types/event';
 import type { Availability } from '../types/availability'
 import '../styles/CalendarGrid.css';

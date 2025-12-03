@@ -1,4 +1,4 @@
-import type { Availability } from '../types/event';
+import type { Availability } from '../types/availability.ts';
 // imports DTOs shared with other services
 import type { UserDTO } from './sharedService.ts';
 // Imports constants and functions shared with other services

@@ -1,4 +1,5 @@
-import type { Event, Availability, NewEventInput, UpdateEventInput } from '../types/event.ts';
+import type { Event, NewEventInput, UpdateEventInput } from '../types/event.ts';
+import type { Availability } from '../types/availability.ts';
 // Imports functions shared with other services
 import { API_BASE_URL, getHeaders, handleResponse, normalizeError, fromAvailabilityDTO } from './sharedService.ts'
 
