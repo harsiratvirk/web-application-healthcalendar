@@ -99,7 +99,7 @@
 }
 
 input:checked + .slider {
-    background-color: var(--primary-strong);
+    background-color: rgb(0, 151, 0)
 }
 
 input:checked + .slider:before {
