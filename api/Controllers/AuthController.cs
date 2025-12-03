@@ -167,7 +167,7 @@ namespace HealthCalendar.Controllers
 
 
         // backend logout method, is not necessary but clears eventual auth cookies from server
-        [Authorize]
+        [Authorize(Roles="Patient,Worker,Admin")]
         [HttpPost("logout")]
         public async Task<IActionResult> logout()
         {

@@ -188,9 +188,27 @@ public static class DbInit
             await addSchedules(context, event3, patient2.WorkerId!);
             await context.SaveChangesAsync();
             await addSchedules(context, event4, patient2.WorkerId!);
-
             await context.SaveChangesAsync();
         }
+
+        var patient2_0 = await userManager.FindByNameAsync("karl@gmail.com");
+        // DELETE
+            var event5 = new Event
+            {
+                From = new TimeOnly(10, 0),
+                To = new TimeOnly(12, 0),
+                Date = new DateOnly(2025, 12, 1),
+                Title = "I wanna take a walk.",
+                Location = "Streetname 11",
+                UserId = patient2_0!.Id
+            };
+            context.Add(event5);
+            // DELETE
+
+            // DELETE
+            await addSchedules(context, event5, patient2_0.WorkerId!);
+            await context.SaveChangesAsync();
+            // DELETE
     }
     
     // adds User to User table

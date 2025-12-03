@@ -132,6 +132,7 @@ public class EventRepo : IEventRepo
         {
             // retreives events between given dates for monday and sunday
             var events = await _db.Events
+                .AsNoTracking()
                 .Where(e => userIds.Contains(e.UserId) && e.Date >= monday && e.Date <= sunday)
                 .ToListAsync();
             return (events, OperationStatus.Ok);

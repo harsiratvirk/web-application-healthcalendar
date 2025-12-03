@@ -494,7 +494,7 @@ namespace HealthCalendar.Controllers
 
         // method that deletes range of Events from table with list of EventIds
         [HttpDelete("deleteEventsByIds")]
-        [Authorize(Roles="Worker,Admin")]
+        [Authorize(Roles="Patient,Worker,Admin")]
         public async Task<IActionResult> deleteEventsByIds([FromQuery] int[] eventIds)
         {
             try
@@ -519,7 +519,7 @@ namespace HealthCalendar.Controllers
                     _logger.LogError("[EventController] Error from deleteEventsByIds(): \n" +
                                      "Could not delete Events with deleteEvents() " + 
                                      "from EventRepo.");
-                    return StatusCode(500, "Something went wrong when deleting Availability");
+                    return StatusCode(500, "Something went wrong when deleting Events");
                 }
                 
                 return Ok(new { Message = "Events have been deleted" });

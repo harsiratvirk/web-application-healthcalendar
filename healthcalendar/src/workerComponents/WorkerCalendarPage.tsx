@@ -63,6 +63,15 @@ export default function EventCalendar() {
 		return `${startDay} – ${endDay} ${month} ${year}`
 	}, [weekStartISO])
 
+	// Calculate today's date in ISO format (YYYY-MM-DD) for filtering past dates
+	const todayISO = useMemo(() => {
+		const now = new Date()
+		const y = now.getFullYear()
+		const m = String(now.getMonth() + 1).padStart(2, '0')
+		const d = String(now.getDate()).padStart(2, '0')
+		return `${y}-${m}-${d}`
+	}, [])
+
 
 	const loadData = async () => {
 		if (!user?.nameid) return // User login check
@@ -71,6 +80,17 @@ export default function EventCalendar() {
 			// Get worker's events from the worker's assigned users
 			const userList = await sharedService.getUsersByWorkerId(user.nameid)
 			const eventsData = await workerService.getWeeksEventsForWorker(userList, weekStartISO)
+			const validEvents = eventsData.filter(e => e.date >= todayISO)
+			setEvents(validEvents)
+
+			// Delete events set for a date before current date
+			const outdatedEventsIds = eventsData
+			.filter(e => e.date < todayISO)
+			.map(e => e.eventId)
+			if (outdatedEventsIds.length > 0) {
+				await sharedService.deleteSchedulesByEventIds(outdatedEventsIds)
+				await sharedService.deleteEventsByIds(outdatedEventsIds)
+			}
 			setEvents(eventsData)
 
 			// Get worker's availability (all records including overlaps)

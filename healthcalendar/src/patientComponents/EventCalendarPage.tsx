@@ -40,6 +40,15 @@ function addDaysISO(iso: string, days: number) {
   return toLocalISO(date)
 }
 
+// Calculate today's date in ISO format (YYYY-MM-DD) for filtering past dates
+async function getTodayISO() {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 // Convert ISO date string to day name
 function convertISOtoDay(iso: string) {
   const dayOfWeekMap: { [key: number]: string } = {
@@ -103,20 +112,32 @@ export default function EventCalendarPage() {
       try {
         // Step 1: Fetch this patient's events for the week
         const patientsEventsData = await patientService.getWeeksEventsByUserId(user.nameid, weekStartISO)
-        setEvents(patientsEventsData)
+        const todayISO = await getTodayISO()
+        const validEvents = patientsEventsData.filter(e => e.date >= todayISO)
+        setEvents(validEvents)
 
-        // Step 2: Fetch worker's availability for the week
+
+        // Step 2: Delete events set for a date before current date
+        const outdatedEventsIds = patientsEventsData
+          .filter(e => e.date < todayISO)
+          .map(e => e.eventId)
+        if (outdatedEventsIds.length > 0) {
+          await sharedService.deleteSchedulesByEventIds(outdatedEventsIds)
+          await sharedService.deleteEventsByIds(outdatedEventsIds)
+        }
+
+        // Step 3: Fetch worker's availability for the week
         const workerId = (user as PatientUser).WorkerId
         let availabilityData = await patientService.getWeeksAvailabilityProper(workerId, weekStartISO)
 
-        // Step 3: Get all patient IDs assigned to this worker
+        // Step 4: Get all patient IDs assigned to this worker
         const userIds = await sharedService.getIdsByWorkerId(workerId)
         const othersUserIds = userIds.filter(id => id !== user.nameid)
 
-        // Step 4: Fetch events of other patients assigned to the same worker
+        // Step 5: Fetch events of other patients assigned to the same worker
         const othersEventsData = await patientService.getWeeksEventsByUserIds(othersUserIds, weekStartISO)
 
-        // Step 5: Filter availability to exclude time slots occupied by other patients
+        // Step 6: Filter availability to exclude time slots occupied by other patients
         // Only show slots that are available for this patient to book
         othersEventsData.forEach(event => {
           const eventDay = convertISOtoDay(event.date)
