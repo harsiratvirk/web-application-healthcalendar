@@ -35,8 +35,8 @@ namespace HealthCalendar.Controllers
                 if (status == OperationStatus.Error || eventt == null)
                 {
                     _logger.LogError("[EventController] Error from getEvent(): \n" +
-                                         "Could not retreive Event with getEventById() from EventRepo.");
-                        return StatusCode(500, "Something went wrong when retreiving Events for the week");
+                                     "Could not retreive Event with getEventById() from EventRepo.");
+                        return StatusCode(500, "Something went wrong when retreiving Event");
                 }
 
                 var eventDTO = new EventDTO
@@ -75,8 +75,8 @@ namespace HealthCalendar.Controllers
                 if (status == OperationStatus.Error)
                 {
                     _logger.LogError("[EventController] Error from getWeeksEventsByUserId(): \n" +
-                                         "Could not retreive Events with getWeeksEventsByUserId() " + 
-                                         "from EventRepo.");
+                                     "Could not retreive Events with getWeeksEventsByUserId() " + 
+                                     "from EventRepo.");
                         return StatusCode(500, "Something went wrong when retreiving Events for the week");
                 }
 
@@ -118,7 +118,7 @@ namespace HealthCalendar.Controllers
                 // In case getWeeksEventsForPatient() did not succeed
                 if (status == OperationStatus.Error)
                 {
-                    _logger.LogError("[EventController] Error from getOthersEventsForWeek(): \n" +
+                    _logger.LogError("[EventController] Error from getWeeksEventsByUserIds(): \n" +
                                          "Could not retreive Events with getWeeksEventsByUserIds() " + 
                                          "from EventRepo.");
                         return StatusCode(500, "Something went wrong when retreiving Events for the week");
@@ -145,7 +145,7 @@ namespace HealthCalendar.Controllers
                 var userIdsString = String.Join(", ", userIds);
                 
                 _logger.LogError("[EventController] Error from getWeeksEventsByUserIds(): \n" +
-                                 "Something went wrong when trying to retreive week's events where " + 
+                                 "Something went wrong when trying to retreive week's Events where " + 
                                 $"UserId is in {userIdsString} and monday is on the date {monday}, " +
                                 $"Error message: {e}");
                 return StatusCode(500, "Internal server error");
@@ -265,7 +265,7 @@ namespace HealthCalendar.Controllers
                 // makes string listing all UserIds
                 var userIdsString = String.Join(", ", userIds);
 
-                _logger.LogError("[EventController] Error from getEventIdsByUserId(): \n" +
+                _logger.LogError("[EventController] Error from getEventIdsByUserIds(): \n" +
                                  "Something went wrong when trying to retreive EventIds " + 
                                 $"for Events where UserId is in {userIdsString}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
@@ -308,7 +308,7 @@ namespace HealthCalendar.Controllers
             {
                 _logger.LogError("[EventController] Error from createEvent(): \n" +
                                  "Something went wrong when trying to create new Event " +
-                                $"with eventDTO {@eventDTO}, Error message: {e}");
+                                $"with EventDTO {@eventDTO}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -324,11 +324,11 @@ namespace HealthCalendar.Controllers
                 // iterates through 
                 var (datesEvents, getStatus) = 
                     await _eventRepo.getDatesEvents(userIds, eventDTO.Date);
-                // In case getEventsByDate() did not succeed
+                // In case getDatesEvents() did not succeed
                 if (getStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[EventController] Error from validateEventForCreate(): \n" +
-                                     "Could not retreive Events with getEventsByDate() " + 
+                                     "Could not retreive Events with getDatesEvents() " + 
                                      "from EventRepo.");
                     return StatusCode(500, "Something went wrong when retreiving " + 
                                            "Events for the date");
@@ -369,11 +369,11 @@ namespace HealthCalendar.Controllers
             {
                 var (datesEvents, getStatus) = 
                     await _eventRepo.getDatesEvents(userIds, eventDTO.Date);;
-                // In case getEventsByDate() did not succeed
+                // In case getDatesEvents() did not succeed
                 if (getStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[EventController] Error from validateEventForUpdate(): \n" +
-                                     "Could not retreive Events with getEventsByDate() " + 
+                                     "Could not retreive Events with getDatesEvents() " + 
                                      "from EventRepo.");
                     return StatusCode(500, "Something went wrong when retreiving " + 
                                            "Events for the date");
@@ -402,7 +402,7 @@ namespace HealthCalendar.Controllers
             catch (Exception e) // In case of unexpected exception
             {   
                 _logger.LogError("[EventController] Error from validateEventForUpdate(): \n" +
-                                 "Something went wrong when trying to validate eventDTO " + 
+                                 "Something went wrong when trying to validate EventDTO " + 
                                 $"{@eventDTO}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
@@ -432,7 +432,7 @@ namespace HealthCalendar.Controllers
                 // In case updateEvent() did not succeed
                 if (status == OperationStatus.Error)
                 {
-                    _logger.LogError("[EventController] Error from updatedEvent(): \n" +
+                    _logger.LogError("[EventController] Error from updateEvent(): \n" +
                                      "Could not update Event with updateEvent() " + 
                                      "from EventRepo.");
                     return StatusCode(500, "Something went wrong when updating Event");
@@ -506,7 +506,7 @@ namespace HealthCalendar.Controllers
                 if (getStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[EventController] Error from deleteEventsByIds(): \n" +
-                                     "Could not retreive Events with getEventByIds() " + 
+                                     "Could not retreive Events with getEventsByIds() " + 
                                      "from EventRepo.");
                     return StatusCode(500, "Something went wrong when retreiving Events");
                 }
@@ -589,7 +589,5 @@ namespace HealthCalendar.Controllers
                 return OperationStatus.Error;
             }
         }
-
-
     }
 }
