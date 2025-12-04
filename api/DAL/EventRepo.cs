@@ -116,7 +116,7 @@ public class EventRepo : IEventRepo
             // makes string listing all UserIds
             var userIdsString = String.Join(", ", userIds);
             
-            _logger.LogError("[EventRepo] Error from getEventsByDate(): \n" +
+            _logger.LogError("[EventRepo] Error from getDatesEvents(): \n" +
                              "Something went wrong when retreiving Events where " +
                             $"UserId is in {userIdsString}, and Date == {date}, " +
                             $"Error message: {e}");
