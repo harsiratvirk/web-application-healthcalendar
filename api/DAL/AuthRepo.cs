@@ -95,7 +95,7 @@ public class AuthRepo : IAuthRepo
         catch (Exception e) // In case of unexpected exception
         {
             
-            _logger.LogError("[AuthRepo] Error from registerUser(): \n" +
+            _logger.LogError("[AuthRepo] Error from checkPassword(): \n" +
                              "Something went wrong when checking password, " +
                             $"Error message: {e}");
             return OperationStatus.Error;
@@ -113,7 +113,7 @@ public class AuthRepo : IAuthRepo
         catch (Exception e) // In case of unexpected exception
         {
             _logger.LogError("[AuthRepo] Error from logout(): \n" +
-                             "SOmething went wrong when logging out, " +
+                             "Something went wrong when logging out, " +
                             $"Error message: {e}");
             return OperationStatus.Error;
         }
