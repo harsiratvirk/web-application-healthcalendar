@@ -85,8 +85,8 @@ export default function EventCalendar() {
 
 			// Delete events set for a date before current date
 			const outdatedEventsIds = eventsData
-			.filter(e => e.date < todayISO)
-			.map(e => e.eventId)
+				.filter(e => e.date < todayISO)
+				.map(e => e.eventId)
 			if (outdatedEventsIds.length > 0) {
 				await sharedService.deleteSchedulesByEventIds(outdatedEventsIds)
 				await sharedService.deleteEventsByIds(outdatedEventsIds)
@@ -470,7 +470,7 @@ export default function EventCalendar() {
 								</>
 							)}
 							<button
-								className={'btn-static-blue'}
+								className={isAvailabilityMode ? 'btn-static-green' : 'btn-static-blue'}
 								onClick={handleAvailabilityToggle}
 							>
 								{isAvailabilityMode ? 'Done' : 'Edit Availability'}

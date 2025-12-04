@@ -11,6 +11,17 @@
     cursor: pointer;
 }
 
+.btn-static-green {
+    background: rgb(11, 170, 11);
+    width: 170px;
+    color: #fff;
+    border: none;
+    padding: 0.8rem 1.3rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .availability-notification {
     position: fixed;
     bottom: 2rem;
