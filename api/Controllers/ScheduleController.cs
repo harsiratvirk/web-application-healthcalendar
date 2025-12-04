@@ -60,9 +60,9 @@ namespace HealthCalendar.Controllers
             }
             catch (Exception e) // In case of unexpected exception
             {
-                _logger.LogError("[scheduleController] Error from getScheduledEventId(): \n" +
-                                 "Something went wrong when trying to find an Event " + 
-                                $"from Schedule with AvailabilityId = {availabilityId}, " +
+                _logger.LogError("[ScheduleController] Error from getScheduledEventId(): \n" +
+                                 "Something went wrong when trying to get an EventId " + 
+                                $"from Schedules with AvailabilityId = {availabilityId}, " +
                                 $"Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
@@ -95,9 +95,9 @@ namespace HealthCalendar.Controllers
             }
             catch (Exception e) // In case of unexpected exception
             {
-                _logger.LogError("[scheduleController] Error from getScheduledEventId(): \n" +
-                                 "Something went wrong when trying to find an Event " + 
-                                $"from Schedule with AvailabilityId = {availabilityId}, " +
+                _logger.LogError("[ScheduleController] Error from getScheduledEventIds(): \n" +
+                                 "Something went wrong when trying to retreive EventIds " + 
+                                $"from Schedules with AvailabilityId = {availabilityId}, " +
                                 $"Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
@@ -136,9 +136,9 @@ namespace HealthCalendar.Controllers
             }
             catch (Exception e) // In case of unexpected exception
             {
-                _logger.LogError("[scheduleController] Error from findScheduledEventId(): \n" +
-                                 "Something went wrong when trying to find an Event where " + 
-                                $"DATE = {date} from Schedule with AvailabilityId = " +
+                _logger.LogError("[ScheduleController] Error from findScheduledEventId(): \n" +
+                                 "Something went wrong when trying to find an EventId where " + 
+                                $"Date = {date} from Schedule with AvailabilityId = " +
                                 $"{availabilityId}, Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
@@ -240,7 +240,7 @@ namespace HealthCalendar.Controllers
                 // retreives list Schedules to be updated
                 var (schedules, getSchedulesStatus) = 
                     await _scheduleRepo.getSchedulesByAvailabilityIds(oldAvailabilityIds);
-                // In case getSchedulesByEventIds() did not succeed
+                // In case getSchedulesByAvailabilityIds() did not succeed
                 if (getSchedulesStatus == OperationStatus.Error)
                 {
                     _logger.LogError("[ScheduleController] Error from updateScheduledAvailability(): \n" +
@@ -273,7 +273,7 @@ namespace HealthCalendar.Controllers
                 // makes string listing all oldAvailabilityIds
                 var oldAvailabilityIdsString = String.Join(", ", oldAvailabilityIds);
                 
-                _logger.LogError("[scheduleController] Error from updateScheduledAvailability(): \n" +
+                _logger.LogError("[ScheduleController] Error from updateScheduledAvailability(): \n" +
                                  "Something went wrong when trying to update Schedules by replacing old " + 
                                 $"Availability with AvailabilityIds {oldAvailabilityIdsString} with " +
                                 $"new Availability with AvailabilityId = {newAvailabilityId}, " + 
@@ -296,7 +296,7 @@ namespace HealthCalendar.Controllers
                 if (getEventStatus == OperationStatus.Error || eventt == null)
                 {
                     _logger.LogError("[ScheduleController] Error from updateScheduledEvent(): \n" +
-                                     "Could not retreive Availability with getEventById() " + 
+                                     "Could not retreive Event with getEventById() " + 
                                      "from EventRepo.");
                     return StatusCode(500, "Something went wrong when retreiving Event");
                 }
@@ -337,10 +337,10 @@ namespace HealthCalendar.Controllers
                 // makes string listing all oldAvailabilityIds
                 var availabilityIdsString = String.Join(", ", availabilityIds);
                 
-                _logger.LogError("[scheduleController] Error from updateScheduledAvailability(): \n" +
+                _logger.LogError("[ScheduleController] Error from updateScheduledEvent(): \n" +
                                  "Something went wrong when trying to update Schedules where " + 
                                 $"AvailabilityId is in {availabilityIdsString} by replacing old " + 
-                                $"Event with updated Event new Event where EventId = {eventId}, " + 
+                                $"Event with updated Event where EventId = {eventId}, " + 
                                 $"Error message: {e}");
                 return StatusCode(500, "Internal server error");
             }
