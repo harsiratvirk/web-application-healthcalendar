@@ -70,7 +70,7 @@ public class AvailabilityRepo : IAvailabilityRepo
         }
         catch (Exception e) // In case of unexpected exception
         {
-            _logger.LogError("[AvailabilityRepo] Error from getAvailabilityById(): \n" +
+            _logger.LogError("[AvailabilityRepo] Error from getAvailabilityByUserId(): \n" +
                              "Something went wrong when retreiving Availability where " +
                             $"UserId = {userId}, Error message: {e}");
             return ([], OperationStatus.Error);
@@ -113,7 +113,7 @@ public class AvailabilityRepo : IAvailabilityRepo
         {
             _logger.LogError("[AvailabilityRepo] Error from getAvailabilityRangeByDoW(): \n" +
                              "Something went wrong when retreiving Availability where " +
-                            $"where UserID = {userId}, DayOfWeek = {dayOfWeek} and From = {from}, " +
+                            $"UserID = {userId}, DayOfWeek = {dayOfWeek} and From = {from}, " +
                             $"Error message: {e}");
             return ([], OperationStatus.Error);
         }
