@@ -134,7 +134,7 @@ public class UserRepo : IUserRepo
             }
             catch (Exception e) // In case of unexpected exception
             {
-                _logger.LogError("[UserRepo] Error from getAllPatients(): \n" +
+                _logger.LogError("[UserRepo] Error from getUnassignedPatients(): \n" +
                                 "Something went wrong when retreiving Users where " +
                                 $"Role = {Roles.Patient} && WorkerId = null, " + 
                                 $"Error message: {e}");
